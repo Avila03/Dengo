@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Check, Clock3, Heart, ListChecks, ShoppingBag, CalendarCheck2 } from "lucide-react";
+import { ArrowRight, CalendarDays, Check, Clock3, Heart, ListChecks, ShoppingBag } from "lucide-react";
 import { Shell } from "./shell";
 import { useDengo } from "./provider";
 import { localToday } from "@/lib/model";

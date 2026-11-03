@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Plus,
@@ -25,7 +25,6 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
   const { entries, names, preferences, busy, add, update, toggle, remove } =
     useDengo();
   const query = useSearchParams();
-  const Container = embedded ? Fragment : Shell;
   const router = useRouter();
   const source = entries.find(
     (e) => e.id === query.get("compra") && e.kind === "shopping",
@@ -94,8 +93,8 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
       setLocalError((e as Error).message);
     }
   }
-  return (
-    <Container>
+  const content = (
+    <>
       <PageHeading
         eyebrow="CONTAS CLARAS, VIDA MAIS LEVE"
         title={embedded ? "Gastos e acertos" : "Nossas finanças"}
@@ -428,6 +427,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
           })}
         </div>
       </section>
-    </Container>
+    </>
   );
+  return embedded ? content : <Shell>{content}</Shell>;
 }

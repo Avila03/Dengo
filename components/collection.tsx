@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -40,7 +40,6 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
         .includes(query.toLocaleLowerCase("pt-BR")),
   );
   const Icon = isTask ? ListChecks : ShoppingBag;
-  const Container = embedded ? Fragment : Shell;
   const today = localToday();
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,8 +63,8 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
       setEditing(null);
     }
   }
-  return (
-    <Container>
+  const content = (
+    <>
       <section className={embedded ? "page-heading purchases-inner-heading" : "page-heading"}>
         <div>
           <span className="eyebrow">
@@ -341,6 +340,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
           ? "Dividir responsabilidades também é uma forma de carinho."
           : "O botão de carteira transforma uma compra em despesa sem preencher a descrição novamente."}
       </p>
-    </Container>
+    </>
   );
+  return embedded ? content : <Shell>{content}</Shell>;
 }
