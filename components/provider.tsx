@@ -507,6 +507,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
 function Login() {
   const [signup, setSignup] = useState(false),
     [recovery, setRecovery] = useState(false),
+    [existingAccount, setExistingAccount] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
@@ -516,6 +517,7 @@ function Login() {
     setBusy(true);
     setError("");
     setMessage("");
+    setExistingAccount(false);
     const f = new FormData(event.currentTarget);
     const email = String(f.get("email") || "").trim(),
       password = String(f.get("password") || "");
@@ -534,14 +536,26 @@ function Login() {
             data: { display_name: String(f.get("name") || "").trim() },
           },
         });
-        if (error)
+        if (error) {
+          if (
+            error.code === "user_already_exists" ||
+            /already registered/i.test(error.message)
+          ) {
+            setExistingAccount(true);
+            throw new Error(
+              "Este e-mail já tem uma conta no Dengo. Entre com sua senha ou recupere o acesso.",
+            );
+          }
           throw new Error(
             "Não foi possível criar a conta. Confira os dados ou tente novamente.",
           );
-        if (!data.session)
+        }
+        if (!data.session) {
+          setExistingAccount(true);
           throw new Error(
-            "Não foi possível iniciar sua sessão automaticamente. Confira o e-mail e a senha e tente entrar.",
+            "Não foi possível iniciar a sessão. Se já usou esse e-mail antes, tente entrar ou recuperar a senha.",
           );
+        }
       } else {
         const { error } = await supabase!.auth.signInWithPassword({
           email,
@@ -549,7 +563,7 @@ function Login() {
         });
         if (error)
           throw new Error(
-            "Não foi possível entrar. Confira seu e-mail e sua senha.",
+            "Não foi possível entrar. Confira seu e-mail e senha ou use 'Esqueci minha senha' para recuperar o acesso.",
           );
       }
     } catch (e) {
@@ -644,6 +658,33 @@ function Login() {
           <p role="status" className="notice">
             {message}
           </p>
+        ) : null}
+        {signup && existingAccount ? (
+          <div className="form-grid">
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                setSignup(false);
+                setExistingAccount(false);
+                setError("");
+              }}
+            >
+              <LogIn size={16} /> Entrar com minha conta
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                setSignup(false);
+                setRecovery(true);
+                setExistingAccount(false);
+                setError("");
+              }}
+            >
+              <KeyRound size={16} /> Recuperar senha
+            </button>
+          </div>
         ) : null}
         <button className="primary" disabled={busy}>
           <LogIn size={18} />
