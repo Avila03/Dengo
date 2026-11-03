@@ -90,7 +90,7 @@ export function Calendar() {
       <PageHeading
         eyebrow="TEMPO PARA O QUE IMPORTA"
         title="Nosso calendário"
-        description="Compromissos, tarefas e contas no mesmo lugar."
+        description="Encontros, compromissos com data e contas marcadas no calendário."
       >
         <button
           className="primary"
@@ -238,8 +238,8 @@ export function Calendar() {
           </div>
           <div className="calendar-legend">
             <span>Compromissos</span>
-            <span>Tarefas com prazo</span>
-            <span>Contas e vencimentos</span>
+            <span>Compromissos com data</span>
+            <span>Gastos e vencimentos de Compras</span>
           </div>
         </section>
         <section className="panel">

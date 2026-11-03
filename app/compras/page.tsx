@@ -1,4 +1,10 @@
-import { Collection } from "@/components/collection";
+import { Suspense } from "react";
+import { ShoppingHub } from "@/components/shopping-hub";
+
 export default function Page() {
-  return <Collection kind="shopping" />;
+  return (
+    <Suspense fallback={<p>Carregando compras…</p>}>
+      <ShoppingHub />
+    </Suspense>
+  );
 }

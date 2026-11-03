@@ -1,5 +1,5 @@
 "use client";
-import { useState, type FormEvent } from "react";
+import { Fragment, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -23,7 +23,7 @@ import {
   type Entry,
   type Draft,
 } from "@/lib/model";
-export function Collection({ kind }: { kind: "shopping" | "task" }) {
+export function Collection({ kind, embedded = false }: { kind: "shopping" | "task"; embedded?: boolean }) {
   const { entries, names, busy, add, update, toggle, remove } = useDengo();
   const [formOpen, setFormOpen] = useState(false),
     [editing, setEditing] = useState<Entry | null>(null),
@@ -40,6 +40,7 @@ export function Collection({ kind }: { kind: "shopping" | "task" }) {
         .includes(query.toLocaleLowerCase("pt-BR")),
   );
   const Icon = isTask ? ListChecks : ShoppingBag;
+  const Container = embedded ? Fragment : Shell;
   const today = localToday();
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,19 +65,19 @@ export function Collection({ kind }: { kind: "shopping" | "task" }) {
     }
   }
   return (
-    <Shell>
-      <section className="page-heading">
+    <Container>
+      <section className={embedded ? "page-heading purchases-inner-heading" : "page-heading"}>
         <div>
           <span className="eyebrow">
             {isTask ? "CUIDADO QUE SE COMPARTILHA" : "DO QUE A GENTE PRECISA"}
           </span>
           <h1>
-            {isTask ? "Responsabilidades" : "Nossa lista de compras"}
+            {isTask ? "Compromissos" : "Nossa lista de compras"}
             <span className="rose">.</span>
           </h1>
           <p>
             {isTask
-              ? "Combinados claros para uma rotina mais leve."
+              ? "Tarefas a realizar, prazos e quem fica responsável por cada uma."
               : "Tudo no mesmo lugar, para não esquecer nada."}
           </p>
         </div>
@@ -90,14 +91,14 @@ export function Collection({ kind }: { kind: "shopping" | "task" }) {
           }}
         >
           {formOpen ? <X size={18} /> : <Plus size={18} />}{" "}
-          {formOpen ? "Fechar" : isTask ? "Novo cuidado" : "Adicionar item"}
+          {formOpen ? "Fechar" : isTask ? "Nova tarefa" : "Adicionar item"}
         </button>
       </section>
       <div className="list-summary">
         <Icon size={22} />
         <span>
           <strong>
-            {pending} {isTask ? "cuidados pendentes" : "itens na lista"}
+            {pending} {isTask ? "compromissos pendentes" : "itens na lista"}
           </strong>{" "}
           · {all.length - pending} {isTask ? "concluídos" : "comprados"}
         </span>
@@ -270,10 +271,10 @@ export function Collection({ kind }: { kind: "shopping" | "task" }) {
                         className="icon-btn"
                         aria-label={
                           linked
-                            ? "Ver finanças"
+                            ? "Ver gastos e acertos"
                             : `Registrar despesa de ${e.title}`
                         }
-                        href={linked ? "/financas" : `/financas?compra=${e.id}`}
+                        href={linked ? "/compras?aba=gastos" : `/compras?aba=gastos&compra=${e.id}`}
                       >
                         <Wallet size={18} />
                       </Link>
@@ -340,6 +341,6 @@ export function Collection({ kind }: { kind: "shopping" | "task" }) {
           ? "Dividir responsabilidades também é uma forma de carinho."
           : "O botão de carteira transforma uma compra em despesa sem preencher a descrição novamente."}
       </p>
-    </Shell>
+    </Container>
   );
 }

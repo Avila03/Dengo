@@ -10,7 +10,6 @@ import {
   ArrowUpRight,
   RefreshCw,
   LogOut,
-  Wallet,
   CalendarDays,
   Clapperboard,
   MapPin,
@@ -19,12 +18,11 @@ import {
 import { useDengo } from "./provider";
 const links = [
   { href: "/", label: "Nosso dia", icon: House },
-  { href: "/financas", label: "Finanças", icon: Wallet },
   { href: "/calendario", label: "Calendário", icon: CalendarDays },
+  { href: "/compromissos", label: "Compromissos", icon: ListChecks },
   { href: "/compras", label: "Compras", icon: ShoppingBag },
-  { href: "/tarefas", label: "Responsabilidades", icon: ListChecks },
-  { href: "/filmes", label: "Filmes & séries", icon: Clapperboard },
   { href: "/lugares", label: "Nossos lugares", icon: MapPin },
+  { href: "/filmes", label: "Filmes e séries", icon: Clapperboard },
   { href: "/configuracoes", label: "Nosso espaço", icon: Settings2 },
 ];
 export function Shell({ children }: { children: React.ReactNode }) {
@@ -39,7 +37,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   ];
   const mobileActive = (href: string) =>
     href === "/mais"
-      ? ["/mais", "/tarefas", "/filmes", "/lugares", "/configuracoes"].includes(
+      ? ["/mais", "/filmes", "/lugares", "/configuracoes"].includes(
           path,
         )
       : path === href;

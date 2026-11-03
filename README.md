@@ -2,6 +2,16 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Entrega 1.0 — navegação reorganizada
+
+- **Nosso dia** agora é uma agenda exclusivamente do dia atual: compromissos do calendário, tarefas com data e despesas com vencimento hoje, ordenados por horário, mostrando pendentes e concluídos.
+- **Calendário** mantém eventos adicionados na agenda e exibe também tarefas com data e contas com vencimento.
+- **Compromissos** substitui o rótulo Responsabilidades (mesma lista de tarefas, responsáveis, prazos e repetições) no novo endereço /compromissos; /tarefas redireciona para manter favoritos.
+- **Compras** reúne duas abas: Lista de compras (itens pendentes e comprados) e Gastos e acertos (todos os registros e funções financeiras existentes). Links antigos /financas redirecionam para /compras?aba=gastos, preservando a referência compra quando válida.
+- **Nossos lugares** e **Filmes e séries** mantidos, nessa ordem. Configurações continuam em Nosso espaço.
+- No celular, os quatro primeiros destinos aparecem na barra inferior e os demais em Mais; os seis destinos e Configurações ficam disponíveis no menu lateral do desktop.
+- A estrutura de dados financeira e tarefas não foi apagada nem migrada; a mudança é de apresentação e rotas.
+
 ## Entrega 0.9 — cadastro direto de locais e links
 
 - **Nossos lugares simplificado:** retirei a busca automática e as chamadas de consulta a estabelecimentos. A tela agora serve exclusivamente para cadastrar, editar e organizar locais do casal.

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  ListChecks,
   Clapperboard,
   MapPin,
   Settings2,
@@ -14,28 +13,22 @@ export default function Page() {
         <div>
           <span className="eyebrow">CADA PARTE DA NOSSA VIDA</span>
           <h1>Mais do nosso espaço.</h1>
-          <p>Responsabilidades, planos e o nosso jeito de ser.</p>
+          <p>Lugares, filmes e configurações do nosso espaço.</p>
         </div>
       </section>
       <div className="places-grid">
         {[
           {
-            href: "/tarefas",
-            title: "Responsabilidades",
-            description: "Dividir os cuidados do dia a dia.",
-            icon: ListChecks,
+            href: "/lugares",
+            title: "Nossos lugares",
+            description: "Endereços, vídeos e lugares que queremos visitar.",
+            icon: MapPin,
           },
           {
             href: "/filmes",
-            title: "Filmes & séries",
+            title: "Filmes e séries",
             description: "Escolher nossa próxima sessão.",
             icon: Clapperboard,
-          },
-          {
-            href: "/lugares",
-            title: "Nossos lugares",
-            description: "Guardar os próximos destinos.",
-            icon: MapPin,
           },
           {
             href: "/configuracoes",

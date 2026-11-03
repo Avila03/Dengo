@@ -14,6 +14,7 @@ import {
   calendarEntries,
 } from "../lib/calendar.ts";
 import { normalizeMovies } from "../lib/movies.ts";
+import { todayEntries } from "../lib/today.ts";
 import { normalizeGooglePlaces, googlePlaceMapsUrl, googleMapsEmbedUrl, normalizePhotonPlaces, openStreetMapEmbedUrl, photonCategoryFilter, overpassSearchQuery, normalizeOverpassPlaces, normalizePlaceLink, safePlaceLink } from "../lib/places.ts";
 const task: Entry = {
   id: "abc",
@@ -183,4 +184,17 @@ test("a saved place accepts TikTok and Google Maps HTTPS links", () => {
   assert.equal(safePlaceLink("javascript:alert(1)"), "");
   assert.throws(() => normalizePlaceLink("http://example.com"), /https/);
   assert.throws(() => normalizePlaceLink("https://username:password@example.com"));
+});
+
+test("Nosso dia shows only events, tasks and expenses scheduled for today", () => {
+  const today = "2026-11-03";
+  const sample = [
+    { ...task, id: "old", kind: "task" as const, due: "2026-11-02" },
+    { ...task, id: "shopping", kind: "shopping" as const, due: today },
+    { ...task, id: "event", kind: "event" as const, due: today, data: { time: "19:00" } },
+    { ...task, id: "task", kind: "task" as const, due: today },
+    { ...task, id: "expense", kind: "expense" as const, due: today, done: true, data: { amount: 1000, payer: 0, shareFirst: 5000, time: "09:00" } },
+  ];
+  assert.deepEqual(todayEntries(sample, today).map((item) => item.id),
+    ["task", "expense", "event"]);
 });

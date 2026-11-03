@@ -1,5 +1,5 @@
 "use client";
-import { useState, type FormEvent } from "react";
+import { Fragment, useState, type FormEvent } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Plus,
@@ -21,10 +21,11 @@ import {
   money,
   CATEGORIES,
 } from "@/lib/finance";
-export function Finance() {
+export function Finance({ embedded = false }: { embedded?: boolean }) {
   const { entries, names, preferences, busy, add, update, toggle, remove } =
     useDengo();
   const query = useSearchParams();
+  const Container = embedded ? Fragment : Shell;
   const router = useRouter();
   const source = entries.find(
     (e) => e.id === query.get("compra") && e.kind === "shopping",
@@ -87,18 +88,18 @@ export function Finance() {
       if (ok) {
         setEditing(null);
         setForm(null);
-        if (query.has("compra")) router.replace("/financas", { scroll: false });
+        if (query.has("compra")) router.replace("/compras?aba=gastos", { scroll: false });
       }
     } catch (e) {
       setLocalError((e as Error).message);
     }
   }
   return (
-    <Shell>
+    <Container>
       <PageHeading
         eyebrow="CONTAS CLARAS, VIDA MAIS LEVE"
-        title="Nossas finanças"
-        description="Dividam os gastos e construam os próximos planos juntos."
+        title={embedded ? "Gastos e acertos" : "Nossas finanças"}
+        description="Despesas, pagamentos, divisões e acertos associados às compras e aos planos de vocês."
       >
         <button
           className="primary"
@@ -427,6 +428,6 @@ export function Finance() {
           })}
         </div>
       </section>
-    </Shell>
+    </Container>
   );
 }

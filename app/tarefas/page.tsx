@@ -1,4 +1,4 @@
-import { Collection } from "@/components/collection";
+import { redirect } from "next/navigation";
 export default function Page() {
-  return <Collection kind="task" />;
+  redirect("/compromissos");
 }
