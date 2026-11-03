@@ -2051,40 +2051,16 @@ progress {
   .catalog-results .movie-copy > p { -webkit-line-clamp: 3; }
 }
 
-/* Dengo 0.6: Places & Maps */
-.places-search-panel { margin-bottom: 22px; }
-.places-search-panel h2 { font-size: 25px; }
-.places-search-panel > small { font-size: 11px; color: var(--muted); display: block; margin-top: 12px; }
-.places-search-form { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) 160px auto; align-items: end; gap: 13px; }
-.places-search-external { margin-top: 12px; }
-.places-search-external .text-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
-.places-search-form .primary { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
-.places-search-spin { animation: dengo-catalog-spin 1s linear infinite; }
-.places-search-results { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 20px; }
-.places-search-results h3 { font-size: 13px; }
-.places-search-choice { display: flex; align-items: center; width: 100%; min-height: 76px; gap: 13px; padding: 12px; margin-bottom: 9px; background: var(--paper); border: 1px solid var(--line); border-radius: 11px; text-align: left; color: var(--ink); }
-.places-search-choice:hover { background: var(--sage); }
-.places-search-choice > svg { color: var(--green); }
-.places-search-choice > span:nth-child(2) { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.places-search-choice strong { font-size: 13px; }
-.places-search-choice small { font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
-.places-search-choose { font-size: 11px; color: var(--rose); font-weight: 700; }
-.places-preview { margin: 6px 0 24px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-.places-preview-label { display: flex; flex-direction: column; gap: 4px; padding: 13px 15px; }
-.places-preview-label strong { display: inline-flex; align-items: center; gap: 5px; }
-.places-preview-label small { color: var(--muted); }
-.places-map-iframe { border: 0; width: 100%; height: 270px; display: block; border-radius: 9px; }
-.places-preview > .secondary { display: inline-flex; align-items: center; gap: 6px; margin: 12px; }
-.places-preview > p { padding: 15px; margin: 0; font-size: 12px; }
-.place-card > .places-map-iframe { margin: 8px 0; }
-@media (max-width: 800px) {
-  .places-search-form { grid-template-columns: 1fr 1fr; }
-  .places-search-form .primary { grid-column: 1 / -1; }
-}
+
+/* Dengo 0.9 — manual place links */
+.places-form-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.places-form-actions .primary, .places-form-actions .secondary { min-height: 44px; }
+.places-saved-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+.place-card > .places-map-iframe { margin: 10px 0; }
+.places-map-iframe { display: block; width: 100%; height: 260px; border: 0; border-radius: 9px; }
+.entry-form label small { color: var(--muted); font-weight: 400; }
 @media (max-width: 580px) {
-  .places-search-form { grid-template-columns: 1fr; }
-  .places-search-form .primary { grid-column: auto; }
-  .places-search-choice { gap: 8px; }
-  .places-search-choose { font-size: 10px; }
-  .places-map-iframe { height: 245px; }
+  .places-form-actions { flex-direction: column; align-items: stretch; }
+  .places-form-actions .primary, .places-form-actions .secondary { width: 100%; }
+  .places-map-iframe { height: 235px; }
 }

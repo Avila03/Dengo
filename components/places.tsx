@@ -1,518 +1,270 @@
 "use client";
-import { useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import {
-  Plus,
-  MapPin,
-  ExternalLink,
-  Pencil,
-  CalendarDays,
-  Check,
-  Search,
-  MapPinned,
-  LoaderCircle,
-  Link2,
-} from "lucide-react";
+import { Plus, MapPin, ExternalLink, Pencil, CalendarDays, Check, Link2, MapPinned } from "lucide-react";
 import { Shell } from "./shell";
 import { EntryAudit } from "./entry-audit";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
 import type { Entry, Draft } from "@/lib/model";
 import { mapsUrl } from "@/lib/calendar";
-import { googleMapsEmbedUrl, googlePlaceMapsUrl, openStreetMapEmbedUrl, parseGoogleMapsShareLink, PLACE_CATEGORIES, type ImportedGoogleMapsLink, type PlaceCategory, type PlaceSearchResult, type OpenStreetMapPlace } from "@/lib/places";
-import { supabase } from "@/lib/supabase";
+import { googleMapsEmbedUrl, openStreetMapEmbedUrl, normalizePlaceLink, safePlaceLink } from "@/lib/places";
 import { money, parseMoney } from "@/lib/finance";
+
+const CATEGORIES = [
+  "Passeio", "Restaurante", "Café", "Bar", "Hamburgueria",
+  "Pizzaria", "Padaria", "Viagem", "Natureza", "Outros",
+];
+
+function linkLabel(url: string): string {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    if (host === "tiktok.com" || host.endsWith(".tiktok.com")) return "Abrir vídeo no TikTok";
+    if (host === "maps.app.goo.gl" || host === "maps.google.com" ||
+        host === "google.com" || host.endsWith(".google.com") ||
+        host === "google.com.br" || host.endsWith(".google.com.br"))
+      return "Abrir localização salva";
+  } catch {
+    // Links antigos ou inválidos nunca são apresentados como links.
+  }
+  return "Abrir link salvo";
+}
+
 export function Places() {
   const { entries, busy, add, update, toggle, remove } = useDengo();
-  const [open, setOpen] = useState(false),
-    [editing, setEditing] = useState<Entry | null>(null),
-    [filter, setFilter] = useState("want"),
-    [error, setError] = useState(""),
-    [term, setTerm] = useState(""),
-    [city, setCity] = useState(""),
-    [category, setCategory] = useState<PlaceCategory>("all"),
-    [results, setResults] = useState<PlaceSearchResult[]>([]),
-    [searchError, setSearchError] = useState(""),
-    [searching, setSearching] = useState(false),
-    [selectedPlace, setSelectedPlace] = useState<PlaceSearchResult | null>(null),
-    [mapOpen, setMapOpen] = useState<string | null>(null),
-    [sharedLink, setSharedLink] = useState(""),
-    [importedLink, setImportedLink] = useState<ImportedGoogleMapsLink | null>(null),
-    [importNotice, setImportNotice] = useState(""),
-    [importError, setImportError] = useState("");
-  const searchLock = useRef(false);
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Entry | null>(null);
+  const [filter, setFilter] = useState<"want" | "visited">("want");
+  const [error, setError] = useState("");
+  const [mapOpen, setMapOpen] = useState<string | null>(null);
   const embedKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY || "";
-  const isOSM = (place: PlaceSearchResult): place is OpenStreetMapPlace =>
-    "source" in place && place.source === "openstreetmap";
-  const savedMap = (entry: Entry) =>
-    entry.data?.osmPlaceId || (entry.data?.url && entry.data.latitude !== undefined && entry.data.longitude !== undefined)
-      ? openStreetMapEmbedUrl(entry.data.latitude, entry.data.longitude)
-      : googleMapsEmbedUrl(entry.data?.googlePlaceId, embedKey);
-  const all = entries.filter((e) => e.kind === "place");
-  const list = all.filter((e) => (filter === "visited" ? e.done : !e.done));
-  async function searchPlace(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (searchLock.current) return;
-    searchLock.current = true;
-    setSearching(true);
-    setSearchError("");
-    setResults([]);
-    try {
-      const { data } = supabase
-        ? await supabase.auth.getSession()
-        : { data: { session: null } };
-      const query = new URLSearchParams({ q: term.trim(), category });
-      if (city.trim()) query.set("city", city.trim());
-      const response = await fetch("/api/places?" + query.toString(), {
-        headers: data.session ? { Authorization: "Bearer " + data.session.access_token } : {},
-      });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error || "Não foi possível pesquisar lugares.");
-      const incoming: PlaceSearchResult[] = Array.isArray(body.results) ? body.results : [];
-      setResults(incoming);
-      if (!incoming.length) setSearchError("Nenhum local encontrado. Tente informar a cidade.");
-    } catch (e) {
-      setSearchError(e instanceof Error ? e.message : "Não foi possível pesquisar lugares.");
-    } finally {
-      searchLock.current = false;
-      setSearching(false);
-    }
-  }
-  function choosePlace(place: PlaceSearchResult) {
-    const existing = all.find((entry) => isOSM(place) ? entry.data?.osmPlaceId === place.id : entry.data?.googlePlaceId === place.id);
-    setEditing(existing || null);
-    setSelectedPlace(existing ? null : place);
-    setImportedLink(null);
-    setOpen(true);
+  const all = entries.filter((entry) => entry.kind === "place");
+  const list = all.filter((entry) => filter === "visited" ? entry.done : !entry.done);
+
+  function startNew() {
+    setEditing(null);
     setError("");
-    if (existing) setFilter(existing.done ? "visited" : "want");
+    setOpen((current) => editing !== null ? true : !current);
+  }
+
+  function editPlace(entry: Entry) {
+    setEditing(entry);
+    setError("");
+    setOpen(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
-  function importGoogleLink(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setImportError("");
-    setImportNotice("");
-    try {
-      const parsed = parseGoogleMapsShareLink(sharedLink);
-      const existing = all.find((entry) =>
-        entry.data?.url === parsed.url ||
-        (!!parsed.googlePlaceId && entry.data?.googlePlaceId === parsed.googlePlaceId));
-      setEditing(existing || null);
-      setSelectedPlace(null);
-      setImportedLink(parsed);
-      setOpen(true);
-      if (existing) setFilter(existing.done ? "visited" : "want");
-      if (parsed.isShortLink) {
-        setImportNotice("Link curto reconhecido! Como ele não mostra os detalhes no endereço, confirme o nome e preencha o endereço antes de salvar.");
-      } else if (parsed.latitude === undefined && parsed.longitude === undefined) {
-        setImportNotice("Link reconhecido. Confira nome e endereço; alguns links não informam a posição exata para mostrar o marcador interno.");
-      } else {
-        setImportNotice("Localização detectada no link. Confira os dados antes de salvar.");
-      }
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (error) {
-      setImportError(error instanceof Error ? error.message : "Não foi possível ler esse link.");
-    }
+
+  function savedMap(entry: Entry) {
+    const data = entry.data;
+    if (data?.osmPlaceId)
+      return openStreetMapEmbedUrl(data.latitude, data.longitude);
+    if (data?.googlePlaceId)
+      return googleMapsEmbedUrl(data.googlePlaceId, embedKey);
+    return "";
   }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    const f = new FormData(event.currentTarget);
+    const form = new FormData(event.currentTarget);
     try {
-      const budget = String(f.get("budget") || "").trim();
-      const googleLink = String(f.get("googleMapsLink") || "").trim();
-      const share = googleLink ? parseGoogleMapsShareLink(googleLink) : null;
-      const fromOSM = selectedPlace && isOSM(selectedPlace);
-      const d: Draft = {
+      const budget = String(form.get("budget") || "").trim();
+      const url = normalizePlaceLink(String(form.get("url") || ""));
+      const title = String(form.get("title") || "").trim();
+      const address = String(form.get("address") || "").trim();
+      if (!title || !address) throw new Error("Informe o nome e o endereço do lugar.");
+      const draft: Draft = {
         kind: "place",
-        title: String(f.get("title") || "").trim(),
-        detail: String(f.get("detail") || ""),
+        title,
+        detail: String(form.get("detail") || "").trim(),
         assignee: "Nós dois",
         due: "",
-        done: f.get("visited") === "on",
+        done: form.get("visited") === "on",
         data: {
           ...editing?.data,
-          googlePlaceId: selectedPlace && !isOSM(selectedPlace)
-            ? selectedPlace.id : (share?.googlePlaceId || editing?.data?.googlePlaceId),
-          osmPlaceId: fromOSM ? selectedPlace.id : editing?.data?.osmPlaceId,
-          latitude: fromOSM ? selectedPlace.lat : (share?.latitude ?? editing?.data?.latitude),
-          longitude: fromOSM ? selectedPlace.lon : (share?.longitude ?? editing?.data?.longitude),
-          url: share?.url,
-          address: String(f.get("address") || "").trim(),
-          category: String(f.get("category") || "Passeio"),
+          address,
+          category: String(form.get("category") || "Passeio"),
           budget: budget ? parseMoney(budget) : 0,
-          review: String(f.get("review") || ""),
+          review: String(form.get("review") || "").trim(),
+          url,
         },
       };
-      if (await (editing ? update(editing, d) : add(d))) {
+      if (await (editing ? update(editing, draft) : add(draft))) {
         setOpen(false);
         setEditing(null);
-        setSelectedPlace(null);
-        setImportedLink(null);
-        setImportNotice("");
-        setResults([]);
       }
-    } catch (e) {
-      setError((e as Error).message);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Não foi possível salvar o lugar.");
     }
   }
+
   return (
     <Shell>
       <PageHeading
         eyebrow="NOVAS HISTÓRIAS PELO CAMINHO"
         title="Nossos lugares"
-        description="Do café da esquina à viagem dos sonhos."
+        description="Guardem restaurantes, cafés, vídeos de dicas e os lugares que querem conhecer juntos."
       >
-        <button
-          className="primary"
-          onClick={() => {
-            setOpen(!open);
-            setEditing(null);
-            setSelectedPlace(null);
-            setImportedLink(null);
-            setImportNotice("");
-          }}
-        >
+        <button type="button" className="primary" onClick={startNew}>
           <Plus size={18} />
-          {open ? "Fechar" : "Salvar um lugar"}
+          {open && !editing ? "Fechar formulário" : "Adicionar local"}
         </button>
       </PageHeading>
+
       <section className="panel place-intro">
         <MapPin />
         <div>
-          <h2>Uma lista de próximos destinos.</h2>
+          <h2>Um lugar para os nossos próximos destinos.</h2>
           <p>
-            Pesquisem um lugar pelo nome, escolham o endereço correto e vejam
-            sua localização no mapa. Depois, salvem os planos do casal.
+            Adicione um local, organize os detalhes e, se quiser, cole um link
+            do TikTok, do Google Maps ou de outra página para consultar depois.
           </p>
         </div>
       </section>
-      <section className="panel places-search-panel">
-        <h2>Encontrar um estabelecimento</h2>
-        <form className="places-search-form" onSubmit={(event) => void searchPlace(event)}>
-          <label>
-            Nome do lugar
-            <input required minLength={2} maxLength={100} value={term}
-              onChange={(event) => setTerm(event.target.value)}
-              placeholder="Ex.: Espartano" />
-          </label>
-          <label>
-            Cidade ou região (opcional)
-            <input maxLength={80} value={city}
-              onChange={(event) => setCity(event.target.value)}
-              placeholder="Ex.: Porto Alegre" />
-          </label>
-          <label>
-            Tipo de lugar
-            <select value={category} onChange={(event) => setCategory(event.target.value as PlaceCategory)}>
-              {Object.entries(PLACE_CATEGORIES).map(([key, name]) => (
-                <option key={key} value={key}>{name}</option>
-              ))}
-            </select>
-          </label>
-          <button type="submit" className="primary" disabled={searching || term.trim().length < 2}>
-            {searching ? <LoaderCircle size={17} className="places-search-spin" /> : <Search size={17} />}
-            {searching ? "Buscando…" : "Pesquisar"}
-          </button>
-        </form>
-        <small>Pesquisa de restaurantes, cafés, bares e outros locais para encontros · © OpenStreetMap contributors. A cobertura pode ser menor que a do Google.</small>
-        <div className="places-search-external">
-          <a className="text-link" href={mapsUrl([term.trim(), category === "all" ? "" : PLACE_CATEGORIES[category], city.trim()].filter(Boolean).join(", "))}
-            target="_blank" rel="noopener noreferrer">
-            Não encontrou? Abrir busca no Google Maps <ExternalLink size={15} />
-          </a>
-        </div>
-        {searchError ? <div className="notice" role="status">{searchError}</div> : null}
-        {results.length > 0 ? (
-          <div className="places-search-results">
-            <h3>Selecione o endereço certo</h3>
-            {results.map((place) => {
-              const saved = all.some((e) => isOSM(place) ? e.data?.osmPlaceId === place.id : e.data?.googlePlaceId === place.id);
-              return (
-                <button type="button" className="places-search-choice" key={place.id}
-                  onClick={() => choosePlace(place)}>
-                  <MapPin size={19} />
-                  <span>
-                    <strong>{place.title}</strong>
-                    <small>{place.address || "Sem endereço informado"}</small>
-                    {place.category ? <small>{place.category}</small> : null}
-                  </span>
-                  <span className="places-search-choose">{saved ? "Editar salvo" : "Selecionar"}</span>
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-      </section>
-      <section className="panel places-import">
-        <div className="places-import-heading">
-          <Link2 size={21} />
-          <div>
-            <h2>Encontrou no Google Maps?</h2>
-            <p>Abra o local no Google Maps, toque em Compartilhar → Copiar link e cole aqui para guardar na lista do casal.</p>
-          </div>
-        </div>
-        <form className="places-import-form" onSubmit={importGoogleLink}>
-          <label>
-            Link compartilhado do Google Maps
-            <input
-              type="url"
-              value={sharedLink}
-              onChange={(event) => setSharedLink(event.target.value)}
-              placeholder="https://maps.app.goo.gl/..."
-              required
-              maxLength={3000}
-              inputMode="url"
-              autoComplete="off"
-            />
-          </label>
-          <button type="submit" className="primary" disabled={!sharedLink.trim()}>
-            <Link2 size={17} /> Importar link
-          </button>
-        </form>
-        {importError ? <p className="error" role="alert">{importError}</p> : null}
-        <small>Sem chave de API. O Dengo aproveita os dados presentes no link; URLs curtas podem exigir nome e endereço manuais.</small>
-      </section>
+
       {open ? (
         <form
+          key={editing?.id || "new"}
           className="panel entry-form setup-note"
-          key={editing?.id || selectedPlace?.id || "new"}
-          onSubmit={submit}
+          onSubmit={(event) => void submit(event)}
         >
-          <h2>{editing ? "Editar lugar" : selectedPlace || importedLink ? "Salvar o lugar escolhido" : "Onde vamos juntos?"}</h2>
-          {importedLink && importNotice ? <p className="notice" role="status">{importNotice}</p> : null}
-          {(selectedPlace?.id || importedLink?.url || editing?.data?.url || editing?.data?.googlePlaceId || editing?.data?.osmPlaceId) ? (
-            <div className="places-preview">
-              <div className="places-preview-label">
-                <strong><MapPin size={17} /> {selectedPlace?.title || importedLink?.title || editing?.title || "Local do Google Maps"}</strong>
-                <small>{selectedPlace?.address || importedLink?.address || editing?.data?.address || "Confira os dados abaixo"}</small>
-              </div>
-              {(() => {
-                const osm = selectedPlace && isOSM(selectedPlace);
-                const lat = osm ? selectedPlace.lat : (importedLink?.latitude ?? editing?.data?.latitude);
-                const lon = osm ? selectedPlace.lon : (importedLink?.longitude ?? editing?.data?.longitude);
-                const mapSrc = osm || importedLink?.latitude !== undefined || editing?.data?.osmPlaceId ||
-                  (editing?.data?.url && lat !== undefined && lon !== undefined)
-                  ? openStreetMapEmbedUrl(lat, lon)
-                  : googleMapsEmbedUrl(selectedPlace?.id || editing?.data?.googlePlaceId, embedKey);
-                const route = osm || editing?.data?.osmPlaceId
-                  ? lat !== undefined && lon !== undefined
-                    ? mapsUrl(String(lat) + "," + String(lon))
-                    : mapsUrl(selectedPlace?.title || editing?.title || "")
-                  : googlePlaceMapsUrl(selectedPlace?.id || editing?.data?.googlePlaceId,
-                      [selectedPlace?.title || editing?.title, selectedPlace?.address || editing?.data?.address].filter(Boolean).join(", "));
-                return (
-                  <>
-                    {mapSrc ? (
-                      <iframe title={"Localização de " + (selectedPlace?.title || editing?.title)}
-                        src={mapSrc} className="places-map-iframe" loading="lazy"
-                        referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
-                    ) : (
-                      <p>Não foi possível mostrar o mapa interno. Abra a localização pelo link abaixo.</p>
-                    )}
-                    <a className="secondary" target="_blank" rel="noopener noreferrer" href={importedLink?.url || editing?.data?.url || route}>
-                      Abrir rota no Google Maps <ExternalLink size={15} />
-                    </a>
-                  </>
-                );
-              })()}
-            </div>
-          ) : null}
+          <h2>{editing ? "Editar lugar" : "Adicionar um local"}</h2>
           <div className="form-grid">
             <label className="full">
-              Link do Google Maps (opcional)
-              <input name="googleMapsLink" type="url" maxLength={3000}
-                defaultValue={importedLink?.url || editing?.data?.url || ""}
-                placeholder="Cole um link para manter a referência do lugar" />
-            </label>
-            <label className="full">
               Nome do lugar
-              <input
-                name="title"
-                required
-                maxLength={120}
-                defaultValue={selectedPlace?.title || importedLink?.title || editing?.title || term.trim()}
-              />
+              <input name="title" required maxLength={120}
+                defaultValue={editing?.title || ""}
+                placeholder="Ex.: Espartano" />
             </label>
             <label className="full">
               Endereço ou cidade
-              <input
-                name="address"
-                required
-                maxLength={240}
-                defaultValue={selectedPlace?.address || importedLink?.address || editing?.data?.address || city.trim()}
-                placeholder="Ex.: Rua, número, cidade"
-              />
+              <input name="address" required maxLength={240}
+                defaultValue={editing?.data?.address || ""}
+                placeholder="Ex.: Porto Alegre, RS" />
             </label>
             <label>
               Tipo
-              <select
-                name="category"
-                defaultValue={editing?.data?.category ||
-                  ({ all: "Passeio", restaurant: "Restaurante", cafe: "Café", bar: "Bar", burger: "Hamburgueria", pizza: "Pizzaria", bakery: "Padaria" } as Record<PlaceCategory,string>)[category]}
-              >
-                {[
-                  "Passeio",
-                  "Restaurante",
-                  "Café",
-                  "Bar",
-                  "Hamburgueria",
-                  "Pizzaria",
-                  "Padaria",
-                  "Viagem",
-                  "Natureza",
-                  "Outros",
-                ].map((c) => (
-                  <option key={c}>{c}</option>
+              <select name="category" defaultValue={editing?.data?.category || "Passeio"}>
+                {CATEGORIES.map((category) => (
+                  <option key={category} value={category}>{category}</option>
                 ))}
               </select>
             </label>
             <label>
               Orçamento previsto do casal (R$)
-              <input
-                name="budget"
-                inputMode="decimal"
-                placeholder="Opcional"
-                defaultValue={
-                  editing?.data?.budget
-                    ? String(editing.data.budget / 100).replace(".", ",")
-                    : ""
-                }
-              />
+              <input name="budget" inputMode="decimal" placeholder="Opcional"
+                defaultValue={editing?.data?.budget
+                  ? String(editing.data.budget / 100).replace(".", ",") : ""} />
+            </label>
+            <label className="full">
+              Link do local (opcional)
+              <input name="url" type="url" inputMode="url" maxLength={3000}
+                defaultValue={editing?.data?.url || ""}
+                placeholder="https://maps.app.goo.gl/... ou https://www.tiktok.com/..." />
+              <small>Cole um link do Google Maps, TikTok ou de outra página. Não é necessário cadastrar nenhuma API.</small>
             </label>
             <label className="full">
               Por que queremos ir?
-              <input
-                name="detail"
-                maxLength={240}
-                defaultValue={editing?.detail}
-              />
+              <input name="detail" maxLength={240} defaultValue={editing?.detail || ""} />
             </label>
             <label className="checkbox-label full">
-              <input
-                type="checkbox"
-                name="visited"
-                defaultChecked={editing?.done}
-              />
+              <input name="visited" type="checkbox" defaultChecked={editing?.done || false} />
               Já conhecemos
             </label>
             <label className="full">
               Nossa lembrança ou avaliação
-              <input
-                name="review"
-                maxLength={240}
-                defaultValue={editing?.data?.review}
-              />
+              <input name="review" maxLength={240} defaultValue={editing?.data?.review || ""} />
             </label>
           </div>
-          {error ? (
-            <p role="alert" className="error">
-              {error}
-            </p>
-          ) : null}
-          <button className="primary" disabled={busy}>
-            {busy ? "Salvando…" : "Salvar lugar"}
-          </button>
+          {error ? <p className="error" role="alert">{error}</p> : null}
+          <div className="places-form-actions">
+            <button type="submit" className="primary" disabled={busy}>
+              {busy ? "Salvando…" : editing ? "Salvar alterações" : "Salvar lugar"}
+            </button>
+            <button type="button" className="secondary" onClick={() => {
+              setOpen(false);
+              setEditing(null);
+              setError("");
+            }}>
+              Cancelar
+            </button>
+          </div>
         </form>
       ) : null}
+
       <div className="filters spaced">
-        {[
-          ["want", "Queremos conhecer"],
-          ["visited", "Já fomos"],
-        ].map(([key, label]) => (
-          <button
-            key={key}
-            className={filter === key ? "selected" : ""}
-            aria-pressed={filter === key}
-            onClick={() => setFilter(key)}
-          >
-            {label}
-          </button>
-        ))}
+        <button type="button" className={filter === "want" ? "selected" : ""}
+          aria-pressed={filter === "want"} onClick={() => setFilter("want")}>
+          Queremos conhecer
+        </button>
+        <button type="button" className={filter === "visited" ? "selected" : ""}
+          aria-pressed={filter === "visited"} onClick={() => setFilter("visited")}>
+          Já fomos
+        </button>
       </div>
+
       {list.length ? (
         <div className="places-grid">
-          {list.map((e) => (
-            <article className="panel place-card" key={e.id}>
-              <div className="place-card-top">
-                <span className="stat-icon sage">
-                  <MapPin />
-                </span>
-                <span className="tag">{e.data?.category}</span>
-              </div>
-              <h2>{e.title}</h2>
-              <p>{e.data?.address}</p>
-              {e.detail ? <p>{e.detail}</p> : null}
-              {e.data?.budget ? (
-                <strong>Previsto: {money(e.data.budget)}</strong>
-              ) : null}
-              {e.data?.review ? (
-                <p className="place-memory">{e.data.review}</p>
-              ) : null}
-              {savedMap(e) ? (
-                <button type="button" className="secondary" onClick={() => setMapOpen(mapOpen === e.id ? null : e.id)}>
-                  <MapPinned size={16} /> {mapOpen === e.id ? "Ocultar mapa" : "Ver no mapa"}
-                </button>
-              ) : null}
-              {mapOpen === e.id && savedMap(e) ? (
-                <iframe title={"Mapa de " + e.title} className="places-map-iframe"
-                  src={savedMap(e)}
-                  loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
-              ) : null}
-              <a
-                href={e.data?.url?.startsWith("https://") ? e.data.url : e.data?.osmPlaceId && e.data?.latitude !== undefined && e.data?.longitude !== undefined
-                  ? mapsUrl(String(e.data.latitude) + "," + String(e.data.longitude))
-                  : e.data?.googlePlaceId
-                    ? googlePlaceMapsUrl(e.data.googlePlaceId, [e.title, e.data?.address].filter(Boolean).join(", "))
-                    : mapsUrl(e.data?.address ? e.title + ", " + e.data.address : e.title)}
-                className="secondary"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Abrir no Google Maps <ExternalLink size={15} />
-              </a>
-              <EntryAudit entry={e} />
-              <div className="row-actions">
-                <button
-                  disabled={busy}
-                  className="icon-btn"
-                  aria-label={`${e.done ? "Voltar aos planos" : "Marcar como visitado"} ${e.title}`}
-                  onClick={() => void toggle(e)}
-                >
-                  <Check size={17} />
-                </button>
-                <Link className="text-link" href={`/calendario?origem=${e.id}`}>
-                  <CalendarDays size={16} />
-                  Planejar visita
-                </Link>
-                <button
-                  className="icon-btn"
-                  aria-label={`Editar ${e.title}`}
-                  onClick={() => {
-                    setEditing(e);
-                    setSelectedPlace(null);
-                    setImportedLink(null);
-                    setImportNotice("");
-                    setOpen(true);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                >
-                  <Pencil size={17} />
-                </button>
-                <DeleteButton
-                  label={e.title}
-                  disabled={busy}
-                  onDelete={() => void remove(e)}
-                />
-              </div>
-            </article>
-          ))}
+          {list.map((entry) => {
+            const sharedUrl = safePlaceLink(entry.data?.url);
+            const embedded = savedMap(entry);
+            return (
+              <article key={entry.id} className="panel place-card">
+                <div className="place-card-top">
+                  <span className="stat-icon sage"><MapPin /></span>
+                  <span className="tag">{entry.data?.category || "Passeio"}</span>
+                </div>
+                <h2>{entry.title}</h2>
+                <p>{entry.data?.address}</p>
+                {entry.detail ? <p>{entry.detail}</p> : null}
+                {entry.data?.budget ? <strong>Previsto: {money(entry.data.budget)}</strong> : null}
+                {entry.data?.review ? <p className="place-memory">{entry.data.review}</p> : null}
+                {sharedUrl ? (
+                  <a href={sharedUrl} target="_blank" rel="noopener noreferrer" className="secondary places-saved-link">
+                    <Link2 size={16} /> {linkLabel(sharedUrl)} <ExternalLink size={15} />
+                  </a>
+                ) : null}
+                {embedded ? (
+                  <button type="button" className="secondary places-saved-link"
+                    onClick={() => setMapOpen((current) => current === entry.id ? null : entry.id)}>
+                    <MapPinned size={16} /> {mapOpen === entry.id ? "Ocultar mapa" : "Ver mapa"}
+                  </button>
+                ) : null}
+                {embedded && mapOpen === entry.id ? (
+                  <iframe title={"Mapa de " + entry.title} src={embedded}
+                    className="places-map-iframe" loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
+                ) : null}
+                <a href={mapsUrl(entry.data?.address ? entry.title + ", " + entry.data.address : entry.title)}
+                  className="secondary places-saved-link" target="_blank" rel="noopener noreferrer">
+                  Abrir endereço no Google Maps <ExternalLink size={15} />
+                </a>
+                <EntryAudit entry={entry} />
+                <div className="row-actions">
+                  <button disabled={busy} type="button" className="icon-btn"
+                    aria-label={(entry.done ? "Voltar aos planos " : "Marcar como visitado ") + entry.title}
+                    onClick={() => void toggle(entry)}>
+                    <Check size={17} />
+                  </button>
+                  <Link className="text-link" href={"/calendario?origem=" + entry.id}>
+                    <CalendarDays size={16} /> Planejar visita
+                  </Link>
+                  <button type="button" className="icon-btn" aria-label={"Editar " + entry.title}
+                    onClick={() => editPlace(entry)}>
+                    <Pencil size={17} />
+                  </button>
+                  <DeleteButton label={entry.title} disabled={busy} onDelete={() => void remove(entry)} />
+                </div>
+              </article>
+            );
+          })}
         </div>
       ) : (
         <section className="panel empty large">
           <MapPin size={35} />
-          <h2>Qual vai ser o primeiro destino?</h2>
-          <p>Salvem um lugar que vocês têm vontade de conhecer.</p>
+          <h2>{filter === "visited" ? "Ainda não registramos visitas" : "Qual vai ser o primeiro destino?"}</h2>
+          <p>{filter === "visited" ? "Marquem um lugar como visitado para aparecer aqui." : "Adicionem um lugar, uma dica do TikTok ou uma localização do Google Maps."}</p>
+          {filter === "want" ? <button type="button" className="secondary" onClick={startNew}>Adicionar local</button> : null}
         </section>
       )}
     </Shell>

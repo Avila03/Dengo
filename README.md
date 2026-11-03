@@ -2,6 +2,15 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Entrega 0.9 — cadastro direto de locais e links
+
+- **Nossos lugares simplificado:** retirei a busca automática e as chamadas de consulta a estabelecimentos. A tela agora serve exclusivamente para cadastrar, editar e organizar locais do casal.
+- Mantidos: nome, endereço/cidade, categoria, orçamento em reais, "por que queremos ir?", "já conhecemos" e lembrança/avaliação.
+- **Novo campo de link opcional:** cole uma URL HTTPS completa do TikTok, Google Maps ou outro site. O link é salvo como referência e pode ser aberto novamente no cartão do lugar. Não tentamos extrair automaticamente dados da página compartilhada.
+- Os registros antigos continuam visíveis e os mapas anteriormente vinculados por OSM ou Place ID permanecem acessíveis, quando suas integrações estiverem disponíveis.
+- **Não precisa de API de mapas:** o botão de endereço usa um link externo do Google Maps, sem integrar uma API.
+- A validação rejeita links que não usam HTTPS e não mostra URLs de registros antigos que sejam potencialmente inseguros.
+
 ## Entrega 0.8 — locais específicos para encontros
 
 - Busca por nome, cidade e categoria: Restaurantes, Cafés, Bares, Hamburguerias, Pizzarias e Padarias.

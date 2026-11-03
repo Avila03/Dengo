@@ -205,75 +205,22 @@ export function normalizeOverpassPlaces(payload: unknown): OpenStreetMapPlace[] 
   return items;
 }
 
-export type ImportedGoogleMapsLink = {
-  url: string;
-  title: string;
-  address: string;
-  googlePlaceId?: string;
-  latitude?: number;
-  longitude?: number;
-  isShortLink: boolean;
-};
 
-/**
- * Reads only information already encoded in a Google Maps sharing URL.
- * It does not fetch or scrape Google Maps or mistake camera coordinates for a POI.
- */
-export function parseGoogleMapsShareLink(input: string): ImportedGoogleMapsLink {
-  const text = input.trim();
-  const match = text.match(/https:\/\/[^\s<>"']+/i);
-  if (!match) throw new Error("Cole um link HTTPS compartilhado pelo Google Maps.");
-  const candidate = match[0].replace(/[),;]+$/, "");
-  if (candidate.length > 3000) throw new Error("O link ultrapassa o tamanho permitido.");
-  let url: URL;
+/** A user-supplied reference link, not metadata imported from another service. */
+export function normalizePlaceLink(input: string): string {
+  const value = input.trim();
+  if (!value) return "";
+  if (value.length > 3000) throw new Error("O link é muito longo. Copie um link de compartilhamento mais curto.");
   try {
-    url = new URL(candidate);
+    const url = new URL(value);
+    if (url.protocol !== "https:" || !url.hostname || url.username || url.password)
+      throw new Error("Use um link HTTPS válido.");
+    return url.href;
   } catch {
-    throw new Error("Este link não é válido. Copie novamente no Google Maps.");
+    throw new Error("Cole um link completo começando com https://, como TikTok ou Google Maps.");
   }
-  const host = url.hostname.toLowerCase();
-  const isGoogle = host === "google.com" || host.endsWith(".google.com") ||
-    host === "google.com.br" || host.endsWith(".google.com.br");
-  const isShort = host === "maps.app.goo.gl" || (host === "goo.gl" && url.pathname.startsWith("/maps"));
-  if (url.protocol !== "https:" || url.username || url.password || (!isGoogle && !isShort))
-    throw new Error("Só aceitamos links oficiais HTTPS do Google Maps.");
-  if (!isShort && !url.pathname.startsWith("/maps") && host !== "maps.google.com")
-    throw new Error("O link informado não aponta para uma página do Google Maps.");
-
-  const matchName = url.pathname.match(/\/maps\/place\/([^/]+)/);
-  const searchName = url.pathname.match(/\/maps\/search\/([^/?]+)/);
-  const rawName = matchName?.[1] || searchName?.[1] || "";
-  let title = "";
-  if (rawName) {
-    try { title = decodeURIComponent(rawName).replace(/\+/g, " ").trim(); }
-    catch { title = rawName.replace(/\+/g, " ").trim(); }
-  }
-  let address = "";
-  const query = url.searchParams.get("query") || url.searchParams.get("q") || "";
-  const isCoordinateQuery = /^-?\d+(?:\.\d+)?,\s*-?\d+(?:\.\d+)?$/.test(query.trim());
-  if (!title && query && !isCoordinateQuery) {
-    const comma = query.indexOf(",");
-    title = (comma > 0 ? query.slice(0, comma) : query).trim();
-    if (comma > 0) address = query.slice(comma + 1).trim();
-  }
-  let latitude: number | undefined;
-  let longitude: number | undefined;
-  const exact = url.toString().match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
-  const fromQuery = isCoordinateQuery ? query.trim().split(",").map(Number) : [];
-  const coords = exact ? [Number(exact[1]), Number(exact[2])] : fromQuery;
-  if (coords.length === 2 && validCoordinates(coords[0], coords[1])) {
-    latitude = coords[0];
-    longitude = coords[1];
-  }
-  // /@lat,lon is the viewport center, NOT necessarily the place's coordinates.
-  const placeId = url.searchParams.get("query_place_id") || "";
-  return {
-    url: url.toString(),
-    title: title.slice(0, 120),
-    address: address.slice(0, 240),
-    googlePlaceId: validGooglePlaceId(placeId) ? placeId : undefined,
-    latitude,
-    longitude,
-    isShortLink: isShort,
-  };
+}
+export function safePlaceLink(value: unknown): string {
+  if (typeof value !== "string") return "";
+  try { return normalizePlaceLink(value); } catch { return ""; }
 }

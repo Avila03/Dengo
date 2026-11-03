@@ -14,7 +14,7 @@ import {
   calendarEntries,
 } from "../lib/calendar.ts";
 import { normalizeMovies } from "../lib/movies.ts";
-import { normalizeGooglePlaces, googlePlaceMapsUrl, googleMapsEmbedUrl, normalizePhotonPlaces, openStreetMapEmbedUrl, photonCategoryFilter, overpassSearchQuery, normalizeOverpassPlaces } from "../lib/places.ts";
+import { normalizeGooglePlaces, googlePlaceMapsUrl, googleMapsEmbedUrl, normalizePhotonPlaces, openStreetMapEmbedUrl, photonCategoryFilter, overpassSearchQuery, normalizeOverpassPlaces, normalizePlaceLink, safePlaceLink } from "../lib/places.ts";
 const task: Entry = {
   id: "abc",
   kind: "task",
@@ -172,4 +172,15 @@ test("Overpass results normalize nodes and way centers", () => {
   assert.equal(places.length, 2);
   assert.equal(places[0].id, "osm_n_1234");
   assert.equal(places[1].title, "Café");
+});
+
+test("a saved place accepts TikTok and Google Maps HTTPS links", () => {
+  const tikTok = "https://www.tiktok.com/@perfil/video/123456";
+  const google = "https://maps.app.goo.gl/abcdef";
+  assert.equal(normalizePlaceLink(tikTok), tikTok);
+  assert.equal(normalizePlaceLink(google), google);
+  assert.equal(normalizePlaceLink(""), "");
+  assert.equal(safePlaceLink("javascript:alert(1)"), "");
+  assert.throws(() => normalizePlaceLink("http://example.com"), /https/);
+  assert.throws(() => normalizePlaceLink("https://username:password@example.com"));
 });
