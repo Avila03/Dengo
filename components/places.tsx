@@ -18,7 +18,7 @@ import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
 import type { Entry, Draft } from "@/lib/model";
 import { mapsUrl } from "@/lib/calendar";
-import { googleMapsEmbedUrl, googlePlaceMapsUrl, type PlaceSearchResult } from "@/lib/places";
+import { googleMapsEmbedUrl, googlePlaceMapsUrl, openStreetMapEmbedUrl, type PlaceSearchResult, type OpenStreetMapPlace } from "@/lib/places";
 import { supabase } from "@/lib/supabase";
 import { money, parseMoney } from "@/lib/finance";
 export function Places() {
@@ -36,6 +36,12 @@ export function Places() {
     [mapOpen, setMapOpen] = useState<string | null>(null);
   const searchLock = useRef(false);
   const embedKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY || "";
+  const isOSM = (place: PlaceSearchResult): place is OpenStreetMapPlace =>
+    "source" in place && place.source === "openstreetmap";
+  const savedMap = (entry: Entry) =>
+    entry.data?.osmPlaceId
+      ? openStreetMapEmbedUrl(entry.data.latitude, entry.data.longitude)
+      : googleMapsEmbedUrl(entry.data?.googlePlaceId, embedKey);
   const all = entries.filter((e) => e.kind === "place");
   const list = all.filter((e) => (filter === "visited" ? e.done : !e.done));
   async function searchPlace(event: FormEvent<HTMLFormElement>) {
@@ -67,7 +73,7 @@ export function Places() {
     }
   }
   function choosePlace(place: PlaceSearchResult) {
-    const existing = all.find((entry) => entry.data?.googlePlaceId === place.id);
+    const existing = all.find((entry) => isOSM(place) ? entry.data?.osmPlaceId === place.id : entry.data?.googlePlaceId === place.id);
     setEditing(existing || null);
     setSelectedPlace(existing ? null : place);
     setOpen(true);
@@ -90,7 +96,14 @@ export function Places() {
         done: f.get("visited") === "on",
         data: {
           ...editing?.data,
-          googlePlaceId: selectedPlace?.id || editing?.data?.googlePlaceId || undefined,
+          googlePlaceId: selectedPlace && !isOSM(selectedPlace)
+            ? selectedPlace.id : editing?.data?.googlePlaceId,
+          osmPlaceId: selectedPlace && isOSM(selectedPlace)
+            ? selectedPlace.id : editing?.data?.osmPlaceId,
+          latitude: selectedPlace && isOSM(selectedPlace)
+            ? selectedPlace.lat : editing?.data?.latitude,
+          longitude: selectedPlace && isOSM(selectedPlace)
+            ? selectedPlace.lon : editing?.data?.longitude,
           address: String(f.get("address") || "").trim(),
           category: String(f.get("category") || "Passeio"),
           budget: budget ? parseMoney(budget) : 0,
@@ -156,13 +169,13 @@ export function Places() {
             {searching ? "Buscando…" : "Pesquisar"}
           </button>
         </form>
-        <small>Busca sob demanda pelo Google Maps. Cada pesquisa pode consumir cota do Google Places.</small>
+        <small>Pesquisa gratuita, sem conta ou cartão, com dados do OpenStreetMap. Nem todos os estabelecimentos estão cadastrados. © OpenStreetMap contributors.</small>
         {searchError ? <div className="notice" role="status">{searchError}</div> : null}
         {results.length > 0 ? (
           <div className="places-search-results">
             <h3>Selecione o endereço certo</h3>
             {results.map((place) => {
-              const saved = all.some((e) => e.data?.googlePlaceId === place.id);
+              const saved = all.some((e) => isOSM(place) ? e.data?.osmPlaceId === place.id : e.data?.googlePlaceId === place.id);
               return (
                 <button type="button" className="places-search-choice" key={place.id}
                   onClick={() => choosePlace(place)}>
@@ -186,25 +199,40 @@ export function Places() {
           onSubmit={submit}
         >
           <h2>{editing ? "Editar lugar" : selectedPlace ? "Salvar o lugar escolhido" : "Onde vamos juntos?"}</h2>
-          {(selectedPlace?.id || editing?.data?.googlePlaceId) ? (
+          {(selectedPlace?.id || editing?.data?.googlePlaceId || editing?.data?.osmPlaceId) ? (
             <div className="places-preview">
               <div className="places-preview-label">
                 <strong><MapPin size={17} /> {selectedPlace?.title || editing?.title}</strong>
                 <small>{selectedPlace?.address || editing?.data?.address}</small>
               </div>
-              {embedKey ? (
-                <iframe title={"Localização de " + (selectedPlace?.title || editing?.title)}
-                  src={googleMapsEmbedUrl(selectedPlace?.id || editing?.data?.googlePlaceId, embedKey)}
-                  className="places-map-iframe" loading="lazy"
-                  referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
-              ) : (
-                <p>O local está identificado. Para mostrar o marcador dentro do Dengo, é necessário ativar a Maps Embed API.</p>
-              )}
-              <a className="secondary" target="_blank" rel="noopener noreferrer"
-                href={googlePlaceMapsUrl(selectedPlace?.id || editing?.data?.googlePlaceId,
-                  [selectedPlace?.title || editing?.title, selectedPlace?.address || editing?.data?.address].filter(Boolean).join(", "))}>
-                Ver no Google Maps <ExternalLink size={15} />
-              </a>
+              {(() => {
+                const osm = selectedPlace && isOSM(selectedPlace);
+                const lat = osm ? selectedPlace.lat : editing?.data?.latitude;
+                const lon = osm ? selectedPlace.lon : editing?.data?.longitude;
+                const mapSrc = osm || editing?.data?.osmPlaceId
+                  ? openStreetMapEmbedUrl(lat, lon)
+                  : googleMapsEmbedUrl(selectedPlace?.id || editing?.data?.googlePlaceId, embedKey);
+                const route = osm || editing?.data?.osmPlaceId
+                  ? lat !== undefined && lon !== undefined
+                    ? mapsUrl(String(lat) + "," + String(lon))
+                    : mapsUrl(selectedPlace?.title || editing?.title || "")
+                  : googlePlaceMapsUrl(selectedPlace?.id || editing?.data?.googlePlaceId,
+                      [selectedPlace?.title || editing?.title, selectedPlace?.address || editing?.data?.address].filter(Boolean).join(", "));
+                return (
+                  <>
+                    {mapSrc ? (
+                      <iframe title={"Localização de " + (selectedPlace?.title || editing?.title)}
+                        src={mapSrc} className="places-map-iframe" loading="lazy"
+                        referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
+                    ) : (
+                      <p>Não foi possível mostrar o mapa interno. Abra a localização pelo link abaixo.</p>
+                    )}
+                    <a className="secondary" target="_blank" rel="noopener noreferrer" href={route}>
+                      Abrir rota no Google Maps <ExternalLink size={15} />
+                    </a>
+                  </>
+                );
+              })()}
             </div>
           ) : null}
           <div className="form-grid">
@@ -327,20 +355,22 @@ export function Places() {
               {e.data?.review ? (
                 <p className="place-memory">{e.data.review}</p>
               ) : null}
-              {e.data?.googlePlaceId && embedKey ? (
+              {savedMap(e) ? (
                 <button type="button" className="secondary" onClick={() => setMapOpen(mapOpen === e.id ? null : e.id)}>
                   <MapPinned size={16} /> {mapOpen === e.id ? "Ocultar mapa" : "Ver no mapa"}
                 </button>
               ) : null}
-              {mapOpen === e.id && e.data?.googlePlaceId && embedKey ? (
+              {mapOpen === e.id && savedMap(e) ? (
                 <iframe title={"Mapa de " + e.title} className="places-map-iframe"
-                  src={googleMapsEmbedUrl(e.data.googlePlaceId, embedKey)}
+                  src={savedMap(e)}
                   loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
               ) : null}
               <a
-                href={e.data?.googlePlaceId
-                  ? googlePlaceMapsUrl(e.data.googlePlaceId, [e.title, e.data?.address].filter(Boolean).join(", "))
-                  : mapsUrl(e.data?.address ? e.title + ", " + e.data.address : e.title)}
+                href={e.data?.osmPlaceId && e.data?.latitude !== undefined && e.data?.longitude !== undefined
+                  ? mapsUrl(String(e.data.latitude) + "," + String(e.data.longitude))
+                  : e.data?.googlePlaceId
+                    ? googlePlaceMapsUrl(e.data.googlePlaceId, [e.title, e.data?.address].filter(Boolean).join(", "))
+                    : mapsUrl(e.data?.address ? e.title + ", " + e.data.address : e.title)}
                 className="secondary"
                 target="_blank"
                 rel="noopener noreferrer"
