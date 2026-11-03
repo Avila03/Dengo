@@ -23,6 +23,9 @@ export type Details = {
   interestSecond?: boolean;
   address?: string;
   googlePlaceId?: string;
+  osmPlaceId?: string;
+  latitude?: number;
+  longitude?: number;
   budget?: number;
   url?: string;
   review?: string;
