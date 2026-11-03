@@ -1,3 +1,4 @@
+import { DEFAULT_CALENDAR_TOPICS, type CalendarTopic } from "./calendar-topics";
 export type Kind =
   "shopping" | "task" | "expense" | "transfer" | "event" | "movie" | "place";
 export type Details = {
@@ -10,6 +11,7 @@ export type Details = {
   alternate?: boolean;
   time?: string;
   location?: string;
+  topicId?: string;
   sourceId?: string;
   sourceKind?: Kind;
   mediaType?: "movie" | "tv";
@@ -66,6 +68,7 @@ export type Preferences = {
   since: string;
   photo: string;
   budgets: Record<string, number>;
+  calendarTopics?: CalendarTopic[];
 };
 export const DEFAULT_PREFS: Preferences = {
   title: "Nosso cantinho",
@@ -73,6 +76,7 @@ export const DEFAULT_PREFS: Preferences = {
   since: "",
   photo: "",
   budgets: {},
+  calendarTopics: DEFAULT_CALENDAR_TOPICS,
 };
 export const STORAGE_KEY = "dengo.demo.v1";
 export const PREFS_KEY = "dengo.preferences.v1";

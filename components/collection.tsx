@@ -1,5 +1,5 @@
 "use client";
-import { useState, type FormEvent } from "react";
+import { Fragment, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -16,6 +16,7 @@ import { Shell } from "./shell";
 import { EntryAudit } from "./entry-audit";
 import { DeleteButton } from "./ui";
 import { useDengo } from "./provider";
+import { filterResponsible, sortTaskEntries, taskSection, TASK_SECTION_LABELS, type ResponsibleFilter } from "@/lib/task-filters";
 import {
   dayLabel,
   localToday,
@@ -24,23 +25,25 @@ import {
   type Draft,
 } from "@/lib/model";
 export function Collection({ kind, embedded = false }: { kind: "shopping" | "task"; embedded?: boolean }) {
-  const { entries, names, busy, add, update, toggle, remove } = useDengo();
+  const { entries, names, memberSlot, busy, add, update, toggle, remove } = useDengo();
   const [formOpen, setFormOpen] = useState(false),
     [editing, setEditing] = useState<Entry | null>(null),
     [filter, setFilter] = useState("pending"),
-    [query, setQuery] = useState("");
+    [query, setQuery] = useState(""),
+    [responsible, setResponsible] = useState<ResponsibleFilter>("all");
   const isTask = kind === "task";
   const all = entries.filter((e) => e.kind === kind),
     pending = all.filter((e) => !e.done).length;
-  const items = all.filter(
+  const today = localToday();
+  const overdue = isTask ? all.filter((e) => isOverdue(e, today)).length : 0;
+  const filtered = all.filter(
     (e) =>
       (filter === "all" || (filter === "done" ? e.done : !e.done)) &&
-      e.title
-        .toLocaleLowerCase("pt-BR")
-        .includes(query.toLocaleLowerCase("pt-BR")),
+      (!isTask || filterResponsible(e, responsible, names as [string, string], memberSlot)) &&
+      e.title.toLocaleLowerCase("pt-BR").includes(query.toLocaleLowerCase("pt-BR")),
   );
+  const items = isTask ? sortTaskEntries(filtered, today) : filtered;
   const Icon = isTask ? ListChecks : ShoppingBag;
-  const today = localToday();
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const f = new FormData(event.currentTarget);
@@ -100,6 +103,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
             {pending} {isTask ? "compromissos pendentes" : "itens na lista"}
           </strong>{" "}
           · {all.length - pending} {isTask ? "concluídos" : "comprados"}
+          {isTask && overdue ? <span className="task-overdue-summary"> · {overdue} atrasados</span> : null}
         </span>
       </div>
       {formOpen ? (
@@ -211,6 +215,17 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
               </button>
             ))}
           </div>
+          {isTask ? (
+            <label className="task-responsible">
+              <span>Responsável</span>
+              <select value={responsible} onChange={(event) => setResponsible(event.target.value as ResponsibleFilter)}>
+                <option value="all">Todos</option>
+                <option value="mine">Comigo · {names[memberSlot]}</option>
+                <option value="partner">Com {names[1 - memberSlot]}</option>
+                <option value="together">Nós dois</option>
+              </select>
+            </label>
+          ) : null}
           <label className="search">
             <Search size={17} />
             <input
@@ -223,12 +238,20 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
         </div>
         {items.length ? (
           <ul className="entry-list">
-            {items.map((e) => {
+            {items.map((e, index) => {
               const linked = entries.some(
                 (i) => i.kind === "expense" && i.data?.sourceId === e.id,
               );
+              const section = isTask ? taskSection(e, today) : null;
+              const previousSection = isTask && index > 0 ? taskSection(items[index - 1], today) : null;
               return (
-                <li className={`entry ${e.done ? "done" : ""}`} key={e.id}>
+                <Fragment key={e.id}>
+                  {section && section !== previousSection ? (
+                    <li className={"task-section-title" + (section === "overdue" ? " overdue" : "")}>
+                      {TASK_SECTION_LABELS[section]}
+                    </li>
+                  ) : null}
+                <li className={`entry ${e.done ? "done" : ""}${isTask && isOverdue(e, today) ? " task-entry-overdue" : ""}`}>
                   <button
                     className={`check ${e.done ? "checked" : ""}`}
                     aria-label={`${e.done ? "Reabrir" : "Concluir"} ${e.title}`}
@@ -296,6 +319,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                     />
                   </div>
                 </li>
+                </Fragment>
               );
             })}
           </ul>

@@ -15,6 +15,8 @@ import {
 } from "../lib/calendar.ts";
 import { normalizeMovies } from "../lib/movies.ts";
 import { todayEntries, weekDates, calendarMonthDays, shiftMonth, addDaysISO } from "../lib/today.ts";
+import { DEFAULT_CALENDAR_TOPICS, calendarTopics, calendarEntryColor, eventTopicLabel, validateCalendarTopics } from "../lib/calendar-topics.ts";
+import { filterResponsible, sortTaskEntries, taskSection } from "../lib/task-filters.ts";
 import { normalizeGooglePlaces, googlePlaceMapsUrl, googleMapsEmbedUrl, normalizePhotonPlaces, openStreetMapEmbedUrl, photonCategoryFilter, overpassSearchQuery, normalizeOverpassPlaces, normalizePlaceLink, safePlaceLink } from "../lib/places.ts";
 const task: Entry = {
   id: "abc",
@@ -210,4 +212,40 @@ test("calendar preview respects Monday-first weeks across months and years", () 
   assert.equal(days[0], null); // November 1, 2026 is a Sunday.
   assert.equal(days[6], "2026-11-01");
   assert.equal(days[days.length - 1], "2026-11-30");
+});
+
+test("calendar topics support renamed labels, distinct colors and validation", () => {
+  const topics = [
+    { id: "janta", name: "Jantar", color: "#1200dd" },
+    { id: "filmes", name: "Sessão", color: "#a04bea" },
+  ];
+  validateCalendarTopics(topics);
+  assert.deepEqual(calendarTopics(topics), topics);
+  assert.equal(calendarTopics(null)[0].name, "Janta");
+  assert.throws(() => validateCalendarTopics([topics[0], { ...topics[1], name: "Jantar" }]));
+  assert.throws(() => validateCalendarTopics([{ ...topics[0], color: "invalid" }]));
+  assert.equal(calendarTopics([{ id: "oops", name: "Unsafe", color: "url(x)" }])[0].id, "janta");
+});
+test("each of three same-day events contributes a colored indicator", () => {
+  const entries: Entry[] = [
+    { ...task, id: "1", kind: "event", data: { topicId: "janta" } },
+    { ...task, id: "2", kind: "event", data: { topicId: "filmes" } },
+    { ...task, id: "3", kind: "event", data: { topicId: "passeio" } },
+  ];
+  assert.deepEqual(calendarEntries(entries).map(e => calendarEntryColor(e, DEFAULT_CALENDAR_TOPICS)),
+    DEFAULT_CALENDAR_TOPICS.slice(0,3).map(t => t.color));
+  assert.equal(eventTopicLabel(entries[0], DEFAULT_CALENDAR_TOPICS), "Janta");
+});
+test("commitment filtering uses current couple member and prioritizes late items", () => {
+  const items: Entry[] = [
+    { ...task, id: "future", assignee: "Bruno", due: "2026-11-07" },
+    { ...task, id: "partner", assignee: "Par", due: "2026-11-03" },
+    { ...task, id: "late", assignee: "Bruno", due: "2026-11-01" },
+    { ...task, id: "joint", assignee: "Nós dois", due: "" },
+  ];
+  assert.deepEqual(sortTaskEntries(items, "2026-11-03").map(x => x.id), ["late","partner","future","joint"]);
+  assert.equal(taskSection(items[2], "2026-11-03"), "overdue");
+  assert.deepEqual(items.filter(x => filterResponsible(x,"mine",["Bruno","Par"],0)).map(x => x.id), ["future","late"]);
+  assert.deepEqual(items.filter(x => filterResponsible(x,"mine",["Bruno","Par"],1)).map(x => x.id), ["partner"]);
+  assert.deepEqual(items.filter(x => filterResponsible(x,"together",["Bruno","Par"],1)).map(x => x.id), ["joint"]);
 });

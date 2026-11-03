@@ -2,6 +2,14 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Entrega 1.2 — tópicos coloridos e compromissos organizados
+
+- Cinco tópicos iniciais: Janta, Filmes, Passeio, Viagem e Outros. O casal pode criar, renomear, escolher cores ou excluir tópicos, com até 16 opções compartilhadas.
+- A agenda completa permite editar tópicos e atribuir um tópico a cada evento. A cor é exibida nos calendários semanal e mensal de Nosso dia e no calendário completo.
+- Cada registro do dia gera seu próprio ponto colorido (até três, seguido de +N se houver mais). Tarefas e contas têm cores fixas e continuam aparecendo.
+- Compromissos ganha filtros por responsável (Todos, Comigo, Meu par, Nós dois), organização por data e destaque dos atrasados.
+- Cores e nomes dos tópicos são armazenados nas preferências do casal, sem migração SQL.
+
 ## Entrega 1.1 — Nosso dia compacto com calendário integrado
 
 - **Calendário removido do menu** lateral e da barra inferior. No celular, quatro destinos: Nosso dia, Compromissos, Compras e Mais.

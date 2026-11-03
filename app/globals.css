@@ -2182,3 +2182,63 @@ progress {
 .day-agenda-row{grid-template-columns:54px minmax(0,1fr) 32px;gap:7px;padding:9px 0}
 .day-agenda-title{font-size:13px}
 }
+
+/* Dengo 1.2 — tópicos coloridos, indicadores múltiplos e compromissos */
+.topic-dots{display:flex;gap:3px;justify-content:center;align-items:center;min-height:8px;max-width:100%;white-space:nowrap;pointer-events:none}
+.topic-dot{width:6px;height:6px;min-width:6px;border-radius:50%;display:block;box-shadow:0 0 0 1px rgba(255,255,255,.56)}
+.topic-dots-more{font-size:8px;font-style:normal;font-weight:700;line-height:1;color:var(--muted)}
+.day-week-day .topic-dots{margin-top:auto}
+.day-week-day.selected .topic-dots-more,.day-month-cell.selected .topic-dots-more,.calendar-day.selected .topic-dots-more{color:#fff}
+.day-month-cell .topic-dots{gap:2px;min-height:6px}
+.day-month-cell .topic-dot{width:5px;height:5px;min-width:5px}
+.calendar-day .topic-dots{position:absolute;bottom:7px;left:1px;right:1px}
+.calendar-day .topic-dot{width:6px;height:6px;min-width:6px}
+.calendar-day .topic-dots-more{font-size:9px}
+.day-calendar-foot{flex-wrap:wrap;row-gap:8px}
+.day-calendar-foot .text-link{min-height:34px}
+.day-entry-dot{display:inline-block;width:9px;height:9px;min-width:9px;border-radius:50%;margin-right:7px;vertical-align:middle}
+.topic-legend-dot{display:inline-block;width:11px;height:11px;min-width:11px;border-radius:50%;vertical-align:middle;margin-right:4px}
+.topics-legend{margin-top:19px;gap:9px 13px}
+.topics-legend span{display:inline-flex;align-items:center;gap:2px}
+.agenda-item .tag{display:inline-flex;align-items:center;gap:5px}
+.topic-select{display:flex;gap:8px;align-items:center}
+.topic-select .topic-legend-dot{margin:0;width:16px;height:16px;min-width:16px}
+.topic-select select{flex:1;min-width:0}
+.topic-editor{margin:0 0 20px}
+.topic-editor .section-title h2{margin:3px 0 5px}
+.topic-editor .section-title p{font-size:12px}
+.topic-editor-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:17px 0 20px}
+.topic-editor-row{display:flex;align-items:center;gap:8px;min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:9px}
+.topic-editor-row input[type="text"]{min-width:0;flex:1}
+.topic-editor-row input[type="color"],.topic-new-color input[type="color"]{width:42px;min-width:42px;height:42px;cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:4px;background:transparent}
+.topic-editor-row .icon-btn{flex-shrink:0}
+.topic-new-form{display:flex;align-items:flex-end;gap:11px;flex-wrap:wrap;margin-bottom:15px}
+.topic-new-form label{flex:1;min-width:150px}
+.topic-new-form .topic-new-color{min-width:52px;flex:0;align-items:center}
+.topic-new-form .secondary{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:45px}
+.topic-editor>.primary{display:inline-flex;align-items:center;gap:8px}
+.topic-editor>.helper{margin:12px 0 0;font-size:11px}
+.task-responsible{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);min-width:180px}
+.task-responsible select{min-width:132px;max-width:215px;font-size:12px}
+.task-overdue-summary{font-weight:700;color:#bb5951}
+.task-section-title{font-weight:700;font-size:12px;letter-spacing:.035em;color:var(--muted);padding:16px 4px 8px;list-style:none}
+.task-section-title:first-child{padding-top:3px}
+.task-section-title.overdue{color:#b7524b}
+.task-entry-overdue{border-left:3px solid #d9756c;padding-left:10px}
+.task-entry-overdue .overdue{color:#b7524b;font-weight:700}
+@media(max-width:760px){
+  .topic-editor-list{grid-template-columns:1fr;gap:7px}
+  .topic-editor-row{padding:7px}
+  .topic-new-form{gap:8px}
+  .topic-new-form label{min-width:0}
+  .topic-new-form .secondary{flex:1 1 100%}
+  .task-responsible{width:100%;justify-content:space-between;gap:10px}
+  .task-responsible select{flex:1;max-width:none}
+  .day-calendar-foot{gap:8px;justify-content:space-between}
+  .day-calendar-foot .text-link{font-size:11px;gap:4px}
+  .day-week-grid{gap:1px}
+  .topic-dots{gap:2px}
+  .day-week-day .topic-dot{width:5px;min-width:5px;height:5px}
+  .day-week-day .topic-dots-more{font-size:7px}
+  .calendar-day .topic-dots{gap:2px}
+}

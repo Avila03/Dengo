@@ -3,9 +3,11 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
-  Clock3, Heart, Plus,
+  Clock3, Heart, Palette, Plus,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { TopicDots } from "./topic-dots";
+import { calendarTopics, calendarEntryColor, eventTopicLabel } from "@/lib/calendar-topics";
 import { useDengo } from "./provider";
 import { dayLabel, localToday } from "@/lib/model";
 import { calendarEntries } from "@/lib/calendar";
@@ -28,6 +30,7 @@ function detailLink(entry: Entry): string {
 export function Home() {
   const { entries, busy, toggle, preferences } = useDengo();
   const today = localToday();
+  const topics = calendarTopics(preferences.calendarTopics);
   const [selected, setSelected] = useState(today);
   const [monthOpen, setMonthOpen] = useState(false);
   const [month, setMonth] = useState(today.slice(0, 7));
@@ -36,7 +39,12 @@ export function Home() {
   const selectedItems = todayEntries(entries, selected);
   const todayItems = todayEntries(entries, today);
   const todayPending = todayItems.filter((entry) => !entry.done).length;
-  const datesWithPlans = new Set(calendarEntries(entries).map((entry) => entry.due));
+  const byDay = new Map<string, Entry[]>();
+  for (const item of calendarEntries(entries)) {
+    const list = byDay.get(item.due) || [];
+    list.push(item);
+    byDay.set(item.due, list);
+  }
   const displayed = allVisible ? selectedItems : selectedItems.slice(0, 3);
   const selectedIsToday = selected === today;
   const dateText = new Intl.DateTimeFormat("pt-BR", {
@@ -89,11 +97,11 @@ export function Home() {
             <button type="button" key={date} onClick={() => chooseDay(date)}
               className={"day-week-day" +
                 (date === today ? " today" : "") + (date === selected ? " selected" : "")}
-              aria-label={dayNames[i] + ", " + dayLabel(date)}
+              aria-label={dayNames[i] + ", " + dayLabel(date) + ", " + (byDay.get(date)?.length || 0) + " registros"}
               aria-pressed={date === selected}>
               <span>{dayNames[i]}</span>
               <strong>{Number(date.slice(-2))}</strong>
-              <i className={datesWithPlans.has(date) ? "day-has-plan" : ""} aria-hidden="true" />
+              <TopicDots entries={byDay.get(date) || []} topics={topics} />
             </button>
           ))}
         </div>
@@ -103,6 +111,9 @@ export function Home() {
             onClick={() => setMonthOpen((value) => !value)}>
             <CalendarDays size={16} /> {monthOpen ? "Ocultar mês" : "Ver mês"} <ChevronDown size={16} />
           </button>
+          <Link href="/calendario?topicos=1" className="text-link">
+            <Palette size={15} /> Tópicos
+          </Link>
           <Link href={"/calendario?data=" + selected} className="text-link">
             Agenda completa <ArrowRight size={15} />
           </Link>
@@ -123,9 +134,9 @@ export function Home() {
                   className={"day-month-cell" +
                     (date === today ? " today" : "") +
                     (date === selected ? " selected" : "")}
-                  aria-label={dayLabel(date)} aria-pressed={date === selected}>
+                  aria-label={dayLabel(date) + ", " + (byDay.get(date)?.length || 0) + " registros"} aria-pressed={date === selected}>
                   {Number(date.slice(-2))}
-                  {datesWithPlans.has(date) ? <i aria-hidden="true" /> : null}
+                  <TopicDots entries={byDay.get(date) || []} topics={topics} />
                 </button>
               ) : <span key={"empty-" + index} aria-hidden="true" />)}
             </div>
@@ -149,8 +160,11 @@ export function Home() {
               <article className={"day-agenda-row" + (entry.done ? " done" : "")} key={entry.id}>
                 <div className="day-agenda-time">{entry.data?.time || "Dia todo"}</div>
                 <div className="day-agenda-detail">
-                  <Link href={detailLink(entry)} className="day-agenda-title">{entry.title}</Link>
-                  <small>{labelByKind[entry.kind]} · {entry.assignee}
+                  <Link href={detailLink(entry)} className="day-agenda-title">
+                    <span className="day-entry-dot" style={{ backgroundColor: calendarEntryColor(entry, topics) }} aria-hidden="true" />
+                    {entry.title}
+                  </Link>
+                  <small>{entry.kind === "event" ? eventTopicLabel(entry, topics) : labelByKind[entry.kind]} · {entry.assignee}
                     {entry.data?.location ? " · " + entry.data.location : ""}
                     {entry.kind === "expense" && entry.data?.amount ? " · " + money(entry.data.amount) : ""}
                   </small>

@@ -9,9 +9,13 @@ import {
   Download,
   ExternalLink,
   Pencil,
+  Palette,
 } from "lucide-react";
 import { Shell } from "./shell";
 import { EntryAudit } from "./entry-audit";
+import { TopicManager } from "./topic-manager";
+import { TopicDots } from "./topic-dots";
+import { calendarTopics, calendarEntryColor, eventTopicLabel, EXPENSE_CALENDAR_COLOR, TASK_CALENDAR_COLOR } from "@/lib/calendar-topics";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
 import { type Entry, type Draft, localToday, dayLabel, isDate } from "@/lib/model";
@@ -27,18 +31,28 @@ const labels = {
   event: "Compromisso",
 };
 export function Calendar() {
-  const { entries, names, busy, add, update, remove } = useDengo();
+  const { entries, names, busy, add, update, remove, preferences, saveCalendarTopics } = useDengo();
   const search = useSearchParams();
   const router = useRouter();
   const source = entries.find((e) => e.id === search.get("origem"));
+  const topics = calendarTopics(preferences.calendarTopics);
   const today = localToday();
   const wantedDate = search.get("data");
   const initialDate = wantedDate && isDate(wantedDate) ? wantedDate : today;
   const [month, setMonth] = useState(initialDate.slice(0, 7)),
     [selected, setSelected] = useState(initialDate),
     [open, setOpen] = useState(!!source || search.get("novo") === "1"),
-    [editing, setEditing] = useState<Entry | null>(null);
+    [editing, setEditing] = useState<Entry | null>(null),
+    [manageTopics, setManageTopics] = useState(search.get("topicos") === "1"),
+    [topicId, setTopicId] = useState(source?.kind === "movie" ? "filmes" :
+      source?.kind === "place" ? "passeio" : "janta");
   const items = calendarEntries(entries);
+  const byDay = new Map<string, Entry[]>();
+  for (const entry of items) {
+    const day = byDay.get(entry.due) || [];
+    day.push(entry);
+    byDay.set(entry.due, day);
+  }
   const [y, m] = month.split("-").map(Number);
   const start = new Date(y, m - 1, 1).getDay();
   const days = new Date(y, m, 0).getDate();
@@ -68,6 +82,7 @@ export function Calendar() {
       data: {
         time: String(f.get("time") || ""),
         location: String(f.get("location") || ""),
+        topicId: topics.some((topic) => topic.id === topicId) ? topicId : topics[0].id,
         ...(source
           ? { sourceId: source.id, sourceKind: source.kind }
           : editing?.data?.sourceId
@@ -94,17 +109,26 @@ export function Calendar() {
         title="Nosso calendário"
         description="Encontros, compromissos com data e contas marcadas no calendário."
       >
+        <button type="button" className="secondary" aria-expanded={manageTopics}
+          onClick={() => setManageTopics((value) => !value)}>
+          <Palette size={17} /> {manageTopics ? "Fechar tópicos" : "Tópicos e cores"}
+        </button>
         <button
           className="primary"
           onClick={() => {
             setOpen(!open);
             setEditing(null);
+            setTopicId("janta");
           }}
         >
           <Plus size={18} />
           {open ? "Fechar" : "Novo compromisso"}
         </button>
       </PageHeading>
+      {manageTopics ? (
+        <TopicManager key={topics.map((topic) => topic.id + topic.name + topic.color).join("|")}
+          topics={topics} busy={busy} onSave={saveCalendarTopics} />
+      ) : null}
       {open ? (
         <form
           className="panel entry-form"
@@ -142,6 +166,18 @@ export function Calendar() {
                 required
                 defaultValue={editing?.due || selected}
               />
+            </label>
+            <label>
+              Tópico
+              <span className="topic-select">
+                <span className="topic-legend-dot" style={{
+                  backgroundColor: topics.find((topic) => topic.id === topicId)?.color || topics[0].color,
+                }} />
+                <select name="topicId" value={topics.some((topic) => topic.id === topicId) ? topicId : topics[0].id}
+                  onChange={(event) => setTopicId(event.target.value)}>
+                  {topics.map((topic) => <option key={topic.id} value={topic.id}>{topic.name}</option>)}
+                </select>
+              </span>
             </label>
             <label>
               Horário opcional (Brasília)
@@ -223,7 +259,8 @@ export function Calendar() {
             ))}
             {Array.from({ length: days }, (_, i) => {
               const date = `${month}-${String(i + 1).padStart(2, "0")}`;
-              const count = items.filter((e) => e.due === date).length;
+              const dayEntries = byDay.get(date) || [];
+              const count = dayEntries.length;
               return (
                 <button
                   key={date}
@@ -233,15 +270,19 @@ export function Calendar() {
                   onClick={() => setSelected(date)}
                 >
                   {i + 1}
-                  {count ? <span className="calendar-dot" /> : null}
+                  <TopicDots entries={dayEntries} topics={topics} />
                 </button>
               );
             })}
           </div>
-          <div className="calendar-legend">
-            <span>Compromissos</span>
-            <span>Compromissos com data</span>
-            <span>Gastos e vencimentos de Compras</span>
+          <div className="calendar-legend topics-legend" aria-label="Legenda de cores">
+            {topics.map((topic) => (
+              <span key={topic.id}>
+                <i className="topic-legend-dot" style={{ backgroundColor: topic.color }} /> {topic.name}
+              </span>
+            ))}
+            <span><i className="topic-legend-dot" style={{ backgroundColor: TASK_CALENDAR_COLOR }} /> Tarefas</span>
+            <span><i className="topic-legend-dot" style={{ backgroundColor: EXPENSE_CALENDAR_COLOR }} /> Contas</span>
           </div>
         </section>
         <section className="panel">
@@ -253,6 +294,7 @@ export function Calendar() {
               onClick={() => {
                 setOpen(true);
                 setEditing(null);
+                setTopicId("janta");
               }}
             >
               <Plus />
@@ -262,7 +304,8 @@ export function Calendar() {
             daily.map((e) => (
               <article className="agenda-item" key={e.id}>
                 <span className="tag">
-                  {labels[e.kind as keyof typeof labels]}
+                  <i className="topic-legend-dot" style={{ backgroundColor: calendarEntryColor(e, topics) }} />
+                  {e.kind === "event" ? eventTopicLabel(e, topics) : labels[e.kind as keyof typeof labels]}
                   {e.done ? " · Concluído" : ""}
                 </span>
                 <h3>{e.title}</h3>
@@ -296,6 +339,7 @@ export function Calendar() {
                         aria-label={`Editar ${e.title}`}
                         onClick={() => {
                           setEditing(e);
+                          setTopicId(e.data?.topicId || "outros");
                           setOpen(true);
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }}

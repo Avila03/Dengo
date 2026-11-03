@@ -15,6 +15,7 @@ import { PasswordRecovery } from "./password-recovery";
 import { supabase, demoMode } from "@/lib/supabase";
 import { Lobby } from "./lobby";
 import { loadAllEntries } from "@/lib/records";
+import { type CalendarTopic, validateCalendarTopics } from "@/lib/calendar-topics";
 import {
   Entry,
   Draft,
@@ -43,6 +44,7 @@ type Context = {
   toggle: (e: Entry) => Promise<void>;
   remove: (e: Entry) => Promise<void>;
   savePreferences: (p: Preferences) => Promise<boolean>;
+  saveCalendarTopics: (topics: CalendarTopic[]) => Promise<boolean>;
   refresh: () => void;
   signOut: () => void;
 };
@@ -399,6 +401,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
     });
   }
   async function savePreferences(p: Preferences) {
+    const nextPrefs: Preferences = { ...preferences, ...p, calendarTopics: preferences.calendarTopics };
     return action(async () => {
       if (
         p.names.some((n) => !n.trim() || n.length > 60) ||
@@ -426,8 +429,8 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
                   : e.assignee,
           })),
         );
-        localStorage.setItem(PREFS_KEY, JSON.stringify(p));
-        setPreferences(p);
+        localStorage.setItem(PREFS_KEY, JSON.stringify(nextPrefs));
+        setPreferences(nextPrefs);
       } else {
         const r = await supabase!
           .from("spaces")
@@ -438,6 +441,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
               since: p.since,
               photo: p.photo,
               budgets: p.budgets,
+              calendarTopics: preferences.calendarTopics,
             },
           })
           .eq("id", space)
@@ -445,7 +449,36 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
           .single();
         if (r.error)
           throw new Error("Não foi possível salvar a personalização.");
-        setPreferences(p);
+        setPreferences(nextPrefs);
+      }
+    });
+  }
+  async function saveCalendarTopics(topics: CalendarTopic[]) {
+    return action(async () => {
+      validateCalendarTopics(topics);
+      const normalized = topics.map((t) => ({
+        id: t.id, name: t.name.trim(), color: t.color.toLowerCase(),
+      }));
+      const next: Preferences = { ...preferences, calendarTopics: normalized };
+      if (demoMode) {
+        localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+        setPreferences(next);
+      } else {
+        const r = await supabase!.from("spaces")
+          .update({
+            preferences: {
+              title: preferences.title,
+              since: preferences.since,
+              photo: preferences.photo,
+              budgets: preferences.budgets,
+              calendarTopics: normalized,
+            },
+          })
+          .eq("id", space)
+          .select("id")
+          .single();
+        if (r.error) throw new Error("Não foi possível salvar os tópicos do calendário.");
+        setPreferences(next);
       }
     });
   }
@@ -485,6 +518,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         toggle,
         remove,
         savePreferences,
+        saveCalendarTopics,
         refresh: () => void refresh(),
         signOut: () => {
           void supabase?.auth.signOut().then(({ error }) => {
