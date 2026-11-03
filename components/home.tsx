@@ -43,7 +43,7 @@ export function Home() {
         <span>{preferences.names.join(" & ")} · nosso cotidiano, do nosso jeito</span>
       </div>
       <section className="today-summary" aria-label="Resumo de hoje">
-        <div><CalendarCheck2 size={21} /><strong>{todayList.length}</strong><span>marcados para hoje</span></div>
+        <div><CalendarDays size={21} /><strong>{todayList.length}</strong><span>marcados para hoje</span></div>
         <div><Clock3 size={21} /><strong>{pending.length}</strong><span>pendentes hoje</span></div>
         <div><Check size={21} /><strong>{completed}</strong><span>concluídos hoje</span></div>
       </section>

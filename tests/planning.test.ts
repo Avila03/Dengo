@@ -188,7 +188,7 @@ test("a saved place accepts TikTok and Google Maps HTTPS links", () => {
 
 test("Nosso dia shows only events, tasks and expenses scheduled for today", () => {
   const today = "2026-11-03";
-  const sample = [
+  const sample: Entry[] = [
     { ...task, id: "old", kind: "task" as const, due: "2026-11-02" },
     { ...task, id: "shopping", kind: "shopping" as const, due: today },
     { ...task, id: "event", kind: "event" as const, due: today, data: { time: "19:00" } },
