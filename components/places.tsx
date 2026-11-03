@@ -1,5 +1,5 @@
 "use client";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -8,6 +8,9 @@ import {
   Pencil,
   CalendarDays,
   Check,
+  Search,
+  MapPinned,
+  LoaderCircle,
 } from "lucide-react";
 import { Shell } from "./shell";
 import { EntryAudit } from "./entry-audit";
@@ -15,15 +18,63 @@ import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
 import type { Entry, Draft } from "@/lib/model";
 import { mapsUrl } from "@/lib/calendar";
+import { googleMapsEmbedUrl, googlePlaceMapsUrl, type PlaceSearchResult } from "@/lib/places";
+import { supabase } from "@/lib/supabase";
 import { money, parseMoney } from "@/lib/finance";
 export function Places() {
   const { entries, busy, add, update, toggle, remove } = useDengo();
   const [open, setOpen] = useState(false),
     [editing, setEditing] = useState<Entry | null>(null),
     [filter, setFilter] = useState("want"),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [term, setTerm] = useState(""),
+    [city, setCity] = useState(""),
+    [results, setResults] = useState<PlaceSearchResult[]>([]),
+    [searchError, setSearchError] = useState(""),
+    [searching, setSearching] = useState(false),
+    [selectedPlace, setSelectedPlace] = useState<PlaceSearchResult | null>(null),
+    [mapOpen, setMapOpen] = useState<string | null>(null);
+  const searchLock = useRef(false);
+  const embedKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY || "";
   const all = entries.filter((e) => e.kind === "place");
   const list = all.filter((e) => (filter === "visited" ? e.done : !e.done));
+  async function searchPlace(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (searchLock.current) return;
+    searchLock.current = true;
+    setSearching(true);
+    setSearchError("");
+    setResults([]);
+    try {
+      const { data } = supabase
+        ? await supabase.auth.getSession()
+        : { data: { session: null } };
+      const query = new URLSearchParams({ q: term.trim() });
+      if (city.trim()) query.set("city", city.trim());
+      const response = await fetch("/api/places?" + query.toString(), {
+        headers: data.session ? { Authorization: "Bearer " + data.session.access_token } : {},
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Não foi possível pesquisar lugares.");
+      const incoming: PlaceSearchResult[] = Array.isArray(body.results) ? body.results : [];
+      setResults(incoming);
+      if (!incoming.length) setSearchError("Nenhum local encontrado. Tente informar a cidade.");
+    } catch (e) {
+      setSearchError(e instanceof Error ? e.message : "Não foi possível pesquisar lugares.");
+    } finally {
+      searchLock.current = false;
+      setSearching(false);
+    }
+  }
+  function choosePlace(place: PlaceSearchResult) {
+    const existing = all.find((entry) => entry.data?.googlePlaceId === place.id);
+    setEditing(existing || null);
+    setSelectedPlace(existing ? null : place);
+    setOpen(true);
+    setError("");
+    if (existing) setFilter(existing.done ? "visited" : "want");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -38,6 +89,8 @@ export function Places() {
         due: "",
         done: f.get("visited") === "on",
         data: {
+          ...editing?.data,
+          googlePlaceId: selectedPlace?.id || editing?.data?.googlePlaceId || undefined,
           address: String(f.get("address") || "").trim(),
           category: String(f.get("category") || "Passeio"),
           budget: budget ? parseMoney(budget) : 0,
@@ -47,6 +100,8 @@ export function Places() {
       if (await (editing ? update(editing, d) : add(d))) {
         setOpen(false);
         setEditing(null);
+        setSelectedPlace(null);
+        setResults([]);
       }
     } catch (e) {
       setError((e as Error).message);
@@ -64,6 +119,7 @@ export function Places() {
           onClick={() => {
             setOpen(!open);
             setEditing(null);
+            setSelectedPlace(null);
           }}
         >
           <Plus size={18} />
@@ -75,18 +131,82 @@ export function Places() {
         <div>
           <h2>Uma lista de próximos destinos.</h2>
           <p>
-            Salvem o nome e o endereço. Para ver o mapa e a rota, o Dengo abre o
-            Google Maps sem contratar uma API de mapas.
+            Pesquisem um lugar pelo nome, escolham o endereço correto e vejam
+            sua localização no mapa. Depois, salvem os planos do casal.
           </p>
         </div>
+      </section>
+      <section className="panel places-search-panel">
+        <h2>Encontrar um estabelecimento</h2>
+        <form className="places-search-form" onSubmit={(event) => void searchPlace(event)}>
+          <label>
+            Nome do lugar
+            <input required minLength={2} maxLength={100} value={term}
+              onChange={(event) => setTerm(event.target.value)}
+              placeholder="Ex.: Espartano" />
+          </label>
+          <label>
+            Cidade ou região (opcional)
+            <input maxLength={80} value={city}
+              onChange={(event) => setCity(event.target.value)}
+              placeholder="Ex.: Porto Alegre" />
+          </label>
+          <button type="submit" className="primary" disabled={searching || term.trim().length < 2}>
+            {searching ? <LoaderCircle size={17} className="places-search-spin" /> : <Search size={17} />}
+            {searching ? "Buscando…" : "Pesquisar"}
+          </button>
+        </form>
+        <small>Busca sob demanda pelo Google Maps. Cada pesquisa pode consumir cota do Google Places.</small>
+        {searchError ? <div className="notice" role="status">{searchError}</div> : null}
+        {results.length > 0 ? (
+          <div className="places-search-results">
+            <h3>Selecione o endereço certo</h3>
+            {results.map((place) => {
+              const saved = all.some((e) => e.data?.googlePlaceId === place.id);
+              return (
+                <button type="button" className="places-search-choice" key={place.id}
+                  onClick={() => choosePlace(place)}>
+                  <MapPin size={19} />
+                  <span>
+                    <strong>{place.title}</strong>
+                    <small>{place.address || "Sem endereço informado"}</small>
+                    {place.category ? <small>{place.category}</small> : null}
+                  </span>
+                  <span className="places-search-choose">{saved ? "Editar salvo" : "Selecionar"}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
       </section>
       {open ? (
         <form
           className="panel entry-form setup-note"
-          key={editing?.id || "new"}
+          key={editing?.id || selectedPlace?.id || "new"}
           onSubmit={submit}
         >
-          <h2>{editing ? "Editar lugar" : "Onde vamos juntos?"}</h2>
+          <h2>{editing ? "Editar lugar" : selectedPlace ? "Salvar o lugar escolhido" : "Onde vamos juntos?"}</h2>
+          {(selectedPlace?.id || editing?.data?.googlePlaceId) ? (
+            <div className="places-preview">
+              <div className="places-preview-label">
+                <strong><MapPin size={17} /> {selectedPlace?.title || editing?.title}</strong>
+                <small>{selectedPlace?.address || editing?.data?.address}</small>
+              </div>
+              {embedKey ? (
+                <iframe title={"Localização de " + (selectedPlace?.title || editing?.title)}
+                  src={googleMapsEmbedUrl(selectedPlace?.id || editing?.data?.googlePlaceId, embedKey)}
+                  className="places-map-iframe" loading="lazy"
+                  referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
+              ) : (
+                <p>O local está identificado. Para mostrar o marcador dentro do Dengo, é necessário ativar a Maps Embed API.</p>
+              )}
+              <a className="secondary" target="_blank" rel="noopener noreferrer"
+                href={googlePlaceMapsUrl(selectedPlace?.id || editing?.data?.googlePlaceId,
+                  [selectedPlace?.title || editing?.title, selectedPlace?.address || editing?.data?.address].filter(Boolean).join(", "))}>
+                Ver no Google Maps <ExternalLink size={15} />
+              </a>
+            </div>
+          ) : null}
           <div className="form-grid">
             <label className="full">
               Nome do lugar
@@ -94,7 +214,7 @@ export function Places() {
                 name="title"
                 required
                 maxLength={120}
-                defaultValue={editing?.title}
+                defaultValue={selectedPlace?.title || editing?.title}
               />
             </label>
             <label className="full">
@@ -103,7 +223,7 @@ export function Places() {
                 name="address"
                 required
                 maxLength={240}
-                defaultValue={editing?.data?.address}
+                defaultValue={selectedPlace?.address || editing?.data?.address}
                 placeholder="Ex.: Rua, número, cidade"
               />
             </label>
@@ -207,10 +327,20 @@ export function Places() {
               {e.data?.review ? (
                 <p className="place-memory">{e.data.review}</p>
               ) : null}
+              {e.data?.googlePlaceId && embedKey ? (
+                <button type="button" className="secondary" onClick={() => setMapOpen(mapOpen === e.id ? null : e.id)}>
+                  <MapPinned size={16} /> {mapOpen === e.id ? "Ocultar mapa" : "Ver no mapa"}
+                </button>
+              ) : null}
+              {mapOpen === e.id && e.data?.googlePlaceId && embedKey ? (
+                <iframe title={"Mapa de " + e.title} className="places-map-iframe"
+                  src={googleMapsEmbedUrl(e.data.googlePlaceId, embedKey)}
+                  loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
+              ) : null}
               <a
-                href={mapsUrl(
-                  e.data?.address ? `${e.title}, ${e.data.address}` : e.title,
-                )}
+                href={e.data?.googlePlaceId
+                  ? googlePlaceMapsUrl(e.data.googlePlaceId, [e.title, e.data?.address].filter(Boolean).join(", "))
+                  : mapsUrl(e.data?.address ? e.title + ", " + e.data.address : e.title)}
                 className="secondary"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -236,6 +366,7 @@ export function Places() {
                   aria-label={`Editar ${e.title}`}
                   onClick={() => {
                     setEditing(e);
+                    setSelectedPlace(null);
                     setOpen(true);
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}

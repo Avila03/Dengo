@@ -14,6 +14,7 @@ import {
   calendarEntries,
 } from "../lib/calendar.ts";
 import { normalizeMovies } from "../lib/movies.ts";
+import { normalizeGooglePlaces, googlePlaceMapsUrl, googleMapsEmbedUrl } from "../lib/places.ts";
 const task: Entry = {
   id: "abc",
   kind: "task",
@@ -118,4 +119,21 @@ test("calendar files use explicit end times and fold UTF-8 text safely", () => {
   assert.match(file, /DTEND:20261104T033000Z/);
   for (const line of file.split("\r\n"))
     assert.ok(new TextEncoder().encode(line).length <= 75);
+});
+
+test("normalizes Google Place IDs and ignores duplicates and invalid values", () => {
+  const results = normalizeGooglePlaces([
+    { id: "ChIJ12345678", displayName: { text: "Espartano" }, formattedAddress: "Porto Alegre, RS" },
+    { id: "ChIJ12345678", displayName: { text: "Duplicado" } },
+    { id: "not valid", displayName: { text: "Invalido" } },
+  ]);
+  assert.equal(results.length, 1);
+  assert.equal(results[0].title, "Espartano");
+});
+test("Google map URLs point to the selected Place ID", () => {
+  const url = new URL(googlePlaceMapsUrl("ChIJ12345678", "Espartano"));
+  assert.equal(url.searchParams.get("query_place_id"), "ChIJ12345678");
+  const embed = new URL(googleMapsEmbedUrl("ChIJ12345678", "referrer_restricted_key"));
+  assert.equal(embed.searchParams.get("q"), "place_id:ChIJ12345678");
+  assert.equal(googleMapsEmbedUrl("https://invalid", "key"), "");
 });

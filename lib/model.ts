@@ -22,6 +22,7 @@ export type Details = {
   interestFirst?: boolean;
   interestSecond?: boolean;
   address?: string;
+  googlePlaceId?: string;
   budget?: number;
   url?: string;
   review?: string;

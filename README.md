@@ -2,6 +2,16 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Entrega 0.6 — encontrar lugares no Google Maps
+
+- **Busca por nome:** digitar o estabelecimento, opcionalmente informar cidade/região, e selecionar um dos endereços apresentados pela Places API (New).
+- **Mapa:** a seleção preserva o Place ID e pode mostrar o marcador dentro do Dengo com a Maps Embed API; o mesmo lugar fica localizável posteriormente pelo link exato do Google Maps.
+- **Dados do casal:** salvar nome, endereço, categoria, orçamento, planos, visitado e avaliação no Supabase como antes. A pesquisa identifica registros já vinculados pelo mesmo Place ID para edição.
+- **Configuração:** habilitar Places API (New) e Maps Embed API no Google Cloud com faturamento ativado. Criar uma chave de servidor para GOOGLE_PLACES_API_KEY (restrita à Places API, variável Sensitive na Vercel) e uma chave de navegador para NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY (restrita à Maps Embed API e aos domínios do Dengo).
+- **Custos:** a pesquisa só chama a API quando o usuário aperta Pesquisar, no máximo oito resultados por chamada; defina também cotas e alerta de orçamento no Google Cloud para evitar cobranças.
+- **Sem integração:** o cadastro manual e o link de localização do Google Maps continuam funcionando, mas pesquisa online e mapa embutido ficam indisponíveis até configurar as chaves.
+- Os dados de buscas são atribuídos ao Google Maps. O Place ID pode ser guardado; o nome e endereço passam pelo formulário editável e são confirmados ao salvar.
+
 ## Entrega 0.5 — catálogo e descoberta de filmes e séries
 
 - **Explorar:** as abas Em alta (semana) e Populares, pesquisa por título em português e seleção de Filme ou Série. Busca paginada com botão Ver mais títulos.
