@@ -14,7 +14,7 @@ import {
   calendarEntries,
 } from "../lib/calendar.ts";
 import { normalizeMovies } from "../lib/movies.ts";
-import { todayEntries } from "../lib/today.ts";
+import { todayEntries, weekDates, calendarMonthDays, shiftMonth, addDaysISO } from "../lib/today.ts";
 import { normalizeGooglePlaces, googlePlaceMapsUrl, googleMapsEmbedUrl, normalizePhotonPlaces, openStreetMapEmbedUrl, photonCategoryFilter, overpassSearchQuery, normalizeOverpassPlaces, normalizePlaceLink, safePlaceLink } from "../lib/places.ts";
 const task: Entry = {
   id: "abc",
@@ -197,4 +197,17 @@ test("Nosso dia shows only events, tasks and expenses scheduled for today", () =
   ];
   assert.deepEqual(todayEntries(sample, today).map((item) => item.id),
     ["task", "expense", "event"]);
+});
+
+test("calendar preview respects Monday-first weeks across months and years", () => {
+  assert.deepEqual(weekDates("2026-11-03"), [
+    "2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05",
+    "2026-11-06", "2026-11-07", "2026-11-08",
+  ]);
+  assert.equal(addDaysISO("2026-12-29", 7), "2027-01-05");
+  assert.equal(shiftMonth("2026-12", 1), "2027-01");
+  const days = calendarMonthDays("2026-11");
+  assert.equal(days[0], null); // November 1, 2026 is a Sunday.
+  assert.equal(days[6], "2026-11-01");
+  assert.equal(days[days.length - 1], "2026-11-30");
 });

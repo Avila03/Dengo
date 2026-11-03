@@ -14,7 +14,7 @@ import { Shell } from "./shell";
 import { EntryAudit } from "./entry-audit";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
-import { type Entry, type Draft, localToday, dayLabel } from "@/lib/model";
+import { type Entry, type Draft, localToday, dayLabel, isDate } from "@/lib/model";
 import {
   calendarEntries,
   eventICS,
@@ -22,7 +22,7 @@ import {
   downloadFile,
 } from "@/lib/calendar";
 const labels = {
-  task: "Responsabilidade",
+  task: "Tarefa",
   expense: "Conta",
   event: "Compromisso",
 };
@@ -32,9 +32,11 @@ export function Calendar() {
   const router = useRouter();
   const source = entries.find((e) => e.id === search.get("origem"));
   const today = localToday();
-  const [month, setMonth] = useState(today.slice(0, 7)),
-    [selected, setSelected] = useState(today),
-    [open, setOpen] = useState(!!source),
+  const wantedDate = search.get("data");
+  const initialDate = wantedDate && isDate(wantedDate) ? wantedDate : today;
+  const [month, setMonth] = useState(initialDate.slice(0, 7)),
+    [selected, setSelected] = useState(initialDate),
+    [open, setOpen] = useState(!!source || search.get("novo") === "1"),
     [editing, setEditing] = useState<Entry | null>(null);
   const items = calendarEntries(entries);
   const [y, m] = month.split("-").map(Number);
@@ -78,8 +80,8 @@ export function Calendar() {
     };
     if (await (editing ? update(editing, draft) : add(draft))) {
       setOpen(false);
-      if (search.has("origem"))
-        router.replace("/calendario", { scroll: false });
+      if (search.has("origem") || search.has("novo"))
+        router.replace("/calendario?data=" + draft.due, { scroll: false });
       setEditing(null);
       setSelected(draft.due);
       setMonth(draft.due.slice(0, 7));

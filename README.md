@@ -2,6 +2,15 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Entrega 1.1 — Nosso dia compacto com calendário integrado
+
+- **Calendário removido do menu** lateral e da barra inferior. No celular, quatro destinos: Nosso dia, Compromissos, Compras e Mais.
+- **Nosso dia** tem resumo enxuto do dia atual e uma visão semanal com indicadores de datas marcadas; tocando em uma data, mostra até três registros desse dia com expansão opcional.
+- **Ver mês** abre uma grade mensal embutida, sem sair da tela inicial. Os dias marcados recebem indicador visual.
+- **Agenda completa** abre a antiga rota /calendario, preservada para criação/edição, links existentes e planejamento originado de lugares ou filmes. Os atalhos passam a data selecionada; **Adicionar** já abre o formulário nessa data.
+- A tela principal prioriza celular, leitura rápida e botões tocáveis, sem duplicar listas de compras ou compromissos na página inicial.
+- Nenhum registro existente foi alterado ou apagado.
+
 ## Entrega 1.0 — navegação reorganizada
 
 - **Nosso dia** agora é uma agenda exclusivamente do dia atual: compromissos do calendário, tarefas com data e despesas com vencimento hoje, ordenados por horário, mostrando pendentes e concluídos.

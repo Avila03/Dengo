@@ -10,7 +10,6 @@ import {
   ArrowUpRight,
   RefreshCw,
   LogOut,
-  CalendarDays,
   Clapperboard,
   MapPin,
   Menu,
@@ -18,7 +17,6 @@ import {
 import { useDengo } from "./provider";
 const links = [
   { href: "/", label: "Nosso dia", icon: House },
-  { href: "/calendario", label: "Calendário", icon: CalendarDays },
   { href: "/compromissos", label: "Compromissos", icon: ListChecks },
   { href: "/compras", label: "Compras", icon: ShoppingBag },
   { href: "/lugares", label: "Nossos lugares", icon: MapPin },
@@ -29,10 +27,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const { demo, error, refresh, signOut, preferences, openLobby } = useDengo();
   const mobileLinks = [
-    links[0],
-    links[1],
-    links[2],
-    links[3],
+    links[0], // Nosso dia
+    links[1], // Compromissos
+    links[2], // Compras
     { href: "/mais", label: "Mais", icon: Menu },
   ];
   const mobileActive = (href: string) =>
@@ -40,7 +37,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       ? ["/mais", "/filmes", "/lugares", "/configuracoes"].includes(
           path,
         )
-      : path === href;
+      : href === "/" ? (path === "/" || path === "/calendario") : path === href;
   return (
     <div className="app">
       <a className="skip" href="#conteudo">
@@ -57,8 +54,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Link
               key={href}
               href={href}
-              className={path === href ? "active" : ""}
-              aria-current={path === href ? "page" : undefined}
+              className={path === href || (href === "/" && path === "/calendario") ? "active" : ""}
+              aria-current={path === href || (href === "/" && path === "/calendario") ? "page" : undefined}
             >
               <Icon size={21} />
               <span>{label}</span>

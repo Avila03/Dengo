@@ -2119,3 +2119,66 @@ progress {
   .purchases-tabs button { font-size:12px; gap:5px; }
   .purchases-inner-heading h1 { font-size:31px; }
 }
+
+/* Dengo 1.1 — página inicial compacta, calendário progressivo */
+.day-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 12px}
+.day-head h1{font:42px/1.06 Georgia,serif;margin:4px 0 4px}
+.day-head p{color:var(--muted);font-size:13px;margin:0;text-transform:capitalize}
+.day-add{display:inline-flex;align-items:center;gap:6px;min-height:43px;flex-shrink:0}
+.day-status{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:8px 0 16px}
+.day-status span{display:inline-flex;gap:5px;align-items:center;font-size:11px;color:var(--muted);padding:6px 10px;border-radius:999px;background:var(--paper);border:1px solid var(--line)}
+.day-status svg{color:var(--rose)}
+.day-calendar{margin:0 0 14px;padding:17px}
+.day-calendar-top,.day-agenda-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.day-calendar-top h2,.day-agenda-top h2{font-size:22px;margin:2px 0 0}
+.day-calendar-tools{display:flex;align-items:center;gap:3px}
+.day-calendar-tools .icon-btn{width:35px;height:35px;min-height:35px}
+.day-today-button{min-height:35px;padding:0 11px;border:1px solid var(--line);border-radius:10px;color:var(--rose);background:transparent;font-size:12px;font-weight:700}
+.day-week-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:15px 0 10px}
+.day-week-day{min-width:0;border:1px solid transparent;border-radius:12px;padding:8px 1px 6px;color:var(--ink);background:transparent;display:flex;flex-direction:column;align-items:center;gap:5px;min-height:69px;cursor:pointer}
+.day-week-day span{font-size:11px;color:var(--muted)}
+.day-week-day strong{font-size:18px}
+.day-week-day i,.day-month-cell i{width:5px;height:5px;border-radius:50%;display:block}
+.day-week-day i.day-has-plan,.day-month-cell i{background:var(--rose)}
+.day-week-day.today{border-color:var(--line)}
+.day-week-day.selected,.day-month-cell.selected{background:var(--rose);color:white;border-color:var(--rose)}
+.day-week-day.selected span{color:white}
+.day-week-day.selected i.day-has-plan,.day-month-cell.selected i{background:white}
+.day-week-day:hover,.day-month-cell:hover{border-color:var(--rose)}
+.day-calendar-foot{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:11px}
+.day-calendar-foot .text-link,.day-agenda-top .text-link{display:inline-flex;gap:5px;align-items:center;font-size:12px}
+.day-month-toggle[aria-expanded="true"]>svg:last-child{transform:rotate(180deg)}
+.day-month{border-top:1px solid var(--line);margin-top:13px;padding-top:13px}
+.day-month-header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.day-month-header strong{text-transform:capitalize;font-size:13px}
+.day-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin-top:10px}
+.day-month-weekday{text-align:center;font-size:10px;color:var(--muted);padding:7px 0}
+.day-month-cell{min-height:39px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;font-size:12px}
+.day-month-cell.today:not(.selected){border-color:var(--rose)}
+.day-agenda{padding:17px}
+.day-agenda-list{margin-top:11px}
+.day-agenda-row{display:grid;grid-template-columns:73px minmax(0,1fr) auto;gap:10px;align-items:center;border-top:1px solid var(--line);padding:11px 0}
+.day-agenda-time{font-size:11px;color:var(--rose);font-weight:700}
+.day-agenda-title{font-size:14px;font-weight:700;color:var(--ink);text-decoration:none;overflow-wrap:anywhere}
+.day-agenda-detail small{display:block;margin-top:3px;color:var(--muted);font-size:11px;overflow-wrap:anywhere}
+.day-agenda-row.done{opacity:.66}
+.day-row-check{flex-shrink:0;color:var(--rose)}
+.day-agenda-empty{padding:22px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);font-size:12px;text-align:center}
+.day-agenda-empty svg{color:var(--rose)}
+.day-show-all{display:flex;justify-content:center;align-items:center;gap:8px;width:100%;border:0;border-top:1px solid var(--line);background:transparent;color:var(--rose);font-size:12px;font-weight:700;padding:13px 0 0;cursor:pointer}
+.day-head a:focus-visible,.day-week-day:focus-visible,.day-month-cell:focus-visible,.day-show-all:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+@media(max-width:760px){
+.day-head h1{font-size:34px}
+.day-head .eyebrow{font-size:9px}
+.day-add{padding:9px 11px;min-height:40px;font-size:12px}
+.day-status{gap:5px;margin-bottom:11px}
+.day-status span{padding:5px 8px;font-size:10px}
+.day-calendar,.day-agenda{padding:13px;margin-bottom:12px}
+.day-calendar-top h2,.day-agenda-top h2{font-size:20px}
+.day-week-grid{gap:1px;margin-top:11px}
+.day-week-day{min-height:63px}
+.day-week-day strong{font-size:17px}
+.day-calendar-foot .text-link,.day-agenda-top .text-link{font-size:11px}
+.day-agenda-row{grid-template-columns:54px minmax(0,1fr) 32px;gap:7px;padding:9px 0}
+.day-agenda-title{font-size:13px}
+}
