@@ -14,7 +14,7 @@ import {
   calendarEntries,
 } from "../lib/calendar.ts";
 import { normalizeMovies } from "../lib/movies.ts";
-import { normalizeGooglePlaces, googlePlaceMapsUrl, googleMapsEmbedUrl } from "../lib/places.ts";
+import { normalizeGooglePlaces, googlePlaceMapsUrl, googleMapsEmbedUrl, normalizePhotonPlaces, openStreetMapEmbedUrl } from "../lib/places.ts";
 const task: Entry = {
   id: "abc",
   kind: "task",
@@ -136,4 +136,22 @@ test("Google map URLs point to the selected Place ID", () => {
   const embed = new URL(googleMapsEmbedUrl("ChIJ12345678", "referrer_restricted_key"));
   assert.equal(embed.searchParams.get("q"), "place_id:ChIJ12345678");
   assert.equal(googleMapsEmbedUrl("https://invalid", "key"), "");
+});
+
+test("Photon search returns stable OSM IDs and map coordinates", () => {
+  const results = normalizePhotonPlaces({
+    features: [
+      { properties: { osm_type: "N", osm_id: 12345, name: "Espartano", city: "Porto Alegre", country: "Brasil", osm_value: "restaurant" }, geometry: { coordinates: [-51.2, -30.0] } },
+      { properties: { osm_type: "N", osm_id: 12345, name: "Duplicado" }, geometry: { coordinates: [-51.2, -30.0] } },
+      { properties: { osm_type: "N", osm_id: 123456, name: "Inválido" }, geometry: { coordinates: [999, -30.0] } },
+    ],
+  });
+  assert.equal(results.length, 1);
+  assert.equal(results[0].id, "osm_n_12345");
+  assert.equal(results[0].lat, -30);
+  assert.equal(results[0].lon, -51.2);
+  assert.equal(results[0].title, "Espartano");
+  const url = new URL(openStreetMapEmbedUrl(results[0].lat, results[0].lon));
+  assert.equal(url.searchParams.get("marker"), "-30,-51.2");
+  assert.equal(openStreetMapEmbedUrl(999, 0), "");
 });
