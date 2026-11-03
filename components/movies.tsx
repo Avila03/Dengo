@@ -12,6 +12,7 @@ import {
   Heart,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { EntryAudit } from "./entry-audit";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
 import { supabase } from "@/lib/supabase";
@@ -372,6 +373,7 @@ export function Movies() {
                     {e.data?.ratingSecond || "—"}
                   </p>
                 ) : null}
+                <EntryAudit entry={e} />
                 <div className="row-actions">
                   <button
                     className="icon-btn"

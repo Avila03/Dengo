@@ -29,7 +29,7 @@ const links = [
 ];
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const { demo, error, refresh, signOut, preferences } = useDengo();
+  const { demo, error, refresh, signOut, preferences, openLobby } = useDengo();
   const mobileLinks = [
     links[0],
     links[1],
@@ -90,7 +90,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
             )}
           </div>
           <div>
-            <strong>{preferences.names.join(" & ")}</strong>
+            <button className="couple-name" onClick={openLobby}>
+              {preferences.title}
+            </button>
             <small>{demo ? "Prévia local" : "Espaço privado"}</small>
           </div>
           {!demo ? (
@@ -111,7 +113,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </Link>
           <div className="topbar-right">
             <span className="status-dot" />
-            {demo ? "Demonstração" : "Só vocês dois"}
+            <button className="lobby-shortcut" onClick={openLobby}>
+              {demo ? "Demonstração" : "Nosso casal"}
+            </button>
             <button
               className="icon-btn"
               onClick={refresh}

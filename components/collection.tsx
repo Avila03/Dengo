@@ -13,6 +13,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { EntryAudit } from "./entry-audit";
 import { DeleteButton } from "./ui";
 import { useDengo } from "./provider";
 import {
@@ -261,6 +262,7 @@ export function Collection({ kind }: { kind: "shopping" | "task" }) {
                         </span>
                       ) : null}
                     </div>
+                    <EntryAudit entry={e} />
                   </div>
                   <div className="row-actions">
                     {!isTask ? (

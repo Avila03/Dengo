@@ -10,6 +10,7 @@ import {
   Check,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { EntryAudit } from "./entry-audit";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
 import type { Entry, Draft } from "@/lib/model";
@@ -216,6 +217,7 @@ export function Places() {
               >
                 Abrir no Google Maps <ExternalLink size={15} />
               </a>
+              <EntryAudit entry={e} />
               <div className="row-actions">
                 <button
                   disabled={busy}

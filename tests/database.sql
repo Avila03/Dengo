@@ -7,9 +7,9 @@ insert into auth.users(id,email) values
 insert into public.spaces(id,names) values
 ('10000000-0000-4000-a000-000000000001',array['Teste A','Teste B']),
 ('10000000-0000-4000-a000-000000000002',array['Outro A','Outro B']);
-insert into public.memberships(user_id,space_id) values
-('00000000-0000-4000-a000-000000000001','10000000-0000-4000-a000-000000000001'),
-('00000000-0000-4000-a000-000000000002','10000000-0000-4000-a000-000000000001');
+insert into public.memberships(user_id,space_id,slot) values
+('00000000-0000-4000-a000-000000000001','10000000-0000-4000-a000-000000000001',0),
+('00000000-0000-4000-a000-000000000002','10000000-0000-4000-a000-000000000001',1);
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-a000-000000000001',true);
 insert into public.entries(id,space_id,kind,title,assignee,due,done,data) values

@@ -1,6 +1,6 @@
 {
   "name": "dengo",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Um lugar para cuidar da vida a dois",
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",

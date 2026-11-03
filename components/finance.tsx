@@ -10,6 +10,7 @@ import {
   Repeat2,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { EntryAudit } from "./entry-audit";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
 import { type Entry, type Draft, localToday, dayLabel } from "@/lib/model";
@@ -346,6 +347,7 @@ export function Finance() {
                       </span>
                     ) : null}
                   </div>
+                  <EntryAudit entry={e} />
                 </div>
                 <strong>{money(e.data?.amount || 0)}</strong>
                 <div className="row-actions">

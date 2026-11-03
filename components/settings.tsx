@@ -15,8 +15,15 @@ import { CATEGORIES, parseMoney } from "@/lib/finance";
 import { downloadFile } from "@/lib/calendar";
 import { localToday } from "@/lib/model";
 export function Settings() {
-  const { entries, demo, preferences, busy, savePreferences, signOut } =
-    useDengo();
+  const {
+    entries,
+    demo,
+    preferences,
+    busy,
+    savePreferences,
+    signOut,
+    openLobby,
+  } = useDengo();
   const [photo, setPhoto] = useState(preferences.photo),
     [error, setError] = useState(""),
     [saved, setSaved] = useState(false);
@@ -61,6 +68,7 @@ export function Settings() {
       }
       if (
         await savePreferences({
+          title: String(f.get("title") || "").trim(),
           names: [
             String(f.get("first") || "").trim(),
             String(f.get("second") || "").trim(),
@@ -93,6 +101,18 @@ export function Settings() {
         onSubmit={submit}
       >
         <h2>Nossa identidade</h2>
+        <button type="button" className="secondary" onClick={openLobby}>
+          Abrir lobby do casal
+        </button>
+        <label className="spaced">
+          Nome do espaço
+          <input
+            name="title"
+            required
+            maxLength={80}
+            defaultValue={preferences.title}
+          />
+        </label>
         <div className="profile-preview">
           {photo ? (
             <img src={photo} alt="Foto do casal" width={100} height={100} />

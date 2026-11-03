@@ -1,4 +1,5 @@
--- Execute depois de criar manualmente as duas contas em Authentication > Users.
+-- Recuperação administrativa opcional. O fluxo normal agora é criar/entrar pelo lobby do app.
+-- Execute apenas para vincular contas já criadas, quando não puder usar o convite.
 -- Substitua os e-mails e nomes. O script falha sem alterar nada se as contas não existirem.
 begin;
 do $$
@@ -15,7 +16,7 @@ begin
   raise exception 'O espaço já contém uma conta diferente. Revise antes de continuar.';
  end if;
  update public.spaces set names=array['Bruno','NOME_DA_OUTRA_PESSOA'] where id=home_id;
- insert into public.memberships(user_id,space_id) values(first_id,home_id),(second_id,home_id)
+ insert into public.memberships(user_id,space_id,slot) values(first_id,home_id,0),(second_id,home_id,1)
  on conflict(user_id) do nothing;
 end $$;
 commit;

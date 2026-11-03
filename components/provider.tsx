@@ -11,6 +11,7 @@ import type { FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Heart, LockKeyhole, LogIn } from "lucide-react";
 import { supabase, demoMode } from "@/lib/supabase";
+import { Lobby } from "./lobby";
 import { loadAllEntries } from "@/lib/records";
 import {
   Entry,
@@ -31,6 +32,10 @@ type Context = {
   error: string;
   demo: boolean;
   user: User | null;
+  spaceId: string;
+  memberCount: number;
+  memberSlot: number;
+  openLobby: () => void;
   add: (d: Draft) => Promise<boolean>;
   update: (e: Entry, d: Draft) => Promise<boolean>;
   toggle: (e: Entry) => Promise<void>;
@@ -52,7 +57,11 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
     [space, setSpace] = useState(""),
     [preferences, setPreferences] = useState<Preferences>(DEFAULT_PREFS),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [membershipLoaded, setMembershipLoaded] = useState(false),
+    [memberCount, setMemberCount] = useState(0),
+    [memberSlot, setMemberSlot] = useState(0),
+    [lobbyOpen, setLobbyOpen] = useState(true);
   const lock = useRef(false),
     identity = useRef<string | null>(null),
     sequence = useRef(0);
@@ -68,6 +77,9 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         sequence.current++;
         setEntries([]);
         setSpace("");
+        setMembershipLoaded(false);
+        setLobbyOpen(true);
+        setMemberCount(0);
         setPreferences(DEFAULT_PREFS);
       }
       identity.current = u?.id ?? null;
@@ -106,37 +118,34 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (!supabase || !user) return;
-      const membership = await supabase
-        .from("memberships")
-        .select("space_id")
-        .eq("user_id", user.id)
-        .single();
+      const { data: home, error: homeError } =
+        await supabase.rpc("couple_summary");
       if (request !== sequence.current) return;
-      if (membership.error)
-        throw new Error(
-          "Sua conta ainda não está vinculada ao espaço do casal.",
-        );
-      const id = membership.data.space_id;
-      const [items, home] = await Promise.all([
-        loadAllEntries(supabase, id),
-        supabase
-          .from("spaces")
-          .select("names,preferences")
-          .eq("id", id)
-          .single(),
-      ]);
+      if (homeError)
+        throw new Error("Não foi possível abrir o lobby. Tente atualizar.");
+      if (!home) {
+        setSpace("");
+        setMemberCount(0);
+        setMembershipLoaded(true);
+        return;
+      }
+      const items = await loadAllEntries(supabase, home.space_id);
       if (request !== sequence.current) return;
-      if (home.error)
-        throw new Error("Não foi possível carregar os dados. Tente atualizar.");
-      setSpace(id);
+      setSpace(home.space_id);
+      setMemberSlot(home.slot);
+      setMemberCount(home.members);
       setEntries(items);
       setPreferences({
         ...DEFAULT_PREFS,
-        ...home.data.preferences,
-        names: home.data.names,
+        ...home.preferences,
+        names: home.names,
       });
+      setMembershipLoaded(true);
     } catch (e) {
-      if (request === sequence.current) setError((e as Error).message);
+      if (request === sequence.current) {
+        setError((e as Error).message);
+        setMembershipLoaded(true);
+      }
     }
   }, [user]);
   useEffect(() => {
@@ -215,6 +224,9 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         ...next,
         id: crypto.randomUUID(),
         created_at: new Date().toISOString(),
+        created_by_slot: 0 as const,
+        updated_by_slot: 0 as const,
+        updated_at: new Date().toISOString(),
         occurrence_from: entry.id,
       },
       ...list,
@@ -234,6 +246,13 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         title: d.title.trim(),
         id: crypto.randomUUID(),
         created_at: new Date().toISOString(),
+        ...(demoMode
+          ? {
+              created_by_slot: 0 as const,
+              updated_by_slot: 0 as const,
+              updated_at: new Date().toISOString(),
+            }
+          : {}),
         ...(space ? { space_id: space } : {}),
       };
       if (demoMode) {
@@ -247,7 +266,14 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
           )
             throw new Error("Esta compra já tem uma despesa vinculada.");
           list = list.map((i) =>
-            i.id === d.data!.sourceId ? { ...i, done: true } : i,
+            i.id === d.data!.sourceId
+              ? {
+                  ...i,
+                  done: true,
+                  updated_by_slot: 0 as const,
+                  updated_at: new Date().toISOString(),
+                }
+              : i,
           );
         }
         if (
@@ -288,7 +314,12 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         const list = readEntries(localStorage.getItem(STORAGE_KEY));
         const current = list.find((i) => i.id === e.id);
         if (!current) throw new Error("Registro não encontrado.");
-        const changed = { ...current, ...d };
+        const changed = {
+          ...current,
+          ...d,
+          updated_by_slot: 0 as const,
+          updated_at: new Date().toISOString(),
+        };
         const changedList = list.map((i) => (i.id === e.id ? changed : i));
         writeLocal(
           !current.done && d.done
@@ -315,12 +346,24 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         if (!current) throw new Error("Registro não encontrado.");
         const done = !current.done;
         const next = done ? successor(current, preferences.names) : null;
-        list = list.map((i) => (i.id === e.id ? { ...i, done } : i));
+        list = list.map((i) =>
+          i.id === e.id
+            ? {
+                ...i,
+                done,
+                updated_by_slot: 0 as const,
+                updated_at: new Date().toISOString(),
+              }
+            : i,
+        );
         if (next && !list.some((i) => i.occurrence_from === e.id))
           list.unshift({
             ...next,
             id: crypto.randomUUID(),
             created_at: new Date().toISOString(),
+            created_by_slot: 0 as const,
+            updated_by_slot: 0 as const,
+            updated_at: new Date().toISOString(),
             occurrence_from: e.id,
           });
         writeLocal(list);
@@ -361,6 +404,8 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         throw new Error(
           "Informe dois nomes diferentes, com até 60 caracteres.",
         );
+      if (!p.title.trim() || p.title.length > 80)
+        throw new Error("Informe um nome para o espaço com até 80 caracteres.");
       if (p.photo && !p.photo.startsWith("data:image/jpeg;base64,"))
         throw new Error("Formato de foto inválido.");
       if (p.photo.length > 400000)
@@ -385,7 +430,12 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
           .from("spaces")
           .update({
             names: p.names,
-            preferences: { since: p.since, photo: p.photo, budgets: p.budgets },
+            preferences: {
+              title: p.title,
+              since: p.since,
+              photo: p.photo,
+              budgets: p.budgets,
+            },
           })
           .eq("id", space)
           .select("id")
@@ -422,6 +472,10 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         error,
         demo: demoMode,
         user,
+        spaceId: space,
+        memberCount,
+        memberSlot,
+        openLobby: () => setLobbyOpen(true),
         add,
         update,
         toggle,
@@ -435,27 +489,60 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      {children}
+      {(!demoMode && (lobbyOpen || !space)) || (demoMode && lobbyOpen) ? (
+        <Lobby
+          loading={!membershipLoaded}
+          onEnter={() => setLobbyOpen(false)}
+        />
+      ) : (
+        children
+      )}
     </Data.Provider>
   );
 }
 function Login() {
-  const [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
-  async function login(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  const [signup, setSignup] = useState(false),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
+    [message, setMessage] = useState("");
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError("");
-    const f = new FormData(e.currentTarget);
+    setMessage("");
+    const f = new FormData(event.currentTarget);
+    const email = String(f.get("email") || "").trim(),
+      password = String(f.get("password") || "");
     try {
-      const { error } = await supabase!.auth.signInWithPassword({
-        email: String(f.get("email")),
-        password: String(f.get("password")),
-      });
-      if (error)
-        setError("Não foi possível entrar. Confira seu e-mail e senha.");
-    } catch {
-      setError("Conexão indisponível. Tente novamente.");
+      if (signup) {
+        const { data, error } = await supabase!.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { display_name: String(f.get("name") || "").trim() },
+          },
+        });
+        if (error)
+          throw new Error(
+            "Não foi possível criar a conta. Confira os dados ou tente novamente.",
+          );
+        if (!data.session)
+          setMessage(
+            "Confira seu e-mail para confirmar o cadastro. Depois, entre com sua senha. Se já tem conta, use Entrar.",
+          );
+      } else {
+        const { error } = await supabase!.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error)
+          throw new Error(
+            "Não foi possível entrar. Confira e-mail, senha e a confirmação do cadastro.",
+          );
+      }
+    } catch (e) {
+      setError((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -466,10 +553,55 @@ function Login() {
         <Heart fill="currentColor" />
         dengo<span>um lugar para nós</span>
       </div>
-      <form className="panel login-form" onSubmit={login}>
+      <form
+        key={signup ? "signup" : "login"}
+        className="panel login-form"
+        onSubmit={submit}
+      >
+        <div className="filters">
+          <button
+            type="button"
+            aria-pressed={!signup}
+            className={!signup ? "selected" : ""}
+            onClick={() => {
+              setSignup(false);
+              setError("");
+              setMessage("");
+            }}
+          >
+            Entrar
+          </button>
+          <button
+            type="button"
+            aria-pressed={signup}
+            className={signup ? "selected" : ""}
+            onClick={() => {
+              setSignup(true);
+              setError("");
+              setMessage("");
+            }}
+          >
+            Criar minha conta
+          </button>
+        </div>
         <LockKeyhole />
-        <h1>Que bom ter você aqui.</h1>
-        <p>Entre para cuidar do cotidiano a dois.</p>
+        <h1>{signup ? "Seu acesso, só seu." : "Que bom ter você aqui."}</h1>
+        <p>
+          {signup
+            ? "Depois do cadastro, crie o espaço do casal ou aceite um convite."
+            : "Entre na sua conta e escolha o espaço do casal."}
+        </p>
+        {signup ? (
+          <label>
+            Seu nome
+            <input
+              name="name"
+              required
+              maxLength={60}
+              autoComplete="nickname"
+            />
+          </label>
+        ) : null}
         <label>
           E-mail
           <input name="email" type="email" autoComplete="username" required />
@@ -479,20 +611,34 @@ function Login() {
           <input
             name="password"
             type="password"
-            autoComplete="current-password"
+            autoComplete={signup ? "new-password" : "current-password"}
+            minLength={signup ? 8 : undefined}
             required
           />
+          {signup ? <small>Use pelo menos 8 caracteres.</small> : null}
         </label>
         {error ? (
           <p role="alert" className="error">
             {error}
           </p>
         ) : null}
+        {message ? (
+          <p role="status" className="notice">
+            {message}
+          </p>
+        ) : null}
         <button className="primary" disabled={busy}>
           <LogIn size={18} />
-          {busy ? "Entrando…" : "Entrar no nosso espaço"}
+          {busy
+            ? "Aguarde…"
+            : signup
+              ? "Criar minha conta"
+              : "Entrar na minha conta"}
         </button>
-        <small>Espaço privado. Apenas contas autorizadas.</small>
+        <small>
+          Cada pessoa tem seu login. Os dados só são compartilhados ao criar ou
+          entrar em um casal.
+        </small>
       </form>
     </main>
   );

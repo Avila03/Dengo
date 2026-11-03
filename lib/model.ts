@@ -38,18 +38,33 @@ export type Entry = {
   created_at: string;
   data?: Details;
   occurrence_from?: string | null;
+  created_by?: string | null;
+  updated_by?: string | null;
+  created_by_slot?: 0 | 1 | null;
+  updated_by_slot?: 0 | 1 | null;
+  updated_at?: string | null;
 };
 export type Draft = Omit<
   Entry,
-  "id" | "created_at" | "space_id" | "occurrence_from"
+  | "id"
+  | "created_at"
+  | "space_id"
+  | "occurrence_from"
+  | "created_by"
+  | "updated_by"
+  | "created_by_slot"
+  | "updated_by_slot"
+  | "updated_at"
 >;
 export type Preferences = {
+  title: string;
   names: [string, string];
   since: string;
   photo: string;
   budgets: Record<string, number>;
 };
 export const DEFAULT_PREFS: Preferences = {
+  title: "Nosso cantinho",
   names: ["Eu", "Meu amor"],
   since: "",
   photo: "",

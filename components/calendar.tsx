@@ -11,6 +11,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { EntryAudit } from "./entry-audit";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
 import { type Entry, type Draft, localToday, dayLabel } from "@/lib/model";
@@ -267,6 +268,7 @@ export function Calendar() {
                   {e.data?.time || "Dia inteiro"} · {e.assignee}
                 </p>
                 {e.data?.location ? <p>{e.data.location}</p> : null}
+                <EntryAudit entry={e} />
                 <div className="row-actions">
                   <a
                     className="text-link"

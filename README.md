@@ -2,8 +2,12 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
-## Entrega 0.2
+## Entrega 0.3 — lobby do casal
 
+- **Login individual:** cadastro e entrada com e-mail/senha. Cada pessoa tem sua própria conta. O projeto está com cadastro habilitado e confirmação de e-mail ativa; entrega e links de confirmação dependem da configuração de Auth na hospedagem.
+- **Lobby do casal:** após entrar na conta, criar um espaço com nome próprio ou aceitar convite. Depois, escolher entrar no espaço. Quem já pertence a um casal vê o cartão do casal; uma conta pertence a um único espaço nesta versão.
+- **Convite privado:** criado somente pela primeira pessoa, uso único, validade de sete dias, regeneração invalida o anterior e limite obrigatório de duas pessoas. Copiar o link não envia mensagem automaticamente. Após sair do lobby, é possível gerar outro convite; o token anterior não é guardado em texto no banco.
+- **Autoria:** o banco registra criador, última pessoa que alterou e data de alteração, separados do responsável e pagador. Os metadados não podem ser falsificados pelo cliente. Registros anteriores à atualização não recebem autoria inventada. A interface mostra o autor e os detalhes da última alteração, não um histórico completo de versões.
 - **Nosso dia:** resumo real das compras e tarefas, próximos encontros e atalhos.
 - **Compras:** adicionar, editar, concluir, reabrir e excluir. Transformar em despesa preserva a descrição e impede lançamento duplicado.
 - **Responsabilidades:** responsável, prazo, edição, busca e filtros. Repetições diárias, semanais e mensais com alternância opcional. Concluir cria a próxima ocorrência; reabrir e concluir de novo não duplica a próxima.
@@ -45,16 +49,22 @@ npm run build
 
 Projeto: `jgntmeifdaghykiodfee`, região São Paulo, separado do Mesa Marcada.
 
-A estrutura e as políticas já foram aplicadas nesse projeto. **Não executar setup.sql novamente nele.** O arquivo é uma referência para inicialização de outro banco vazio. Há um espaço vazio criado, ainda sem contas reais vinculadas.
+A estrutura e as políticas de `setup.sql` e `lobby.sql` já foram aplicadas nesse projeto. **Não executar esses scripts novamente nele.** Para outro banco vazio, executar `setup.sql` e depois `lobby.sql`.
 
 Para ativar o uso do casal:
 
-1. Em Supabase Authentication > Users, criar e confirmar manualmente duas contas com e-mail e senha. Desabilitar cadastro público no painel. Mesmo antes disso, uma conta sem membership não pode acessar dados do casal.
-2. Preencher os dois e-mails e o nome da segunda pessoa em `supabase/connect_accounts.sql` e executar no SQL Editor. Não colocar senhas em SQL nem no repositório.
-3. Configurar as variáveis de `.env.example` na hospedagem, mantendo `NEXT_PUBLIC_DEMO_MODE=false`.
-4. Entrar com ambas as contas, em navegadores diferentes, e conferir o compartilhamento.
+1. Configurar as variáveis de `.env.example` na hospedagem, mantendo `NEXT_PUBLIC_DEMO_MODE=false`.
+2. Em Supabase Auth > URL Configuration, configurar o endereço publicado como Site URL e Redirect URL. Manter cadastro por e-mail habilitado se for usar a tela Criar minha conta. Conferir a entrega da confirmação: o provedor padrão pode limitar os destinatários; alternativamente, o administrador pode criar e confirmar as duas contas pelo painel.
+3. Cada pessoa cria sua conta individual no Dengo e confirma o e-mail quando solicitado.
+4. A primeira pessoa escolhe Criar nosso espaço e gera o convite no lobby.
+5. A segunda pessoa entra na própria conta e aceita o convite por link ou código.
+6. Ambas abrem o cartão do casal e acessam o mesmo espaço, com registros identificados por autoria.
 
-As políticas foram verificadas com usuários temporários em transação revertida: acesso dos dois membros, bloqueio de usuário externo, bloqueio de alteração de membership pelo cliente, recorrência sem duplicidade e conversão atômica de compra em despesa. O advisor de segurança não apontou problemas. Isso não substitui o teste final de login e navegador com as contas reais.
+Não é mais necessário vincular contas por SQL no fluxo normal. `connect_accounts.sql` fica apenas como referência de recuperação administrativa. O cadastro não dá acesso a nenhum casal existente: somente criar seu próprio espaço ou aceitar um convite válido concede vínculo.
+
+Os métodos privilegiados de onboarding ficam no schema não exposto `dengo_private`, com search_path vazio, verificação explícita de auth.uid(), travas transacionais, permissões limitadas e wrappers públicos invoker. Convites ficam apenas como hash SHA-256 e não são consultáveis pelos clientes. As demais gravações continuam sob RLS. `Referrer-Policy: no-referrer` evita encaminhar o link de convite como referenciador a sites externos.
+
+As políticas foram verificadas com usuários temporários em transação revertida: acesso dos dois membros, bloqueio de usuário externo, bloqueio de alteração de membership pelo cliente, recorrência sem duplicidade e conversão atômica de compra em despesa. O advisor de segurança não apontou problemas. Também foram testados criação do lobby, rotação/expiração/uso único de convite, rejeição de terceira pessoa e proteção contra falsificar autoria. Os testes SQL estão em `tests/database.sql` e `tests/lobby.sql` e revertem todas as fixtures. Isso não substitui o teste final de login e navegador com as contas reais.
 
 ## Ativar o catálogo TMDB
 
@@ -74,5 +84,6 @@ Importar `Avila03/Dengo` com o preset Next.js e configurar as variáveis acima. 
 - Registrar uma despesa recorrente já paga cria a próxima pendente. A compra que originou a primeira despesa não é vinculada às repetições seguintes.
 - Ao atualizar o nome de alguém, os responsáveis com o nome anterior são atualizados. Os campos de pagador e a divisão financeira usam índices estáveis.
 - O orçamento do lugar é estimativo e não vira gasto automaticamente. Não há reserva de estabelecimento, pagamento, integração bancária, receita, meta de poupança, envio de mensagens ou upload de fotos dos passeios.
+- Não há saída, troca ou exclusão de casal pelo app nesta versão. Uma conta fica vinculada a um espaço; o administrador pode auxiliar na recuperação.
 - A exportação JSON é uma cópia manual. Importação e backup automático ainda não estão disponíveis. Recuperação de senha é administrativa nesta versão.
 - O plano gratuito tem cotas e pode pausar por pouca atividade. Teste visual e end-to-end no navegador ainda pendente: a prévia gerenciada não aceitou os argumentos do servidor Next.js.
