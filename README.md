@@ -2,6 +2,11 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Entrega 0.4 — recuperação de acesso
+
+- **Esqueci minha senha:** solicitação de link por e-mail, tela dedicada para definir e confirmar nova senha e retorno ao login. O link depende da configuração de Redirect URLs do Supabase e da entrega de e-mails do projeto; não exige chave privada no navegador.
+- **Separação:** senha é individual, redefinir a senha não troca a pessoa de casal nem apaga registros.
+
 ## Entrega 0.3 — lobby do casal
 
 - **Login individual:** cadastro e entrada com e-mail/senha. Cada pessoa tem sua própria conta. O projeto está com cadastro habilitado e confirmação de e-mail ativa; entrega e links de confirmação dependem da configuração de Auth na hospedagem.
@@ -55,10 +60,11 @@ Para ativar o uso do casal:
 
 1. Configurar as variáveis de `.env.example` na hospedagem, mantendo `NEXT_PUBLIC_DEMO_MODE=false`.
 2. Em Supabase Auth > URL Configuration, configurar o endereço publicado como Site URL e Redirect URL. Manter cadastro por e-mail habilitado se for usar a tela Criar minha conta. Conferir a entrega da confirmação: o provedor padrão pode limitar os destinatários; alternativamente, o administrador pode criar e confirmar as duas contas pelo painel.
-3. Cada pessoa cria sua conta individual no Dengo e confirma o e-mail quando solicitado.
-4. A primeira pessoa escolhe Criar nosso espaço e gera o convite no lobby.
-5. A segunda pessoa entra na própria conta e aceita o convite por link ou código.
-6. Ambas abrem o cartão do casal e acessam o mesmo espaço, com registros identificados por autoria.
+3. Adicionar https://SEU-DOMINIO/redefinir-senha à lista de Redirect URLs no Supabase Auth, além do domínio do aplicativo. O remetente padrão pode limitar envio; configurar SMTP se necessário.
+4. Cada pessoa cria sua conta individual no Dengo e confirma o e-mail quando solicitado.
+5. A primeira pessoa escolhe Criar nosso espaço e gera o convite no lobby.
+6. A segunda pessoa entra na própria conta e aceita o convite por link ou código.
+7. Ambas abrem o cartão do casal e acessam o mesmo espaço, com registros identificados por autoria.
 
 Não é mais necessário vincular contas por SQL no fluxo normal. `connect_accounts.sql` fica apenas como referência de recuperação administrativa. O cadastro não dá acesso a nenhum casal existente: somente criar seu próprio espaço ou aceitar um convite válido concede vínculo.
 
@@ -85,5 +91,5 @@ Importar `Avila03/Dengo` com o preset Next.js e configurar as variáveis acima. 
 - Ao atualizar o nome de alguém, os responsáveis com o nome anterior são atualizados. Os campos de pagador e a divisão financeira usam índices estáveis.
 - O orçamento do lugar é estimativo e não vira gasto automaticamente. Não há reserva de estabelecimento, pagamento, integração bancária, receita, meta de poupança, envio de mensagens ou upload de fotos dos passeios.
 - Não há saída, troca ou exclusão de casal pelo app nesta versão. Uma conta fica vinculada a um espaço; o administrador pode auxiliar na recuperação.
-- A exportação JSON é uma cópia manual. Importação e backup automático ainda não estão disponíveis. Recuperação de senha é administrativa nesta versão.
+- A exportação JSON é uma cópia manual. Importação e backup automático ainda não estão disponíveis. A recuperação de senha por e-mail foi adicionada na versão 0.4 e depende da configuração de redirecionamento e envio de e-mails do Supabase.
 - O plano gratuito tem cotas e pode pausar por pouca atividade. Teste visual e end-to-end no navegador ainda pendente: a prévia gerenciada não aceitou os argumentos do servidor Next.js.

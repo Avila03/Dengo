@@ -9,7 +9,9 @@ import {
 } from "react";
 import type { FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
-import { Heart, LockKeyhole, LogIn } from "lucide-react";
+import { Heart, LockKeyhole, LogIn, KeyRound, ArrowLeft } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { PasswordRecovery } from "./password-recovery";
 import { supabase, demoMode } from "@/lib/supabase";
 import { Lobby } from "./lobby";
 import { loadAllEntries } from "@/lib/records";
@@ -51,6 +53,7 @@ export function useDengo() {
   return v;
 }
 export function DengoProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null),
     [ready, setReady] = useState(false),
     [entries, setEntries] = useState<Entry[]>([]),
@@ -461,6 +464,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         <p>O acesso privado ainda precisa ser configurado.</p>
       </div>
     );
+  if (pathname === "/redefinir-senha") return <PasswordRecovery />;
   if (supabase && !user) return <Login />;
   return (
     <Data.Provider
@@ -502,6 +506,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
 }
 function Login() {
   const [signup, setSignup] = useState(false),
+    [recovery, setRecovery] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
@@ -515,7 +520,13 @@ function Login() {
     const email = String(f.get("email") || "").trim(),
       password = String(f.get("password") || "");
     try {
-      if (signup) {
+      if (recovery) {
+        const { error } = await supabase!.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/redefinir-senha`,
+        });
+        if (error) throw new Error("Não foi possível solicitar o link. Tente novamente mais tarde.");
+        setMessage("Se existir uma conta com esse e-mail, enviaremos um link para redefinir a senha. Confira também a pasta de spam.");
+      } else if (signup) {
         const { data, error } = await supabase!.auth.signUp({
           email,
           password,
@@ -554,17 +565,18 @@ function Login() {
         dengo<span>um lugar para nós</span>
       </div>
       <form
-        key={signup ? "signup" : "login"}
+        key={signup ? "signup" : recovery ? "recovery" : "login"}
         className="panel login-form"
         onSubmit={submit}
       >
-        <div className="filters">
+        {!recovery ? <div className="filters">
           <button
             type="button"
             aria-pressed={!signup}
             className={!signup ? "selected" : ""}
             onClick={() => {
               setSignup(false);
+              setRecovery(false);
               setError("");
               setMessage("");
             }}
@@ -577,17 +589,18 @@ function Login() {
             className={signup ? "selected" : ""}
             onClick={() => {
               setSignup(true);
+              setRecovery(false);
               setError("");
               setMessage("");
             }}
           >
             Criar minha conta
           </button>
-        </div>
+        </div> : null}
         <LockKeyhole />
-        <h1>{signup ? "Seu acesso, só seu." : "Que bom ter você aqui."}</h1>
+        <h1>{recovery ? "Vamos recuperar seu acesso." : signup ? "Seu acesso, só seu." : "Que bom ter você aqui."}</h1>
         <p>
-          {signup
+          {recovery ? "Informe seu e-mail para receber um link seguro de redefinição." : signup
             ? "Depois do cadastro, crie o espaço do casal ou aceite um convite."
             : "Entre na sua conta e escolha o espaço do casal."}
         </p>
@@ -606,7 +619,7 @@ function Login() {
           E-mail
           <input name="email" type="email" autoComplete="username" required />
         </label>
-        <label>
+        {!recovery ? <label>
           Senha
           <input
             name="password"
@@ -616,7 +629,12 @@ function Login() {
             required
           />
           {signup ? <small>Use pelo menos 8 caracteres.</small> : null}
-        </label>
+        </label> : null}
+        {!signup && !recovery ? (
+          <button type="button" className="text-link" onClick={() => {setRecovery(true);setError("");setMessage("");}}>
+            <KeyRound size={15} /> Esqueci minha senha
+          </button>
+        ) : null}
         {error ? (
           <p role="alert" className="error">
             {error}
@@ -631,14 +649,18 @@ function Login() {
           <LogIn size={18} />
           {busy
             ? "Aguarde…"
+            : recovery ? "Enviar link de recuperação"
             : signup
               ? "Criar minha conta"
               : "Entrar na minha conta"}
         </button>
-        <small>
-          Cada pessoa tem seu login. Os dados só são compartilhados ao criar ou
-          entrar em um casal.
-        </small>
+        {recovery ? (
+          <button type="button" className="secondary" onClick={() => {setRecovery(false);setError("");setMessage("");}}>
+            <ArrowLeft size={16} /> Voltar ao login
+          </button>
+        ) : (
+          <small>Cada pessoa tem seu login. Os dados só são compartilhados ao criar ou entrar em um casal.</small>
+        )}
       </form>
     </main>
   );
