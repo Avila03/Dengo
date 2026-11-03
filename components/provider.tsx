@@ -539,8 +539,8 @@ function Login() {
             "Não foi possível criar a conta. Confira os dados ou tente novamente.",
           );
         if (!data.session)
-          setMessage(
-            "Confira seu e-mail para confirmar o cadastro. Depois, entre com sua senha. Se já tem conta, use Entrar.",
+          throw new Error(
+            "Não foi possível iniciar sua sessão automaticamente. Confira o e-mail e a senha e tente entrar.",
           );
       } else {
         const { error } = await supabase!.auth.signInWithPassword({
@@ -549,7 +549,7 @@ function Login() {
         });
         if (error)
           throw new Error(
-            "Não foi possível entrar. Confira e-mail, senha e a confirmação do cadastro.",
+            "Não foi possível entrar. Confira seu e-mail e sua senha.",
           );
       }
     } catch (e) {
@@ -601,7 +601,7 @@ function Login() {
         <h1>{recovery ? "Vamos recuperar seu acesso." : signup ? "Seu acesso, só seu." : "Que bom ter você aqui."}</h1>
         <p>
           {recovery ? "Informe seu e-mail para receber um link seguro de redefinição." : signup
-            ? "Depois do cadastro, crie o espaço do casal ou aceite um convite."
+            ? "Seu cadastro é imediato, sem confirmação de e-mail. Depois, crie o espaço do casal ou aceite um convite."
             : "Entre na sua conta e escolha o espaço do casal."}
         </p>
         {signup ? (
