@@ -1,4 +1,4 @@
-import { DEFAULT_CALENDAR_TOPICS, type CalendarTopic } from "./calendar-topics";
+import { DEFAULT_CALENDAR_TOPICS, type CalendarTopic } from "./calendar-topics.ts";
 export type Kind =
   "shopping" | "task" | "expense" | "transfer" | "event" | "movie" | "place";
 export type Details = {
