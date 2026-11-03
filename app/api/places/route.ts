@@ -52,9 +52,11 @@ export async function GET(request: NextRequest) {
         if (now - time > 120000) recentRequests.delete(id);
     }
     try {
+      // A instância pública do Photon nem sempre inclui o idioma "pt":
+      // forçar lang=pt pode resultar em HTTP 400 (Bad Request).
+      // Deixamos o serviço escolher seu idioma padrão.
       const params = new URLSearchParams({
         q: city ? search + ", " + city : search,
-        lang: "pt",
         limit: "8",
       });
       const response = await fetch("https://photon.komoot.io/api?" + params, {
@@ -65,11 +67,19 @@ export async function GET(request: NextRequest) {
         signal: AbortSignal.timeout(9000),
         next: { revalidate: 3600 },
       });
-      if (!response.ok)
+      if (!response.ok) {
+        // Não expor detalhes internos do provedor; manter o cadastro manual.
+        const unavailable = response.status === 429 || response.status >= 500;
         return NextResponse.json(
-          { error: "A busca gratuita está temporariamente indisponível. Tente novamente ou cadastre manualmente." },
+          {
+            code: unavailable ? "SEARCH_PROVIDER_UNAVAILABLE" : "SEARCH_PROVIDER_REJECTED",
+            error: unavailable
+              ? "O serviço gratuito de mapas não respondeu agora. Tente novamente em instantes ou adicione o lugar manualmente."
+              : "A busca foi recusada pelo serviço de mapas. Tente um nome mais curto ou use o cadastro manual.",
+          },
           { status: 502 },
         );
+      }
       const payload: unknown = await response.json();
       return NextResponse.json(
         { results: normalizePhotonPlaces(payload), provider: "openstreetmap" },
