@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { normalizeGooglePlaces, normalizePhotonPlaces } from "@/lib/places";
+import { normalizeGooglePlaces, normalizePhotonPlaces, normalizeOverpassPlaces, photonCategoryFilter, overpassSearchQuery, isPlaceCategory } from "@/lib/places";
 
 export const dynamic = "force-dynamic";
 const recentRequests = new Map<string, number>();
@@ -8,6 +8,8 @@ const recentRequests = new Map<string, number>();
 export async function GET(request: NextRequest) {
   const search = request.nextUrl.searchParams.get("q")?.trim() ?? "";
   const city = request.nextUrl.searchParams.get("city")?.trim() ?? "";
+  const categoryParam = request.nextUrl.searchParams.get("category") || "all";
+  if (!isPlaceCategory(categoryParam)) return NextResponse.json({ error: "Categoria inválida." }, { status: 400 });
   if (search.length < 2 || search.length > 100 || city.length > 80)
     return NextResponse.json(
       { error: "Digite um nome entre 2 e 100 caracteres e uma cidade de até 80 caracteres." },
@@ -51,46 +53,59 @@ export async function GET(request: NextRequest) {
       for (const [id, time] of recentRequests)
         if (now - time > 120000) recentRequests.delete(id);
     }
+    let results = normalizePhotonPlaces([]);
+    let providerResponded = false;
     try {
-      // A instância pública do Photon nem sempre inclui o idioma "pt":
-      // forçar lang=pt pode resultar em HTTP 400 (Bad Request).
-      // Deixamos o serviço escolher seu idioma padrão.
       const params = new URLSearchParams({
         q: city ? search + ", " + city : search,
         limit: "8",
+        include: photonCategoryFilter(categoryParam),
       });
-      const response = await fetch("https://photon.komoot.io/api?" + params, {
-        headers: {
-          "User-Agent": "DengoCouples/0.7 (+https://dengo-mesamarcada.vercel.app)",
-          Accept: "application/json",
-        },
-        signal: AbortSignal.timeout(9000),
-        next: { revalidate: 3600 },
+      const response = await fetch("https://photon.komoot.io/api?" + params.toString(), {
+        headers: { "User-Agent": "DengoCouples/0.8 (+https://dengo-mesamarcada.vercel.app)", Accept: "application/json" },
+        signal: AbortSignal.timeout(6500),
+        next: { revalidate: 1800 },
       });
-      if (!response.ok) {
-        // Não expor detalhes internos do provedor; manter o cadastro manual.
-        const unavailable = response.status === 429 || response.status >= 500;
-        return NextResponse.json(
-          {
-            code: unavailable ? "SEARCH_PROVIDER_UNAVAILABLE" : "SEARCH_PROVIDER_REJECTED",
-            error: unavailable
-              ? "O serviço gratuito de mapas não respondeu agora. Tente novamente em instantes ou adicione o lugar manualmente."
-              : "A busca foi recusada pelo serviço de mapas. Tente um nome mais curto ou use o cadastro manual.",
-          },
-          { status: 502 },
-        );
+      if (response.ok) {
+        providerResponded = true;
+        results = normalizePhotonPlaces(await response.json());
       }
-      const payload: unknown = await response.json();
-      return NextResponse.json(
-        { results: normalizePhotonPlaces(payload), provider: "openstreetmap" },
-        { headers: { "Cache-Control": "private, no-store" } },
-      );
     } catch {
+      // Photon is a best-effort public instance.
+    }
+    if (!results.length && city.trim()) {
+      try {
+        // Always bound Overpass to a named municipality; never scan the planet.
+        const query = overpassSearchQuery(search, city, categoryParam);
+        const response = await fetch("https://overpass.private.coffee/api/interpreter", {
+          method: "POST",
+          body: new URLSearchParams({ data: query }),
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "DengoCouples/0.8 (+https://dengo-mesamarcada.vercel.app)",
+            Accept: "application/json",
+          },
+          signal: AbortSignal.timeout(9500),
+          cache: "no-store",
+        });
+        if (response.ok) {
+          const fallback = normalizeOverpassPlaces(await response.json());
+          providerResponded = true;
+          if (fallback.length) results = fallback;
+        }
+      } catch {
+        // Public Overpass instances may throttle; users can use a Maps URL.
+      }
+    }
+    if (!results.length && !providerResponded)
       return NextResponse.json(
-        { error: "Não foi possível consultar o mapa agora. Você ainda pode adicionar o lugar manualmente." },
+        { error: "Os serviços gratuitos estão indisponíveis agora. Use a busca direta do Google Maps ou o cadastro manual." },
         { status: 502 },
       );
-    }
+    return NextResponse.json(
+      { results, provider: "openstreetmap" },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
   }
 
   try {
@@ -102,7 +117,7 @@ export async function GET(request: NextRequest) {
         "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.primaryTypeDisplayName",
       },
       body: JSON.stringify({
-        textQuery: city ? search + ", " + city : search,
+        textQuery: search + (categoryParam === "all" ? "" : " " + categoryParam) + (city ? ", " + city : ""),
         languageCode: "pt-BR",
         regionCode: "BR",
         pageSize: 8,

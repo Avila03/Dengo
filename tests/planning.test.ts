@@ -14,7 +14,7 @@ import {
   calendarEntries,
 } from "../lib/calendar.ts";
 import { normalizeMovies } from "../lib/movies.ts";
-import { normalizeGooglePlaces, googlePlaceMapsUrl, googleMapsEmbedUrl, normalizePhotonPlaces, openStreetMapEmbedUrl } from "../lib/places.ts";
+import { normalizeGooglePlaces, googlePlaceMapsUrl, googleMapsEmbedUrl, normalizePhotonPlaces, openStreetMapEmbedUrl, photonCategoryFilter, overpassSearchQuery, normalizeOverpassPlaces } from "../lib/places.ts";
 const task: Entry = {
   id: "abc",
   kind: "task",
@@ -154,4 +154,22 @@ test("Photon search returns stable OSM IDs and map coordinates", () => {
   const url = new URL(openStreetMapEmbedUrl(results[0].lat, results[0].lon));
   assert.equal(url.searchParams.get("marker"), "-30,-51.2");
   assert.equal(openStreetMapEmbedUrl(999, 0), "");
+});
+
+test("restaurant, bar and café search categories select OSM POIs", () => {
+  assert.match(photonCategoryFilter("restaurant"), /osm\.amenity\.restaurant/);
+  assert.match(photonCategoryFilter("bar"), /osm\.amenity\.pub/);
+  assert.match(photonCategoryFilter("cafe"), /osm\.amenity\.cafe/);
+  const query = overpassSearchQuery("Espartano", "Porto Alegre, RS", "restaurant");
+  assert.match(query, /area\["name"="Porto Alegre"\]/);
+  assert.match(query, /amenity/);
+});
+test("Overpass results normalize nodes and way centers", () => {
+  const places = normalizeOverpassPlaces({ elements: [
+    { type: "node", id: 1234, lat: -30.01, lon: -51.21, tags: { name: "Espartano", amenity: "restaurant", "addr:city": "Porto Alegre" } },
+    { type: "way", id: 5678, center: { lat: -30.03, lon: -51.2 }, tags: { name: "Café", amenity: "cafe" } },
+  ] });
+  assert.equal(places.length, 2);
+  assert.equal(places[0].id, "osm_n_1234");
+  assert.equal(places[1].title, "Café");
 });

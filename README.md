@@ -2,6 +2,14 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Entrega 0.8 — locais específicos para encontros
+
+- Busca por nome, cidade e categoria: Restaurantes, Cafés, Bares, Hamburguerias, Pizzarias e Padarias.
+- Photon filtra estabelecimentos pelas categorias do OpenStreetMap. Quando não houver resultados e a cidade estiver informada, tenta Overpass, restrito ao município.
+- Se a pesquisa gratuita não encontrar um local, um link abre a busca já preenchida no Google Maps, sem chave ou contratação de API.
+- Lugares encontrados continuam com mapa e marcador, notas, orçamento, status de visita e calendário.
+- Photon e Overpass são serviços públicos de melhor esforço; cobertura incompleta, limites de frequência e indisponibilidades podem ocorrer.
+
 ## Entrega 0.7 — alternativa gratuita de lugares
 
 - **Sem criar contas externas:** caso não exista chave GOOGLE_PLACES_API_KEY na hospedagem, o Dengo usa o Photon (dados do OpenStreetMap) para pesquisar estabelecimentos por nome e cidade.

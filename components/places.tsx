@@ -18,7 +18,7 @@ import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
 import type { Entry, Draft } from "@/lib/model";
 import { mapsUrl } from "@/lib/calendar";
-import { googleMapsEmbedUrl, googlePlaceMapsUrl, openStreetMapEmbedUrl, type PlaceSearchResult, type OpenStreetMapPlace } from "@/lib/places";
+import { googleMapsEmbedUrl, googlePlaceMapsUrl, openStreetMapEmbedUrl, PLACE_CATEGORIES, type PlaceCategory, type PlaceSearchResult, type OpenStreetMapPlace } from "@/lib/places";
 import { supabase } from "@/lib/supabase";
 import { money, parseMoney } from "@/lib/finance";
 export function Places() {
@@ -29,6 +29,7 @@ export function Places() {
     [error, setError] = useState(""),
     [term, setTerm] = useState(""),
     [city, setCity] = useState(""),
+    [category, setCategory] = useState<PlaceCategory>("all"),
     [results, setResults] = useState<PlaceSearchResult[]>([]),
     [searchError, setSearchError] = useState(""),
     [searching, setSearching] = useState(false),
@@ -55,7 +56,7 @@ export function Places() {
       const { data } = supabase
         ? await supabase.auth.getSession()
         : { data: { session: null } };
-      const query = new URLSearchParams({ q: term.trim() });
+      const query = new URLSearchParams({ q: term.trim(), category });
       if (city.trim()) query.set("city", city.trim());
       const response = await fetch("/api/places?" + query.toString(), {
         headers: data.session ? { Authorization: "Bearer " + data.session.access_token } : {},
@@ -164,12 +165,26 @@ export function Places() {
               onChange={(event) => setCity(event.target.value)}
               placeholder="Ex.: Porto Alegre" />
           </label>
+          <label>
+            Tipo de lugar
+            <select value={category} onChange={(event) => setCategory(event.target.value as PlaceCategory)}>
+              {Object.entries(PLACE_CATEGORIES).map(([key, name]) => (
+                <option key={key} value={key}>{name}</option>
+              ))}
+            </select>
+          </label>
           <button type="submit" className="primary" disabled={searching || term.trim().length < 2}>
             {searching ? <LoaderCircle size={17} className="places-search-spin" /> : <Search size={17} />}
             {searching ? "Buscando…" : "Pesquisar"}
           </button>
         </form>
-        <small>Pesquisa gratuita, sem conta ou cartão, com dados do OpenStreetMap. Nem todos os estabelecimentos estão cadastrados. © OpenStreetMap contributors.</small>
+        <small>Pesquisa de restaurantes, cafés, bares e outros locais para encontros · © OpenStreetMap contributors. A cobertura pode ser menor que a do Google.</small>
+        <div className="places-search-external">
+          <a className="text-link" href={mapsUrl([term.trim(), category === "all" ? "" : PLACE_CATEGORIES[category], city.trim()].filter(Boolean).join(", "))}
+            target="_blank" rel="noopener noreferrer">
+            Não encontrou? Abrir busca no Google Maps <ExternalLink size={15} />
+          </a>
+        </div>
         {searchError ? <div className="notice" role="status">{searchError}</div> : null}
         {results.length > 0 ? (
           <div className="places-search-results">
@@ -259,12 +274,17 @@ export function Places() {
               Tipo
               <select
                 name="category"
-                defaultValue={editing?.data?.category || "Passeio"}
+                defaultValue={editing?.data?.category ||
+                  ({ all: "Passeio", restaurant: "Restaurante", cafe: "Café", bar: "Bar", burger: "Hamburgueria", pizza: "Pizzaria", bakery: "Padaria" } as Record<PlaceCategory,string>)[category]}
               >
                 {[
                   "Passeio",
                   "Restaurante",
                   "Café",
+                  "Bar",
+                  "Hamburgueria",
+                  "Pizzaria",
+                  "Padaria",
                   "Viagem",
                   "Natureza",
                   "Outros",

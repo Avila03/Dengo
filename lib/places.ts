@@ -122,3 +122,85 @@ export function openStreetMapEmbedUrl(lat: number | undefined, lon: number | und
       marker: String(lat) + "," + String(lon),
     }).toString();
 }
+
+export const PLACE_CATEGORIES = {
+  all: "Todos",
+  restaurant: "Restaurantes",
+  cafe: "Cafés",
+  bar: "Bares",
+  burger: "Hamburguerias",
+  pizza: "Pizzarias",
+  bakery: "Padarias",
+} as const;
+export type PlaceCategory = keyof typeof PLACE_CATEGORIES;
+export function isPlaceCategory(value: string): value is PlaceCategory {
+  return Object.prototype.hasOwnProperty.call(PLACE_CATEGORIES, value);
+}
+export function photonCategoryFilter(category: PlaceCategory): string {
+  const choices: Record<PlaceCategory, string> = {
+    all: "osm.amenity.restaurant,osm.amenity.cafe,osm.amenity.bar,osm.amenity.pub,osm.amenity.fast_food,osm.shop.bakery",
+    restaurant: "osm.amenity.restaurant",
+    cafe: "osm.amenity.cafe,osm.shop.coffee",
+    bar: "osm.amenity.bar,osm.amenity.pub,osm.amenity.biergarten",
+    burger: "osm.amenity.fast_food,osm.amenity.restaurant",
+    pizza: "osm.amenity.restaurant,osm.amenity.fast_food",
+    bakery: "osm.shop.bakery,osm.shop.confectionery",
+  };
+  return choices[category];
+}
+export function overpassSearchQuery(name: string, city: string, category: PlaceCategory): string {
+  // Allow only letters, numbers, spaces and dashes, preventing Overpass regex injection.
+  const safeName = name.replace(/[^\p{L}\p{N} -]/gu, " ").trim().slice(0, 80);
+  const safeCity = city.split(",")[0].trim();
+  const pattern = JSON.stringify(safeName);
+  const area = 'area["name"=' + JSON.stringify(safeCity) + ']["boundary"="administrative"]["admin_level"="8"]->.city;';
+  const amenity: Record<PlaceCategory, string> = {
+    all: '["amenity"~"^(restaurant|cafe|bar|pub|fast_food|biergarten)$"]',
+    restaurant: '["amenity"="restaurant"]',
+    cafe: '["amenity"="cafe"]',
+    bar: '["amenity"~"^(bar|pub|biergarten)$"]',
+    burger: '["amenity"~"^(fast_food|restaurant)$"]',
+    pizza: '["amenity"~"^(fast_food|restaurant)$"]',
+    bakery: '["shop"~"^(bakery|confectionery)$"]',
+  };
+  const main = 'nwr(area.city)["name"~' + pattern + ',i]' + amenity[category] + ';';
+  const bakery = category === "all"
+    ? 'nwr(area.city)["name"~' + pattern + ',i]["shop"~"^(bakery|confectionery)$"];'
+    : "";
+  return ['[out:json][timeout:12];',area,'(',main,bakery,');','out center 8;'].join("\n");
+}
+export function normalizeOverpassPlaces(payload: unknown): OpenStreetMapPlace[] {
+  if (!payload || typeof payload !== "object" || !("elements" in payload)) return [];
+  const data = (payload as { elements?: unknown }).elements;
+  if (!Array.isArray(data)) return [];
+  const seen = new Set<string>();
+  const items: OpenStreetMapPlace[] = [];
+  for (const element of data) {
+    if (!element || typeof element !== "object") continue;
+    const e = element as Record<string, unknown>;
+    const kind = String(e.type);
+    const tag = kind === "node" ? "n" : kind === "way" ? "w" : kind === "relation" ? "r" : "";
+    if (!tag || !/^\d+$/.test(String(e.id))) continue;
+    const tags = e.tags && typeof e.tags === "object" ? e.tags as Record<string, unknown> : {};
+    const center = e.center && typeof e.center === "object" ? e.center as Record<string, unknown> : {};
+    const lat = typeof e.lat === "number" ? e.lat : Number(center.lat);
+    const lon = typeof e.lon === "number" ? e.lon : Number(center.lon);
+    const title = typeof tags.name === "string" ? tags.name.trim() : "";
+    if (!title || !validCoordinates(lat, lon)) continue;
+    const id = "osm_" + tag + "_" + String(e.id);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const address = [
+      typeof tags["addr:street"] === "string" && typeof tags["addr:housenumber"] === "string"
+        ? tags["addr:street"] + ", " + tags["addr:housenumber"] : tags["addr:street"],
+      tags["addr:suburb"], tags["addr:city"],
+    ].filter((value): value is string => typeof value === "string" && !!value.trim()).join(", ");
+    items.push({
+      id, title: title.slice(0,120), address: address.slice(0,240) || title,
+      category: String(tags.amenity || tags.shop || "").slice(0,80),
+      source: "openstreetmap", lat, lon,
+    });
+    if (items.length >= 8) break;
+  }
+  return items;
+}

@@ -2055,7 +2055,9 @@ progress {
 .places-search-panel { margin-bottom: 22px; }
 .places-search-panel h2 { font-size: 25px; }
 .places-search-panel > small { font-size: 11px; color: var(--muted); display: block; margin-top: 12px; }
-.places-search-form { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 13px; }
+.places-search-form { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) 160px auto; align-items: end; gap: 13px; }
+.places-search-external { margin-top: 12px; }
+.places-search-external .text-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
 .places-search-form .primary { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
 .places-search-spin { animation: dengo-catalog-spin 1s linear infinite; }
 .places-search-results { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 20px; }
