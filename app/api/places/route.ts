@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { normalizeGooglePlaces } from "@/lib/places";
+import { normalizeGooglePlaces, normalizePhotonPlaces } from "@/lib/places";
 
 export const dynamic = "force-dynamic";
+const recentRequests = new Map<string, number>();
 
 export async function GET(request: NextRequest) {
   const search = request.nextUrl.searchParams.get("q")?.trim() ?? "";
@@ -37,11 +38,50 @@ export async function GET(request: NextRequest) {
       { status: 403 },
     );
   const placesKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!placesKey)
-    return NextResponse.json(
-      { error: "Falta ativar a chave do Google Places no Dengo. O cadastro manual continua disponível.", code: "GOOGLE_NOT_CONFIGURED" },
-      { status: 503 },
-    );
+  if (!placesKey) {
+    // Rate-limited for the small personal app; public Photon is a best-effort demo.
+    const now = Date.now();
+    if (now - (recentRequests.get(data.user.id) ?? 0) < 3000)
+      return NextResponse.json(
+        { error: "Aguarde alguns segundos antes de pesquisar novamente." },
+        { status: 429 },
+      );
+    recentRequests.set(data.user.id, now);
+    if (recentRequests.size > 250) {
+      for (const [id, time] of recentRequests)
+        if (now - time > 120000) recentRequests.delete(id);
+    }
+    try {
+      const params = new URLSearchParams({
+        q: city ? search + ", " + city : search,
+        lang: "pt",
+        limit: "8",
+      });
+      const response = await fetch("https://photon.komoot.io/api?" + params, {
+        headers: {
+          "User-Agent": "DengoCouples/0.7 (+https://dengo-mesamarcada.vercel.app)",
+          Accept: "application/json",
+        },
+        signal: AbortSignal.timeout(9000),
+        next: { revalidate: 3600 },
+      });
+      if (!response.ok)
+        return NextResponse.json(
+          { error: "A busca gratuita está temporariamente indisponível. Tente novamente ou cadastre manualmente." },
+          { status: 502 },
+        );
+      const payload: unknown = await response.json();
+      return NextResponse.json(
+        { results: normalizePhotonPlaces(payload), provider: "openstreetmap" },
+        { headers: { "Cache-Control": "private, no-store" } },
+      );
+    } catch {
+      return NextResponse.json(
+        { error: "Não foi possível consultar o mapa agora. Você ainda pode adicionar o lugar manualmente." },
+        { status: 502 },
+      );
+    }
+  }
 
   try {
     const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
