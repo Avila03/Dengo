@@ -11,6 +11,7 @@ import {
   Search,
   MapPinned,
   LoaderCircle,
+  Link2,
 } from "lucide-react";
 import { Shell } from "./shell";
 import { EntryAudit } from "./entry-audit";
@@ -18,7 +19,7 @@ import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
 import type { Entry, Draft } from "@/lib/model";
 import { mapsUrl } from "@/lib/calendar";
-import { googleMapsEmbedUrl, googlePlaceMapsUrl, openStreetMapEmbedUrl, PLACE_CATEGORIES, type PlaceCategory, type PlaceSearchResult, type OpenStreetMapPlace } from "@/lib/places";
+import { googleMapsEmbedUrl, googlePlaceMapsUrl, openStreetMapEmbedUrl, parseGoogleMapsShareLink, PLACE_CATEGORIES, type ImportedGoogleMapsLink, type PlaceCategory, type PlaceSearchResult, type OpenStreetMapPlace } from "@/lib/places";
 import { supabase } from "@/lib/supabase";
 import { money, parseMoney } from "@/lib/finance";
 export function Places() {
@@ -34,13 +35,17 @@ export function Places() {
     [searchError, setSearchError] = useState(""),
     [searching, setSearching] = useState(false),
     [selectedPlace, setSelectedPlace] = useState<PlaceSearchResult | null>(null),
-    [mapOpen, setMapOpen] = useState<string | null>(null);
+    [mapOpen, setMapOpen] = useState<string | null>(null),
+    [sharedLink, setSharedLink] = useState(""),
+    [importedLink, setImportedLink] = useState<ImportedGoogleMapsLink | null>(null),
+    [importNotice, setImportNotice] = useState(""),
+    [importError, setImportError] = useState("");
   const searchLock = useRef(false);
   const embedKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY || "";
   const isOSM = (place: PlaceSearchResult): place is OpenStreetMapPlace =>
     "source" in place && place.source === "openstreetmap";
   const savedMap = (entry: Entry) =>
-    entry.data?.osmPlaceId
+    entry.data?.osmPlaceId || (entry.data?.url && entry.data.latitude !== undefined && entry.data.longitude !== undefined)
       ? openStreetMapEmbedUrl(entry.data.latitude, entry.data.longitude)
       : googleMapsEmbedUrl(entry.data?.googlePlaceId, embedKey);
   const all = entries.filter((e) => e.kind === "place");
@@ -77,10 +82,37 @@ export function Places() {
     const existing = all.find((entry) => isOSM(place) ? entry.data?.osmPlaceId === place.id : entry.data?.googlePlaceId === place.id);
     setEditing(existing || null);
     setSelectedPlace(existing ? null : place);
+    setImportedLink(null);
     setOpen(true);
     setError("");
     if (existing) setFilter(existing.done ? "visited" : "want");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function importGoogleLink(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setImportError("");
+    setImportNotice("");
+    try {
+      const parsed = parseGoogleMapsShareLink(sharedLink);
+      const existing = all.find((entry) =>
+        entry.data?.url === parsed.url ||
+        (!!parsed.googlePlaceId && entry.data?.googlePlaceId === parsed.googlePlaceId));
+      setEditing(existing || null);
+      setSelectedPlace(null);
+      setImportedLink(parsed);
+      setOpen(true);
+      if (existing) setFilter(existing.done ? "visited" : "want");
+      if (parsed.isShortLink) {
+        setImportNotice("Link curto reconhecido! Como ele não mostra os detalhes no endereço, confirme o nome e preencha o endereço antes de salvar.");
+      } else if (parsed.latitude === undefined && parsed.longitude === undefined) {
+        setImportNotice("Link reconhecido. Confira nome e endereço; alguns links não informam a posição exata para mostrar o marcador interno.");
+      } else {
+        setImportNotice("Localização detectada no link. Confira os dados antes de salvar.");
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : "Não foi possível ler esse link.");
+    }
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -88,6 +120,9 @@ export function Places() {
     const f = new FormData(event.currentTarget);
     try {
       const budget = String(f.get("budget") || "").trim();
+      const googleLink = String(f.get("googleMapsLink") || "").trim();
+      const share = googleLink ? parseGoogleMapsShareLink(googleLink) : null;
+      const fromOSM = selectedPlace && isOSM(selectedPlace);
       const d: Draft = {
         kind: "place",
         title: String(f.get("title") || "").trim(),
@@ -98,13 +133,11 @@ export function Places() {
         data: {
           ...editing?.data,
           googlePlaceId: selectedPlace && !isOSM(selectedPlace)
-            ? selectedPlace.id : editing?.data?.googlePlaceId,
-          osmPlaceId: selectedPlace && isOSM(selectedPlace)
-            ? selectedPlace.id : editing?.data?.osmPlaceId,
-          latitude: selectedPlace && isOSM(selectedPlace)
-            ? selectedPlace.lat : editing?.data?.latitude,
-          longitude: selectedPlace && isOSM(selectedPlace)
-            ? selectedPlace.lon : editing?.data?.longitude,
+            ? selectedPlace.id : (share?.googlePlaceId || editing?.data?.googlePlaceId),
+          osmPlaceId: fromOSM ? selectedPlace.id : editing?.data?.osmPlaceId,
+          latitude: fromOSM ? selectedPlace.lat : (share?.latitude ?? editing?.data?.latitude),
+          longitude: fromOSM ? selectedPlace.lon : (share?.longitude ?? editing?.data?.longitude),
+          url: share?.url,
           address: String(f.get("address") || "").trim(),
           category: String(f.get("category") || "Passeio"),
           budget: budget ? parseMoney(budget) : 0,
@@ -115,6 +148,8 @@ export function Places() {
         setOpen(false);
         setEditing(null);
         setSelectedPlace(null);
+        setImportedLink(null);
+        setImportNotice("");
         setResults([]);
       }
     } catch (e) {
@@ -134,6 +169,8 @@ export function Places() {
             setOpen(!open);
             setEditing(null);
             setSelectedPlace(null);
+            setImportedLink(null);
+            setImportNotice("");
           }}
         >
           <Plus size={18} />
@@ -207,24 +244,55 @@ export function Places() {
           </div>
         ) : null}
       </section>
+      <section className="panel places-import">
+        <div className="places-import-heading">
+          <Link2 size={21} />
+          <div>
+            <h2>Encontrou no Google Maps?</h2>
+            <p>Abra o local no Google Maps, toque em Compartilhar → Copiar link e cole aqui para guardar na lista do casal.</p>
+          </div>
+        </div>
+        <form className="places-import-form" onSubmit={importGoogleLink}>
+          <label>
+            Link compartilhado do Google Maps
+            <input
+              type="url"
+              value={sharedLink}
+              onChange={(event) => setSharedLink(event.target.value)}
+              placeholder="https://maps.app.goo.gl/..."
+              required
+              maxLength={3000}
+              inputMode="url"
+              autoComplete="off"
+            />
+          </label>
+          <button type="submit" className="primary" disabled={!sharedLink.trim()}>
+            <Link2 size={17} /> Importar link
+          </button>
+        </form>
+        {importError ? <p className="error" role="alert">{importError}</p> : null}
+        <small>Sem chave de API. O Dengo aproveita os dados presentes no link; URLs curtas podem exigir nome e endereço manuais.</small>
+      </section>
       {open ? (
         <form
           className="panel entry-form setup-note"
           key={editing?.id || selectedPlace?.id || "new"}
           onSubmit={submit}
         >
-          <h2>{editing ? "Editar lugar" : selectedPlace ? "Salvar o lugar escolhido" : "Onde vamos juntos?"}</h2>
-          {(selectedPlace?.id || editing?.data?.googlePlaceId || editing?.data?.osmPlaceId) ? (
+          <h2>{editing ? "Editar lugar" : selectedPlace || importedLink ? "Salvar o lugar escolhido" : "Onde vamos juntos?"}</h2>
+          {importedLink && importNotice ? <p className="notice" role="status">{importNotice}</p> : null}
+          {(selectedPlace?.id || importedLink?.url || editing?.data?.url || editing?.data?.googlePlaceId || editing?.data?.osmPlaceId) ? (
             <div className="places-preview">
               <div className="places-preview-label">
-                <strong><MapPin size={17} /> {selectedPlace?.title || editing?.title}</strong>
-                <small>{selectedPlace?.address || editing?.data?.address}</small>
+                <strong><MapPin size={17} /> {selectedPlace?.title || importedLink?.title || editing?.title || "Local do Google Maps"}</strong>
+                <small>{selectedPlace?.address || importedLink?.address || editing?.data?.address || "Confira os dados abaixo"}</small>
               </div>
               {(() => {
                 const osm = selectedPlace && isOSM(selectedPlace);
-                const lat = osm ? selectedPlace.lat : editing?.data?.latitude;
-                const lon = osm ? selectedPlace.lon : editing?.data?.longitude;
-                const mapSrc = osm || editing?.data?.osmPlaceId
+                const lat = osm ? selectedPlace.lat : (importedLink?.latitude ?? editing?.data?.latitude);
+                const lon = osm ? selectedPlace.lon : (importedLink?.longitude ?? editing?.data?.longitude);
+                const mapSrc = osm || importedLink?.latitude !== undefined || editing?.data?.osmPlaceId ||
+                  (editing?.data?.url && lat !== undefined && lon !== undefined)
                   ? openStreetMapEmbedUrl(lat, lon)
                   : googleMapsEmbedUrl(selectedPlace?.id || editing?.data?.googlePlaceId, embedKey);
                 const route = osm || editing?.data?.osmPlaceId
@@ -242,7 +310,7 @@ export function Places() {
                     ) : (
                       <p>Não foi possível mostrar o mapa interno. Abra a localização pelo link abaixo.</p>
                     )}
-                    <a className="secondary" target="_blank" rel="noopener noreferrer" href={route}>
+                    <a className="secondary" target="_blank" rel="noopener noreferrer" href={importedLink?.url || editing?.data?.url || route}>
                       Abrir rota no Google Maps <ExternalLink size={15} />
                     </a>
                   </>
@@ -252,12 +320,18 @@ export function Places() {
           ) : null}
           <div className="form-grid">
             <label className="full">
+              Link do Google Maps (opcional)
+              <input name="googleMapsLink" type="url" maxLength={3000}
+                defaultValue={importedLink?.url || editing?.data?.url || ""}
+                placeholder="Cole um link para manter a referência do lugar" />
+            </label>
+            <label className="full">
               Nome do lugar
               <input
                 name="title"
                 required
                 maxLength={120}
-                defaultValue={selectedPlace?.title || editing?.title}
+                defaultValue={selectedPlace?.title || importedLink?.title || editing?.title || term.trim()}
               />
             </label>
             <label className="full">
@@ -266,7 +340,7 @@ export function Places() {
                 name="address"
                 required
                 maxLength={240}
-                defaultValue={selectedPlace?.address || editing?.data?.address}
+                defaultValue={selectedPlace?.address || importedLink?.address || editing?.data?.address || city.trim()}
                 placeholder="Ex.: Rua, número, cidade"
               />
             </label>
@@ -386,7 +460,7 @@ export function Places() {
                   loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
               ) : null}
               <a
-                href={e.data?.osmPlaceId && e.data?.latitude !== undefined && e.data?.longitude !== undefined
+                href={e.data?.url?.startsWith("https://") ? e.data.url : e.data?.osmPlaceId && e.data?.latitude !== undefined && e.data?.longitude !== undefined
                   ? mapsUrl(String(e.data.latitude) + "," + String(e.data.longitude))
                   : e.data?.googlePlaceId
                     ? googlePlaceMapsUrl(e.data.googlePlaceId, [e.title, e.data?.address].filter(Boolean).join(", "))
@@ -417,6 +491,8 @@ export function Places() {
                   onClick={() => {
                     setEditing(e);
                     setSelectedPlace(null);
+                    setImportedLink(null);
+                    setImportNotice("");
                     setOpen(true);
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
