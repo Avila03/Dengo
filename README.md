@@ -2,6 +2,15 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Entrega 0.7 — alternativa gratuita de lugares
+
+- **Sem criar contas externas:** caso não exista chave GOOGLE_PLACES_API_KEY na hospedagem, o Dengo usa o Photon (dados do OpenStreetMap) para pesquisar estabelecimentos por nome e cidade.
+- **Mapa interno gratuito:** ao selecionar um resultado, o marcador aparece em um mapa incorporado do OpenStreetMap. As coordenadas e a identificação OSM são salvas junto com os dados próprios do casal; ao reabrir, o mapa continua disponível.
+- **Rota no Google Maps:** o link externo abre a posição por coordenadas, sem precisar da API paga.
+- **Preserva:** cadastro manual, histórico do casal, orçamento, avaliações, marcar visitado, calendário e locais salvos anteriormente.
+- **Limites:** Photon é uma demonstração pública com uso razoável, sem garantia de disponibilidade e sujeito a limitação de tráfego. A busca acontece somente ao clicar em Pesquisar, inclui limitação básica de frequência e cache de pesquisas. A cobertura pode ser inferior à do Google. Para alto volume de usuários será necessário contratar ou hospedar serviço próprio.
+- Créditos: © OpenStreetMap contributors; dados OpenStreetMap/ODbL. Evitar inserir dados pessoais ou confidenciais na busca externa.
+
 ## Entrega 0.6 — encontrar lugares no Google Maps
 
 - **Busca por nome:** digitar o estabelecimento, opcionalmente informar cidade/região, e selecionar um dos endereços apresentados pela Places API (New).
