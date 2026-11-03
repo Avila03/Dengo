@@ -2,14 +2,16 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
-## Entrega 0.4 — recuperação de acesso
+## Entrega 0.4 — cadastro imediato e recuperação de acesso
+
+- **Cadastro sem confirmação:** confirmação de e-mail desativada manualmente no Supabase Auth. Ao criar uma conta nova, o Supabase fornece uma sessão para acesso direto ao lobby. Caso não receba sessão, o aplicativo apresenta erro sem orientar a confirmar e-mail.
 
 - **Esqueci minha senha:** solicitação de link por e-mail, tela dedicada para definir e confirmar nova senha e retorno ao login. O link depende da configuração de Redirect URLs do Supabase e da entrega de e-mails do projeto; não exige chave privada no navegador.
 - **Separação:** senha é individual, redefinir a senha não troca a pessoa de casal nem apaga registros.
 
 ## Entrega 0.3 — lobby do casal
 
-- **Login individual:** cadastro e entrada com e-mail/senha. Cada pessoa tem sua própria conta. O projeto está com cadastro habilitado e confirmação de e-mail ativa; entrega e links de confirmação dependem da configuração de Auth na hospedagem.
+- **Login individual:** cadastro e entrada com e-mail/senha. Cada pessoa tem sua própria conta. O projeto está com cadastro habilitado e confirmação de e-mail desativada no Supabase; cada pessoa entra sem aguardar mensagem de confirmação.
 - **Lobby do casal:** após entrar na conta, criar um espaço com nome próprio ou aceitar convite. Depois, escolher entrar no espaço. Quem já pertence a um casal vê o cartão do casal; uma conta pertence a um único espaço nesta versão.
 - **Convite privado:** criado somente pela primeira pessoa, uso único, validade de sete dias, regeneração invalida o anterior e limite obrigatório de duas pessoas. Copiar o link não envia mensagem automaticamente. Após sair do lobby, é possível gerar outro convite; o token anterior não é guardado em texto no banco.
 - **Autoria:** o banco registra criador, última pessoa que alterou e data de alteração, separados do responsável e pagador. Os metadados não podem ser falsificados pelo cliente. Registros anteriores à atualização não recebem autoria inventada. A interface mostra o autor e os detalhes da última alteração, não um histórico completo de versões.
@@ -59,9 +61,9 @@ A estrutura e as políticas de `setup.sql` e `lobby.sql` já foram aplicadas nes
 Para ativar o uso do casal:
 
 1. Configurar as variáveis de `.env.example` na hospedagem, mantendo `NEXT_PUBLIC_DEMO_MODE=false`.
-2. Em Supabase Auth > URL Configuration, configurar o endereço publicado como Site URL e Redirect URL. Manter cadastro por e-mail habilitado se for usar a tela Criar minha conta. Conferir a entrega da confirmação: o provedor padrão pode limitar os destinatários; alternativamente, o administrador pode criar e confirmar as duas contas pelo painel.
+2. Em Supabase Auth > URL Configuration, configurar o endereço publicado como Site URL e Redirect URL. Manter cadastro por e-mail habilitado se for usar a tela Criar minha conta. Manter **Confirm Email** desativado no provedor Email para permitir entrar sem clicar em links de confirmação.
 3. Adicionar https://SEU-DOMINIO/redefinir-senha à lista de Redirect URLs no Supabase Auth, além do domínio do aplicativo. O remetente padrão pode limitar envio; configurar SMTP se necessário.
-4. Cada pessoa cria sua conta individual no Dengo e confirma o e-mail quando solicitado.
+4. Cada pessoa cria sua conta individual no Dengo e entra imediatamente, sem confirmação por e-mail.
 5. A primeira pessoa escolhe Criar nosso espaço e gera o convite no lobby.
 6. A segunda pessoa entra na própria conta e aceita o convite por link ou código.
 7. Ambas abrem o cartão do casal e acessam o mesmo espaço, com registros identificados por autoria.
