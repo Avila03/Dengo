@@ -77,6 +77,20 @@ test("external catalog response is normalized and unsafe image paths ignored", (
   assert.equal(movie.poster, "");
   assert.equal(movie.year, "2026");
   assert.equal(movie.mediaType, "movie");
+  assert.equal(movie.rating, null);
+});
+test("catalog normalizes scores, posters and ignores adult titles", () => {
+  const results = normalizeMovies([
+    { id: 1, title: "Um Filme", vote_average: 8.36, poster_path: "/movie.jpg", release_date: "2026-04-10" },
+    { id: 2, title: "Oculto", adult: true },
+    { id: 3, title: "", poster_path: "/movie.jpg" },
+    { id: 4, title: "Outro", vote_average: 19, poster_path: "//evil.invalid" },
+  ], "movie");
+  assert.equal(results.length, 2);
+  assert.equal(results[0].rating, 8.4);
+  assert.equal(results[0].poster, "https://image.tmdb.org/t/p/w342/movie.jpg");
+  assert.equal(results[1].rating, null);
+  assert.equal(results[1].poster, "");
 });
 
 test("monthly recurrences retain the original day after a short month", () => {

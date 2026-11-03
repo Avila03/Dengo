@@ -2,6 +2,15 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Entrega 0.5 — catálogo e descoberta de filmes e séries
+
+- **Explorar:** as abas Em alta (semana) e Populares, pesquisa por título em português e seleção de Filme ou Série. Busca paginada com botão Ver mais títulos.
+- **Cartões:** pôster, título, ano de lançamento, sinopse e avaliação comunitária do TMDB (não confundir com as notas individuais do casal).
+- **Adicionar à lista:** um toque salva o título no espaço compartilhado, marca o interesse de quem adicionou e não oferece adicionar novamente o mesmo TMDB ID. Interesses e notas podem ser editados depois.
+- **Segurança:** a API consulta apenas endpoints fixos do TMDB, exige login e participação no espaço, não expõe o token e limita o número de páginas. O catálogo online só funciona após ativar TMDB_READ_ACCESS_TOKEN na Vercel; cadastro manual segue disponível.
+- **Ativação:** em https://www.themoviedb.org/settings/api, obter **API Read Access Token**, configurar a variável **TMDB_READ_ACCESS_TOKEN** nas variáveis de ambiente da Vercel para Production (e Preview, se desejar). Faça isso no painel, sem enviar o token no chat. Efetuar novo deploy após salvar e então testar a busca em /filmes.
+- O TMDB disponibiliza a API gratuitamente para uso não comercial com atribuição; os créditos estão na página.
+
 ## Entrega 0.4 — cadastro imediato e recuperação de acesso
 
 - **Cadastro sem confirmação:** confirmação de e-mail desativada manualmente no Supabase Auth. Ao criar uma conta nova, o Supabase fornece uma sessão para acesso direto ao lobby. Caso não receba sessão, o aplicativo apresenta erro sem orientar a confirmar e-mail.
@@ -20,7 +29,7 @@ Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Sup
 - **Responsabilidades:** responsável, prazo, edição, busca e filtros. Repetições diárias, semanais e mensais com alternância opcional. Concluir cria a próxima ocorrência; reabrir e concluir de novo não duplica a próxima.
 - **Finanças:** despesas pagas ou pendentes, categorias, divisão percentual (50/50 por padrão), saldo a acertar, registro de reembolsos, contas mensais e orçamento por categoria. Valores inteiros em centavos. O centavo indivisível da divisão fica na parcela da primeira pessoa. O saldo considera todo o histórico pago, enquanto o resumo e o orçamento usam o mês selecionado.
 - **Calendário:** visão mensal e agenda do dia, compromissos editáveis, tarefas e contas com prazo, exportação .ics e botão de adicionar ao Google Agenda. Horários em Brasília. Filmes e lugares podem virar compromissos.
-- **Filmes e séries:** busca preparada para TMDB, cadastro manual, interesses de cada pessoa, filtro de interesse em comum, sorteio entre títulos em comum, assistidos e notas individuais. O catálogo só funciona após configurar um token TMDB válido. Dados normalizados são exibidos com créditos ao fornecedor.
+- **Filmes e séries:** exploração de títulos em alta e populares, pesquisa no TMDB, cadastro manual, interesses de cada pessoa, filtro de interesse em comum, sorteio, assistidos e notas individuais. O catálogo online requer token TMDB válido na Vercel. Créditos ao fornecedor na página.
 - **Lugares:** endereço, categoria, orçamento previsto, observação e lembrança da visita; planejados e visitados; abrir no Google Maps e agendar visita. Não há mapa embutido nem busca automática de estabelecimentos.
 - **Nosso espaço:** nomes, foto comprimida para JPEG, data do relacionamento, limites mensais e exportação JSON dos registros e personalização.
 - **Compartilhamento:** login privado, RLS por espaço, Realtime e atualização ao voltar para a janela. Há botão manual Atualizar como alternativa. O carregamento percorre todas as páginas do banco para não cortar o histórico financeiro em 1.000 registros.
