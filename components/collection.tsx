@@ -1,24 +1,33 @@
 "use client";
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import {
   Plus,
   Check,
-  Trash2,
   ShoppingBag,
   ListChecks,
   Search,
   X,
   Pencil,
+  Repeat2,
+  Wallet,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { DeleteButton } from "./ui";
 import { useDengo } from "./provider";
-import { dayLabel, localToday, isOverdue, type Entry } from "@/lib/model";
-export function Collection({ kind }: { kind: Entry["kind"] }) {
-  const { entries, names, busy, add, toggle, remove } = useDengo();
+import {
+  dayLabel,
+  localToday,
+  isOverdue,
+  type Entry,
+  type Draft,
+} from "@/lib/model";
+export function Collection({ kind }: { kind: "shopping" | "task" }) {
+  const { entries, names, busy, add, update, toggle, remove } = useDengo();
   const [formOpen, setFormOpen] = useState(false),
+    [editing, setEditing] = useState<Entry | null>(null),
     [filter, setFilter] = useState("pending"),
-    [query, setQuery] = useState(""),
-    [deleting, setDeleting] = useState<string | null>(null);
+    [query, setQuery] = useState("");
   const isTask = kind === "task";
   const all = entries.filter((e) => e.kind === kind),
     pending = all.filter((e) => !e.done).length;
@@ -31,23 +40,26 @@ export function Collection({ kind }: { kind: Entry["kind"] }) {
   );
   const Icon = isTask ? ListChecks : ShoppingBag;
   const today = localToday();
-  async function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const f = new FormData(form);
-    const title = String(f.get("title") || "").trim();
-    if (!title) return;
-    const ok = await add({
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const f = new FormData(event.currentTarget);
+    const draft: Draft = {
       kind,
-      title,
+      title: String(f.get("title") || "").trim(),
       detail: String(f.get("detail") || "").trim(),
       assignee: String(f.get("assignee") || "Nós dois"),
       due: String(f.get("due") || ""),
-      done: false,
-    });
-    if (ok) {
-      form.reset();
+      done: editing?.done ?? false,
+      data: {
+        ...editing?.data,
+        recurrence: String(f.get("recurrence") || "none") as
+          "none" | "daily" | "weekly" | "monthly",
+        alternate: f.get("alternate") === "on",
+      },
+    };
+    if (await (editing ? update(editing, draft) : add(draft))) {
       setFormOpen(false);
+      setEditing(null);
     }
   }
   return (
@@ -71,7 +83,10 @@ export function Collection({ kind }: { kind: Entry["kind"] }) {
           className="primary"
           aria-expanded={formOpen}
           aria-controls="new-entry"
-          onClick={() => setFormOpen(!formOpen)}
+          onClick={() => {
+            setFormOpen(!formOpen);
+            setEditing(null);
+          }}
         >
           {formOpen ? <X size={18} /> : <Plus size={18} />}{" "}
           {formOpen ? "Fechar" : isTask ? "Novo cuidado" : "Adicionar item"}
@@ -87,8 +102,19 @@ export function Collection({ kind }: { kind: Entry["kind"] }) {
         </span>
       </div>
       {formOpen ? (
-        <form id="new-entry" className="panel entry-form" onSubmit={submit}>
-          <h2>{isTask ? "Um novo combinado" : "O que vamos comprar?"}</h2>
+        <form
+          key={editing?.id || "new"}
+          id="new-entry"
+          className="panel entry-form"
+          onSubmit={submit}
+        >
+          <h2>
+            {editing
+              ? "Editar registro"
+              : isTask
+                ? "Um novo combinado"
+                : "O que vamos comprar?"}
+          </h2>
           <div className="form-grid">
             <label className="full">
               {isTask ? "Nome da tarefa" : "Nome do item"}
@@ -97,6 +123,7 @@ export function Collection({ kind }: { kind: Entry["kind"] }) {
                 autoFocus
                 required
                 maxLength={120}
+                defaultValue={editing?.title}
                 placeholder={
                   isTask ? "Ex.: Regar as plantas" : "Ex.: Café para a semana"
                 }
@@ -104,23 +131,55 @@ export function Collection({ kind }: { kind: Entry["kind"] }) {
             </label>
             <label>
               {isTask ? "Quem vai cuidar?" : "Quem vai comprar?"}
-              <select name="assignee">
+              <select
+                name="assignee"
+                defaultValue={editing?.assignee || "Nós dois"}
+              >
                 {["Nós dois", ...names].map((n, i) => (
                   <option key={`${n}-${i}`}>{n}</option>
                 ))}
               </select>
             </label>
             {isTask ? (
-              <label>
-                Prazo opcional
-                <input type="date" name="due" />
-              </label>
+              <>
+                <label>
+                  Data inicial ou prazo
+                  <input type="date" name="due" defaultValue={editing?.due} />
+                </label>
+                <label>
+                  Repetição
+                  <select
+                    name="recurrence"
+                    defaultValue={editing?.data?.recurrence || "none"}
+                  >
+                    <option value="none">Não repetir</option>
+                    <option value="daily">Diária</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="monthly">Mensal</option>
+                  </select>
+                </label>
+                <label className="checkbox-label">
+                  <input
+                    name="alternate"
+                    type="checkbox"
+                    defaultChecked={editing?.data?.alternate}
+                  />
+                  Alternar responsável a cada repetição
+                </label>
+                <p className="helper full">
+                  Concluir uma tarefa repetida cria a próxima ocorrência. Para
+                  alternar, escolha uma das duas pessoas como responsável. Ao
+                  editar, a alteração vale para esta ocorrência; as já criadas
+                  ficam preservadas.
+                </p>
+              </>
             ) : null}
-            <label className={isTask ? "full" : ""}>
+            <label className="full">
               {isTask ? "Observação opcional" : "Quantidade ou observação"}
               <input
                 name="detail"
                 maxLength={240}
+                defaultValue={editing?.detail}
                 placeholder={
                   isTask ? "Algum detalhe importante?" : "Ex.: 2 pacotes"
                 }
@@ -163,57 +222,80 @@ export function Collection({ kind }: { kind: Entry["kind"] }) {
         </div>
         {items.length ? (
           <ul className="entry-list">
-            {items.map((e) => (
-              <li className={`entry ${e.done ? "done" : ""}`} key={e.id}>
-                <button
-                  className={`check ${e.done ? "checked" : ""}`}
-                  aria-label={`${e.done ? "Reabrir" : "Concluir"} ${e.title}`}
-                  aria-pressed={e.done}
-                  disabled={busy}
-                  onClick={() => void toggle(e)}
-                >
-                  <Check size={16} />
-                </button>
-                <div className="entry-copy">
-                  <strong>{e.title}</strong>
-                  {e.detail ? <p>{e.detail}</p> : null}
-                  <div className="entry-meta">
-                    <span className="tag">{e.assignee}</span>
-                    {isTask ? (
-                      <span className={isOverdue(e, today) ? "overdue" : ""}>
-                        {isOverdue(e, today) ? "Atrasado · " : ""}
-                        {dayLabel(e.due)}
-                      </span>
-                    ) : null}
+            {items.map((e) => {
+              const linked = entries.some(
+                (i) => i.kind === "expense" && i.data?.sourceId === e.id,
+              );
+              return (
+                <li className={`entry ${e.done ? "done" : ""}`} key={e.id}>
+                  <button
+                    className={`check ${e.done ? "checked" : ""}`}
+                    aria-label={`${e.done ? "Reabrir" : "Concluir"} ${e.title}`}
+                    aria-pressed={e.done}
+                    disabled={busy}
+                    onClick={() => void toggle(e)}
+                  >
+                    <Check size={16} />
+                  </button>
+                  <div className="entry-copy">
+                    <strong>{e.title}</strong>
+                    {e.detail ? <p>{e.detail}</p> : null}
+                    <div className="entry-meta">
+                      <span className="tag">{e.assignee}</span>
+                      {isTask ? (
+                        <span className={isOverdue(e, today) ? "overdue" : ""}>
+                          {isOverdue(e, today) ? "Atrasado · " : ""}
+                          {dayLabel(e.due)}
+                        </span>
+                      ) : null}
+                      {e.data?.recurrence && e.data.recurrence !== "none" ? (
+                        <span className="tag">
+                          <Repeat2 size={12} />
+                          {
+                            {
+                              daily: "Diária",
+                              weekly: "Semanal",
+                              monthly: "Mensal",
+                            }[e.data.recurrence]
+                          }
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-                {deleting === e.id ? (
-                  <div className="delete-confirm">
-                    <span>Excluir item?</span>
+                  <div className="row-actions">
+                    {!isTask ? (
+                      <Link
+                        className="icon-btn"
+                        aria-label={
+                          linked
+                            ? "Ver finanças"
+                            : `Registrar despesa de ${e.title}`
+                        }
+                        href={linked ? "/financas" : `/financas?compra=${e.id}`}
+                      >
+                        <Wallet size={18} />
+                      </Link>
+                    ) : null}
                     <button
-                      disabled={busy}
-                      className="danger"
+                      className="icon-btn"
+                      aria-label={`Editar ${e.title}`}
                       onClick={() => {
-                        void remove(e);
-                        setDeleting(null);
+                        setEditing(e);
+                        setFormOpen(true);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
                     >
-                      Excluir
+                      <Pencil size={17} />
                     </button>
-                    <button onClick={() => setDeleting(null)}>Cancelar</button>
+                    <DeleteButton
+                      label={e.title}
+                      disabled={busy}
+                      onDelete={() => void remove(e)}
+                    />
                   </div>
-                ) : (
-                  <button
-                    disabled={busy}
-                    className="icon-btn delete"
-                    onClick={() => setDeleting(e.id)}
-                    aria-label={`Excluir ${e.title}`}
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                )}
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <div className="empty large">
@@ -237,7 +319,13 @@ export function Collection({ kind }: { kind: Entry["kind"] }) {
                   : "Adicione o que falta e marque conforme forem comprando."}
             </p>
             {!query ? (
-              <button className="secondary" onClick={() => setFormOpen(true)}>
+              <button
+                className="secondary"
+                onClick={() => {
+                  setEditing(null);
+                  setFormOpen(true);
+                }}
+              >
                 <Pencil size={16} />
                 {isTask ? "Criar tarefa" : "Adicionar item"}
               </button>
@@ -248,7 +336,7 @@ export function Collection({ kind }: { kind: Entry["kind"] }) {
       <p className="helper">
         {isTask
           ? "Dividir responsabilidades também é uma forma de carinho."
-          : "Mudou de ideia? Você pode desmarcar um item comprado a qualquer momento."}
+          : "O botão de carteira transforma uma compra em despesa sem preencher a descrição novamente."}
       </p>
     </Shell>
   );

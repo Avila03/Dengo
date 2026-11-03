@@ -10,17 +10,39 @@ import {
   ArrowUpRight,
   RefreshCw,
   LogOut,
+  Wallet,
+  CalendarDays,
+  Clapperboard,
+  MapPin,
+  Menu,
 } from "lucide-react";
 import { useDengo } from "./provider";
 const links = [
   { href: "/", label: "Nosso dia", icon: House },
+  { href: "/financas", label: "Finanças", icon: Wallet },
+  { href: "/calendario", label: "Calendário", icon: CalendarDays },
   { href: "/compras", label: "Compras", icon: ShoppingBag },
   { href: "/tarefas", label: "Responsabilidades", icon: ListChecks },
+  { href: "/filmes", label: "Filmes & séries", icon: Clapperboard },
+  { href: "/lugares", label: "Nossos lugares", icon: MapPin },
   { href: "/configuracoes", label: "Nosso espaço", icon: Settings2 },
 ];
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const { demo, error, refresh, signOut } = useDengo();
+  const { demo, error, refresh, signOut, preferences } = useDengo();
+  const mobileLinks = [
+    links[0],
+    links[1],
+    links[2],
+    links[3],
+    { href: "/mais", label: "Mais", icon: Menu },
+  ];
+  const mobileActive = (href: string) =>
+    href === "/mais"
+      ? ["/mais", "/tarefas", "/filmes", "/lugares", "/configuracoes"].includes(
+          path,
+        )
+      : path === href;
   return (
     <div className="app">
       <a className="skip" href="#conteudo">
@@ -55,9 +77,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <span>Um dia de cada vez, juntos.</span>
         </div>
         <div className="couple">
-          <div className="avatar">D</div>
+          <div className="avatar">
+            {preferences.photo ? (
+              <img
+                src={preferences.photo}
+                alt="Foto do casal"
+                width={36}
+                height={36}
+              />
+            ) : (
+              "D"
+            )}
+          </div>
           <div>
-            <strong>Nosso cantinho</strong>
+            <strong>{preferences.names.join(" & ")}</strong>
             <small>{demo ? "Prévia local" : "Espaço privado"}</small>
           </div>
           {!demo ? (
@@ -109,15 +142,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
       <nav className="bottom-nav" aria-label="Navegação no celular">
-        {links.map(({ href, label, icon: Icon }, i) => (
+        {mobileLinks.map(({ href, label, icon: Icon }) => (
           <Link
             href={href}
             key={href}
-            className={path === href ? "active" : ""}
-            aria-current={path === href ? "page" : undefined}
+            className={mobileActive(href) ? "active" : ""}
+            aria-current={mobileActive(href) ? "page" : undefined}
           >
             <Icon size={22} />
-            <span>{i === 2 ? "Tarefas" : i === 3 ? "Espaço" : label}</span>
+            <span>{label}</span>
           </Link>
         ))}
       </nav>

@@ -16,12 +16,14 @@ import { Shell } from "./shell";
 import { useDengo } from "./provider";
 import { dayLabel, localToday, isOverdue } from "@/lib/model";
 export function Home() {
-  const { entries, busy, toggle } = useDengo();
+  const { entries, busy, toggle, preferences } = useDengo();
   const shopping = entries.filter((e) => e.kind === "shopping" && !e.done);
   const tasks = entries
     .filter((e) => e.kind === "task" && !e.done)
     .sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999"));
-  const completed = entries.filter((e) => e.done).length;
+  const completed = entries.filter(
+    (e) => e.done && ["task", "shopping"].includes(e.kind),
+  ).length;
   const today = localToday();
   return (
     <Shell>
@@ -43,6 +45,15 @@ export function Home() {
           }).format(new Date())}
         </div>
       </section>
+      <div className="couple-greeting">
+        <Heart size={16} />
+        <span>
+          {preferences.names.join(" & ")}
+          {preferences.since
+            ? ` · juntos desde ${dayLabel(preferences.since)}`
+            : " · nosso cotidiano, do nosso jeito"}
+        </span>
+      </div>
       <section className="hero">
         <div className="hero-copy">
           <span className="pill">
@@ -175,42 +186,71 @@ export function Home() {
           </Link>
         </section>
       </div>
+      {entries.some((e) => e.kind === "event" && e.due >= today) ? (
+        <section className="panel setup-note">
+          <div className="section-title">
+            <h2>Nosso próximo encontro</h2>
+            <Link href="/calendario" className="text-link">
+              Abrir calendário <ArrowRight size={15} />
+            </Link>
+          </div>
+          {entries
+            .filter((e) => e.kind === "event" && e.due >= today)
+            .sort((a, b) => a.due.localeCompare(b.due))
+            .slice(0, 2)
+            .map((e) => (
+              <div className="mini-row" key={e.id}>
+                <CalendarDays size={18} />
+                <div>
+                  <strong>{e.title}</strong>
+                  <span>
+                    {dayLabel(e.due)} {e.data?.time || ""}
+                  </span>
+                </div>
+              </div>
+            ))}
+        </section>
+      ) : null}
       <section className="coming">
         <div className="section-title">
           <div>
-            <span className="eyebrow">NOSSO PRÓXIMO CAPÍTULO</span>
+            <span className="eyebrow">NOSSA VIDA, NO MESMO LUGAR</span>
             <h2>Mais espaço para os nossos planos</h2>
           </div>
-          <span className="tag">Em breve</span>
+          <span className="tag">Para viver juntos</span>
         </div>
         <div className="future-grid">
           {[
             {
               icon: Wallet,
               name: "Finanças",
+              href: "/financas",
               desc: "Contas claras, planos juntos.",
             },
             {
               icon: CalendarDays,
               name: "Calendário",
+              href: "/calendario",
               desc: "Tempo reservado para nós.",
             },
             {
               icon: Clapperboard,
               name: "Filmes & séries",
+              href: "/filmes",
               desc: "O próximo “só mais um”.",
             },
             {
               icon: MapPin,
               name: "Nossos lugares",
+              href: "/lugares",
               desc: "Novas histórias pelo caminho.",
             },
-          ].map(({ icon: Icon, name, desc }) => (
-            <div className="future" key={name}>
+          ].map(({ icon: Icon, name, desc, href }) => (
+            <Link href={href} className="future" key={name}>
               <Icon size={22} />
               <h3>{name}</h3>
               <p>{desc}</p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
