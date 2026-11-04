@@ -40,14 +40,17 @@ export function ShoppingHub() {
         <div>
           <span className="eyebrow">NOSSA ORGANIZAÇÃO</span>
           <h1>Compras<span className="rose">.</span></h1>
-          <p>O que comprar e o que pagar, sem complicação.</p>
+          <p>Lista e pagamentos do casal.</p>
         </div>
-        <div className="clean-shopping-summary">
-          <span><ShoppingBag size={16} /> <strong>{pending}</strong> a comprar</span>
-          <span><CalendarClock size={16} /> <strong>{money(financial.remaining)}</strong> a pagar</span>
-        </div>
+        {pending > 0 || financial.remaining > 0 ? (
+          <div className="clean-shopping-summary">
+            {pending > 0 ? <span><ShoppingBag size={16}/><strong>{pending}</strong> a comprar</span> : null}
+            {financial.remaining > 0 ? <span><CalendarClock size={16}/>
+              <strong>{money(financial.remaining)}</strong> a pagar</span> : null}
+          </div>
+        ) : null}
       </section>
-      <details className="clean-summary-details">
+      {tab === "pagamentos" ? <details className="clean-summary-details">
         <summary>Ver resumo financeiro completo</summary>
         <div className="purchases-stats">
           <span><ShoppingBag size={18} /> <strong>{pending}</strong> pendentes</span>
@@ -57,7 +60,7 @@ export function ShoppingHub() {
           {paymentPending > 0 ? <span><Wallet size={18} /> <strong>{paymentPending}</strong> aguardando pagamento</span> : null}
           {financial.remaining>0 ? <span><CalendarClock size={18}/> <strong>{money(financial.remaining)}</strong> a pagar neste mês</span>:null}
         </div>
-      </details>
+      </details> : null}
       {reminders.length>0 && tab==="lista" ? (
         <button type="button" className="shopping-reminder-shortcut"
           onClick={()=>changeTab("pagamentos")}>
@@ -70,7 +73,7 @@ export function ShoppingHub() {
         <button type="button" aria-pressed={tab === "lista"}
           className={tab === "lista" ? "selected" : ""}
           onClick={() => changeTab("lista")}>
-          <ShoppingBag size={18} /> Lista de compras
+          <ShoppingBag size={18} /> Lista
         </button>
         <button type="button" aria-pressed={tab === "pagamentos"}
           className={tab === "pagamentos" ? "selected" : ""}

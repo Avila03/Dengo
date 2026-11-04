@@ -258,7 +258,7 @@ export function Places() {
         </CleanSheet>
       ) : null}
 
-      <section className="places-filter-panel" aria-label="Organizar lugares">
+      {all.length > 0 ? <section className="places-filter-panel" aria-label="Organizar lugares">
         <div className="places-status-row">
           {([
             ["want", "Queremos conhecer"],
@@ -277,6 +277,8 @@ export function Places() {
             Favoritos {favoriteCount ? "(" + favoriteCount + ")" : ""}
           </button>
         </div>
+        <details className="clean-place-collection-filter">
+          <summary> {collection ? "Coleção: " + collection : "Filtrar por coleção"}</summary>
         <div className="places-collection-list" role="group" aria-label="Filtrar por coleção">
           <button type="button" aria-pressed={!collection}
             className={!collection ? "selected" : ""} onClick={() => setCollection("")}>
@@ -290,7 +292,8 @@ export function Places() {
             </button>
           ))}
         </div>
-      </section>
+        </details>
+      </section> : null}
       {error && !open ? <p className="error" role="alert">{error}</p> : null}
 
       {list.length ? (
@@ -376,15 +379,18 @@ export function Places() {
           })}
         </div>
       ) : (
-        <section className="panel empty large">
-          <MapPin size={35} />
-          <h2>Nenhum lugar nesta seleção.</h2>
-          <p>Altere os filtros ou adicione um novo lugar à coleção.</p>
-          <button type="button" className="secondary" onClick={() => {
-            setCollection("");
-            setFavoritesOnly(false);
-            setStatus("want");
-          }}>Limpar filtros</button>
+        <section className="clean-simple-empty" role="status">
+          <MapPin size={21} />
+          <div>
+            <strong>{all.length ? "Nenhum lugar nesta seleção" : "Nenhum lugar salvo por enquanto"}</strong>
+            <p>{all.length ? "Tente outra coleção ou um filtro diferente." :
+              "Use “Adicionar local” para guardar seu primeiro lugar."}</p>
+            {all.length > 0 ? <button type="button" className="text-link" onClick={() => {
+              setCollection("");
+              setFavoritesOnly(false);
+              setStatus("all");
+            }}>Mostrar todos</button> : null}
+          </div>
         </section>
       )}
     </Shell>

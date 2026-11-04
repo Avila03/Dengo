@@ -260,7 +260,7 @@ export function Movies() {
         </button>
       </PageHeading>
 
-      <section className="clean-media-toolbar" aria-label="Resumo de filmes e séries">
+      {all.length > 0 ? <section className="clean-media-toolbar" aria-label="Resumo de filmes e séries">
         <div className="catalog-stats">
           <button type="button" onClick={() => selectSaved("pending")}
             aria-label={"Abrir " + counters.pending + " títulos na lista"}>
@@ -275,7 +275,7 @@ export function Movies() {
             <strong>{counters.watched}</strong><span>Assistidos</span>
           </button>
         </div>
-      </section>
+      </section> : null}
 
       {open ? (
         <CleanSheet title={editing ? "Editar " + editing.title : "Adicionar título"}
@@ -369,7 +369,7 @@ export function Movies() {
           </div>
           <span className="saved-media-total">{all.length} {all.length === 1 ? "título salvo" : "títulos salvos"}</span>
         </div>
-        <div className="saved-media-filters" role="group" aria-label="Filtrar títulos salvos">
+        {all.length > 0 ? <div className="saved-media-filters" role="group" aria-label="Filtrar títulos salvos">
           {([
             ["pending", "Na lista"],
             ["watching", "Assistindo"],
@@ -386,7 +386,7 @@ export function Movies() {
           <button className="secondary media-random" type="button" onClick={random}>
             <Shuffle size={16} /> Sortear
           </button>
-        </div>
+        </div> : null}
         {picked ? <p className="notice" role="status"><Heart size={16}/>{picked}</p> : null}
         {catalogNotice ? <p className="notice" role="status"><Heart size={16}/>{catalogNotice}</p> : null}
         {list.length ? (
@@ -484,25 +484,21 @@ export function Movies() {
             })}
           </div>
         ) : (
-          <section className="panel empty saved-media-empty">
-            <BookOpen size={28} />
-            <h3>{!all.length ? "Nossa lista começa com uma história." : "Nenhum título com este status."}</h3>
-            <p>{!all.length ? "Salvem um filme ou série no catálogo logo abaixo." :
-              "Escolham outro filtro para ver os títulos já salvos."}</p>
-            <button type="button" className="secondary" onClick={() => {
-              if (all.length) setFilter("all");
-              else {
-                const discover = document.getElementById("descobrir-filmes");
-                if (discover instanceof HTMLDetailsElement) discover.open = true;
-                discover?.scrollIntoView({behavior:"smooth",block:"start"});
-              }
-            }}>{all.length ? "Ver todos os títulos" : "Explorar catálogo"}</button>
+          <section className="clean-simple-empty" role="status">
+            <BookOpen size={21}/>
+            <div>
+              <strong>{all.length ? "Nenhum título neste filtro" : "Nossa lista está vazia"}</strong>
+              <p>{all.length ? "Os outros títulos continuam disponíveis." :
+                "Descubra filmes e séries pelo catálogo abaixo, ou adicione um título manualmente."}</p>
+              {all.length ? <button type="button" className="text-link"
+                onClick={() => setFilter("all")}>Ver todos os títulos</button> : null}
+            </div>
           </section>
         )}
       </section>
 
       <details id="descobrir-filmes" className="media-discover clean-discover"
-        aria-label="Descobrir novos títulos">
+        aria-label="Descobrir novos títulos" key={all.length ? "saved" : "empty"} defaultOpen={!all.length}>
         <summary><span><Search size={18} /> Descobrir filmes e séries</span>
           <span>Pesquisar no catálogo</span></summary>
         <div className="clean-discover-content">

@@ -1,3 +1,14 @@
+## Correção 2.0.1 — telas realmente enxutas no iPhone
+
+- A auditoria com capturas reais revelou **botões duplicados** na lista vazia, excesso de filtros e busca sempre à mostra, e o nome **Compromissos** quebrando no menu inferior.
+- **Compromissos:** somente um botão **Nova tarefa**, no cabeçalho. Quando não há tarefas, desaparecem os três filtros, busca e seleção de responsável, substituídos por uma mensagem compacta, sem outro botão de criar. Com registros, aparecem só três filtros de status; busca e responsável são abertos sob demanda.
+- **Compras:** somente um botão **Adicionar item**, sem segundo título grande **Nossa lista de compras**; listas vazias e sem itens faltando são compactas, e os filtros aparecem somente quando há itens. O resumo financeiro completo fica na seção Pagamentos, sempre acessível.
+- **Lugares:** nenhum filtro quando o casal ainda não tem lugares salvos; coleções ficam num painel recolhível; estado vazio compacto, sem operações redundantes.
+- **Filmes e séries:** ocultados contadores e filtros vazios; catálogo de descoberta expande automaticamente quando a lista está vazia; mensagem vazia simplificada.
+- **Menu inferior:** **Tarefas** é o nome curto no celular para a aba **Compromissos** (mesma rota e funcionalidade), evitando letras quebradas; ícones e cinco destinos continuam. O botão de atualizar sai do cabeçalho no celular, mas permanece acessível em **Nosso espaço → Atualizar registros**.
+- Mudança exclusivamente de apresentação e acesso aos controles; os registros, vínculos financeiros, permissões e regras de negócio foram mantidos. A nova camada \`app/clarity.css\` refina o design visual sem apagar CSS legado.
+- Testes estáticos de regressão cobrem estados vazios, CTA única, filtros progressivos, link da navegação e o carregamento da folha de estilo.
+
 ## Dengo 2.0 Clean — redesign integral, funcionalidades preservadas
 
 - **Identidade preservada**: off-white, rosa queimado, tipografia serifada, ícones e cinco destinos inferiores continuam; a nova camada \`app/clean.css\` centraliza o sistema visual sem reescrever as regras de negócio.

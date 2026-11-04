@@ -27,7 +27,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const mobileLinks = links.map((link) => ({
     ...link,
     label: link.href === "/lugares" ? "Lugares" :
-      link.href === "/filmes" ? "Filmes" : link.label,
+      link.href === "/filmes" ? "Filmes" :
+      link.href === "/compromissos" ? "Tarefas" : link.label,
   }));
   const mobileActive = (href: string) =>
     href === "/" ? path === "/" || path === "/calendario" : path === href;

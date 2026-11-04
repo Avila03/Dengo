@@ -7,6 +7,7 @@ import {
   Monitor,
   Save,
   LogOut,
+  RefreshCw,
 } from "lucide-react";
 import { Shell } from "./shell";
 import { useDengo } from "./provider";
@@ -20,6 +21,7 @@ export function Settings() {
     savePreferences,
     signOut,
     openLobby,
+    refresh,
   } = useDengo();
   const [photo, setPhoto] = useState(preferences.photo),
     [error, setError] = useState(""),
@@ -221,6 +223,9 @@ export function Settings() {
           {" "}
           {demo ? "Armazenamento local" : "Dados do casal"}
         </span>
+        <button type="button" className="secondary spaced clean-settings-refresh" onClick={refresh}>
+          <RefreshCw size={16} /> Atualizar registros
+        </button>
         {!demo ? (
           <button type="button" className="secondary spaced" onClick={signOut}>
             <LogOut size={16} />

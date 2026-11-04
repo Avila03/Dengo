@@ -7,6 +7,7 @@ import {
   ShoppingBag,
   ListChecks,
   Search,
+  SlidersHorizontal,
   X,
   Pencil,
   Repeat2,
@@ -15,7 +16,7 @@ import {
 import { Shell } from "./shell";
 import { CleanSheet } from "./clean-sheet";
 import { money, parseMoney, CATEGORIES } from "@/lib/finance";
-import { makePurchaseExpense, plannedShoppingTotal, relatedShoppingExpense, shoppingStatus } from "@/lib/shopping";
+import { makePurchaseExpense, relatedShoppingExpense, shoppingStatus } from "@/lib/shopping";
 import { PAYMENT_METHODS, type PayMethod } from "@/lib/payment-plans";
 import { EntryAudit } from "./entry-audit";
 import { DeleteButton } from "./ui";
@@ -34,6 +35,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
     [editing, setEditing] = useState<Entry | null>(null),
     [filter, setFilter] = useState("pending"),
     [query, setQuery] = useState(""),
+    [showSearch, setShowSearch] = useState(false),
     [responsible, setResponsible] = useState<ResponsibleFilter>("all"),
     [quickPurchaseId, setQuickPurchaseId] = useState<string | null>(null),
     [localError, setLocalError] = useState("");
@@ -111,51 +113,29 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
   }
   const content = (
     <>
-      <section className={embedded ? "page-heading purchases-inner-heading" : "page-heading"}>
-        <div>
-          <span className="eyebrow">
-            {isTask ? "CUIDADO QUE SE COMPARTILHA" : "DO QUE A GENTE PRECISA"}
-          </span>
-          {embedded && !isTask ? (
-            <h2 className="shopping-inline-title">Nossa lista de compras</h2>
-          ) : (
-            <h1>
-              {isTask ? "Compromissos" : "Nossa lista de compras"}
-              <span className="rose">.</span>
-            </h1>
-          )}
-          <p>
-            {isTask
-              ? "Tarefas a realizar, prazos e quem fica responsável por cada uma."
-              : "Tudo no mesmo lugar, para não esquecer nada."}
+      <section className={embedded ? "clean-embedded-collection-head" : "page-heading clean-task-heading"}>
+        {!embedded ? (
+          <div>
+            <h1>{isTask ? "Compromissos" : "Lista de compras"}<span className="rose">.</span></h1>
+            <p>{all.length === 0
+              ? "Um lugar simples para organizar o que precisa ser feito."
+              : pending + (isTask ? " pendentes" : " para comprar") +
+                " · " + (all.length - pending) + (isTask ? " concluídos" : " comprados") +
+                (isTask && overdue ? " · " + overdue + " atrasados" : "")}</p>
+          </div>
+        ) : (
+          <p className="clean-embedded-count" aria-live="polite">
+            {all.length === 0 ? "Sua lista está vazia" :
+              pending + " para comprar · " + (all.length - pending) + " comprados"}
           </p>
-        </div>
-        <button
-          className="primary"
-          aria-expanded={formOpen}
-          aria-controls="new-entry"
-          onClick={() => {
-            setFormOpen(!formOpen);
-            setEditing(null);
-          }}
-        >
-          {formOpen ? <X size={18} /> : <Plus size={18} />}{" "}
+        )}
+        <button type="button" className="primary clean-create-button"
+          aria-expanded={formOpen} aria-controls="new-entry"
+          onClick={() => {setFormOpen(!formOpen);setEditing(null);setLocalError("");}}>
+          {formOpen ? <X size={17}/> : <Plus size={17}/>}
           {formOpen ? "Fechar" : isTask ? "Nova tarefa" : "Adicionar item"}
         </button>
       </section>
-      <div className="list-summary">
-        <Icon size={22} />
-        <span>
-          <strong>
-            {pending} {isTask ? "compromissos pendentes" : "itens na lista"}
-          </strong>{" "}
-          · {all.length - pending} {isTask ? "concluídos" : "comprados"}
-          {isTask && overdue ? <span className="task-overdue-summary"> · {overdue} atrasados</span> : null}
-          {!isTask && plannedShoppingTotal(entries) ? (
-            <span> · Previsão dos itens pendentes: {money(plannedShoppingTotal(entries))}</span>
-          ) : null}
-        </span>
-      </div>
       {formOpen ? (
         <CleanSheet title={editing ? "Editar " + editing.title : isTask ? "Nova tarefa" : "Adicionar item"}
           onClose={() => {setFormOpen(false);setEditing(null);}}>
@@ -259,46 +239,64 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
         </form>
         </CleanSheet>
       ) : null}
-      <section className="panel list-panel">
-        <div className="list-toolbar">
-          <div className="filters" aria-label="Filtrar lista">
-            {[
-              ["pending", isTask ? "Pendentes" : "Faltando"],
-              ["done", isTask ? "Concluídos" : "Comprados"],
-              ["all", "Todos"],
-            ].map(([key, label]) => (
-              <button
-                key={key}
-                aria-pressed={filter === key}
-                className={filter === key ? "selected" : ""}
-                onClick={() => setFilter(key)}
-              >
-                {label}
+      <section className={all.length ? "panel clean-list-panel" : "clean-list-empty-wrap"}>
+        {all.length > 0 ? (
+          <div className="clean-list-controls">
+            <div className="filters clean-list-filters" role="group" aria-label="Filtrar lista">
+              {[
+                ["pending", isTask ? "Pendentes" : "Faltando"],
+                ["done", isTask ? "Concluídos" : "Comprados"],
+                ["all", "Todos"],
+              ].map(([key, label]) => (
+                <button type="button" key={key} aria-pressed={filter === key}
+                  className={filter === key ? "selected" : ""}
+                  onClick={() => setFilter(key)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="clean-list-tools">
+              {isTask ? (
+                <details className="clean-filter-details">
+                  <summary>
+                    <SlidersHorizontal size={16}/>
+                    {responsible === "all" ? "Responsável" : "Filtrado"}
+                  </summary>
+                  <label className="task-responsible">
+                    <span>Mostrar tarefas de</span>
+                    <select value={responsible}
+                      onChange={(event) => setResponsible(event.target.value as ResponsibleFilter)}>
+                      <option value="all">Todos</option>
+                      <option value="mine">Comigo · {names[memberSlot]}</option>
+                      <option value="partner">Com {names[1 - memberSlot]}</option>
+                      <option value="together">Nós dois</option>
+                    </select>
+                  </label>
+                </details>
+              ) : null}
+              <button type="button" className="clean-search-toggle"
+                aria-label={showSearch || query ? "Ocultar busca" : "Buscar na lista"}
+                aria-expanded={showSearch || Boolean(query)}
+                onClick={() => {
+                  if (showSearch || query) {setShowSearch(false);setQuery("");}
+                  else setShowSearch(true);
+                }}>
+                {showSearch || query ? <X size={17}/> : <Search size={17}/>}
+                <span>{showSearch || query ? "Fechar busca" : "Buscar"}</span>
               </button>
-            ))}
+            </div>
+            {showSearch || query ? (
+              <label className="search clean-expanded-search">
+                <Search size={16}/>
+                <input type="search" aria-label="Buscar na lista"
+                  value={query} onChange={event => setQuery(event.target.value)}
+                  placeholder={isTask ? "Nome da tarefa" : "Nome do item"}
+                  autoFocus />
+              </label>
+            ) : null}
           </div>
-          {isTask ? (
-            <label className="task-responsible">
-              <span>Responsável</span>
-              <select value={responsible} onChange={(event) => setResponsible(event.target.value as ResponsibleFilter)}>
-                <option value="all">Todos</option>
-                <option value="mine">Comigo · {names[memberSlot]}</option>
-                <option value="partner">Com {names[1 - memberSlot]}</option>
-                <option value="together">Nós dois</option>
-              </select>
-            </label>
-          ) : null}
-          <label className="search">
-            <Search size={17} />
-            <input
-              aria-label="Buscar na lista"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar na lista"
-            />
-          </label>
-        </div>
-        {items.length ? (
+        ) : null}
+{items.length ? (
           <ul className="entry-list">
             {items.map((e, index) => {
               const linkedExpense = !isTask ? relatedShoppingExpense(e, entries) : undefined;
@@ -457,46 +455,29 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
             })}
           </ul>
         ) : (
-          <div className="empty large">
-            <Icon size={35} />
-            <h2>
-              {query
-                ? "Nenhum resultado encontrado."
-                : filter === "done"
-                  ? "Os cuidados feitos vão aparecer aqui."
-                  : filter === "pending" && all.length
-                    ? "Tudo em dia por aqui."
-                    : isTask
-                      ? "Vamos dividir os cuidados?"
-                      : "Nossa lista começa com um item."}
-            </h2>
-            <p>
-              {query
-                ? "Tente buscar por outro nome."
-                : isTask
-                  ? "Adicione uma tarefa e combinem quem vai cuidar."
-                  : "Adicione o que falta e marque conforme forem comprando."}
-            </p>
-            {!query ? (
-              <button
-                className="secondary"
-                onClick={() => {
-                  setEditing(null);
-                  setFormOpen(true);
-                }}
-              >
-                <Pencil size={16} />
-                {isTask ? "Criar tarefa" : "Adicionar item"}
-              </button>
-            ) : null}
+          <div className="clean-collection-empty" role="status">
+            <Icon size={21} strokeWidth={1.7}/>
+            <div>
+              <strong>{!all.length
+                ? isTask ? "Nenhuma tarefa por enquanto" : "Nenhum item na lista"
+                : query ? "Nenhum resultado para essa busca"
+                : filter === "done" ? isTask ? "Nenhuma tarefa concluída" : "Nenhum item comprado"
+                : filter === "pending" ? isTask ? "Sem tarefas pendentes" : "Nada faltando por enquanto"
+                : "Nada nesta seleção"}</strong>
+              <p>{!all.length
+                ? isTask ? "Use “Nova tarefa” para começar." : "Use “Adicionar item” para começar."
+                : query ? "Tente outro nome."
+                : "Se quiser, veja os outros itens da lista."}</p>
+              {all.length > 0 && (filter !== "all" || query || responsible !== "all") ? (
+                <button type="button" className="text-link"
+                  onClick={() => {setFilter("all");setQuery("");setResponsible("all");}}>
+                  Ver todos os registros
+                </button>
+              ) : null}
+            </div>
           </div>
         )}
       </section>
-      <p className="helper">
-        {isTask
-          ? "Dividir responsabilidades também é uma forma de carinho."
-          : "Toque no ícone da carteira para registrar o valor, quem pagou e a divisão sem sair da lista."}
-      </p>
     </>
   );
   return embedded ? content : <Shell>{content}</Shell>;
