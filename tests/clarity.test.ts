@@ -28,7 +28,8 @@ test("shopping header is not duplicated by an embedded list heading", () => {
   assert.doesNotMatch(source, /className="shopping-inline-title"/);
   const hub=read("components/shopping-hub.tsx");
   assert.match(hub, /<h1>Compras/);
-  assert.match(hub, /tab === "pagamentos" \? <details className="clean-summary-details">/);
+  assert.match(hub, /className="purchases-tabs purchases-main-choice"/);
+  assert.doesNotMatch(hub, /className="payment-section-nav"/);
 });
 test("mobile navigation avoids long wrap and refresh is available in settings", () => {
   const shell=read("components/shell.tsx");

@@ -1,3 +1,15 @@
+## Dengo 2.1 — Compras simplificadas
+
+- Compras agora tem **duas escolhas claras**: **Lista de compras** e **Pagamentos**. A aba de pagamentos deixou de ter cinco subabas horizontais confusas.
+- No resumo de pagamentos, um único valor **Falta pagar** apresenta o mês, com **Previsto** e **Já pago** recolhidos em **Ver valores do mês**.
+- **Próximos vencimentos** aparece em uma lista curta de até quatro registros, que pode ser expandida. Alertas só aparecem quando existem.
+- **Organizar pagamentos** apresenta quatro linhas simples, com acesso às coleções **Assinaturas**, **Compras parceladas**, **Contas fixas** e **Extrato e acertos**. Cada área abre uma tela interna com botão **Voltar aos pagamentos**; seus cadastros e ações existentes continuam funcionando.
+- Em vez de três botões simultâneos, há um único **Adicionar**, que apresenta a escolha entre assinatura, compra parcelada e conta fixa somente quando solicitado.
+- A **Lista de compras** mantém o botão único **Adicionar item**, filtros condicionais e registro de compra/gasto, sem duplicar o cabeçalho.
+- Endereços antigos como \`/compras?aba=gastos\` e \`/compras?aba=pagamentos&sec=parcelas\` seguem funcionando.
+- Alteração **apenas de apresentação e navegação**. Nenhum registro financeiro, modelo de recorrência, cálculo de parcelamento ou banco de dados foi alterado.
+- Testes de interface de fonte verificam as duas escolhas, criação progressiva, projeção mensal, lista expansível e todos os destinos financeiros.
+
 ## Correção 2.0.1 — telas realmente enxutas no iPhone
 
 - A auditoria com capturas reais revelou **botões duplicados** na lista vazia, excesso de filtros e busca sempre à mostra, e o nome **Compromissos** quebrando no menu inferior.

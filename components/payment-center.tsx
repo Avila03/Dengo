@@ -1,8 +1,9 @@
 "use client";
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import {
   Bell, CalendarClock, Check, CircleDollarSign, CreditCard, Pause,
-  Pencil, Plus, Repeat2, Play, Receipt, Trash2, X, AlertCircle,
+  Pencil, Plus, Repeat2, Play, Receipt, Trash2, X, AlertCircle, ArrowRight,
 } from "lucide-react";
 import { useDengo } from "./provider";
 import { CleanSheet } from "./clean-sheet";
@@ -49,6 +50,8 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
   const today=localToday();
   const [month,setMonth]=useState(today.slice(0,7));
   const [formType,setFormType]=useState<PlanKind|null>(null);
+  const [showCreateMenu,setShowCreateMenu]=useState(false);
+  const [showAllDue,setShowAllDue]=useState(false);
   const [editing,setEditing]=useState<Entry|null>(null);
   const [formError,setFormError]=useState("");
   const [paymentTarget,setPaymentTarget]=useState<PlanCharge|null>(null);
@@ -59,12 +62,14 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
   const notifications=activeReminders(entries,today);
   const upcoming=due.filter(x=>x.daysAway>=0).slice(0,12);
   const overdue=due.filter(x=>x.overdue).slice(-6);
+  const dueList=[...overdue,...upcoming];
+  const visibleDue=showAllDue ? dueList : dueList.slice(0,4);
   const planKind=defaultPlanKind[section];
   const plans=planKind?planList(entries,planKind):[];
   const selectedPlan=editing && isPlan(editing)?editing:null;
 
   function openNew(kind:PlanKind) {
-    setFormType(kind);setEditing(null);setFormError("");
+    setFormType(kind);setEditing(null);setFormError("");setShowCreateMenu(false);
     setPaymentTarget(null);setStatusNotice("");
     window.requestAnimationFrame(()=>document.getElementById("payment-plan-form")?.scrollIntoView({behavior:"smooth",block:"start"}));
   }
@@ -157,64 +162,57 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
 
   return (
     <section className="payment-center">
-      <div className="payment-month-head">
-        <div>
-          <span className="eyebrow">PLANEJAMENTO DO CASAL</span>
-          <h2>{section==="vencimentos"?"O que precisamos pagar":
-            section==="assinaturas"?"Nossas assinaturas":
+      {section === "vencimentos" ? (
+        <>
+          <div className="payment-overview-heading">
+            <div>
+              <h2>Este mês</h2>
+              <p>O que falta pagar, em um só lugar.</p>
+            </div>
+            <label>
+              <span>Mês</span>
+              <input type="month" aria-label="Mês de referência" value={month}
+                onChange={event=>setMonth(event.target.value)}/>
+            </label>
+          </div>
+          <div className="payment-overview-card" aria-label="Resumo do mês">
+            <div className="payment-overview-value">
+              <span>Falta pagar</span>
+              <strong>{money(projection.remaining)}</strong>
+            </div>
+            <details className="payment-overview-details">
+              <summary>Ver valores do mês</summary>
+              <div className="payment-overview-breakdown">
+                <span>Previsto <strong>{money(projection.expected)}</strong></span>
+                <span>Já pago <strong>{money(projection.paid)}</strong></span>
+              </div>
+            </details>
+          </div>
+        </>
+      ) : (
+        <header className="payment-detail-heading">
+          <h2>{section==="assinaturas"?"Assinaturas":
             section==="parcelas"?"Compras parceladas":"Contas fixas"}</h2>
-          <p>Vencimentos e pagamentos separados, sem somar a mesma conta duas vezes.</p>
-        </div>
-        <label>Mês de referência
-          <input type="month" value={month} onChange={(e)=>setMonth(e.target.value)} />
-        </label>
-      </div>
-
-      <div className="payment-forecast" aria-label="Previsão financeira do mês">
-        <div><span>Previsto</span><strong>{money(projection.expected)}</strong></div>
-        <div><span>Já pago</span><strong>{money(projection.paid)}</strong></div>
-        <div><span>Falta pagar</span><strong>{money(projection.remaining)}</strong></div>
-      </div>
-      <p className="payment-forecast-note">
-        A previsão considera as parcelas, assinaturas, contas fixas e despesas avulsas do mês.
-        Só valores registrados como pagos entram no acerto entre vocês.
-      </p>
+          <p>{section==="assinaturas"?"Serviços que renovam todo mês ou ano.":
+            section==="parcelas"?"Acompanhe quantas parcelas ainda faltam.":
+            "Despesas que se repetem a cada mês."}</p>
+        </header>
+      )}
 
       {statusNotice ? <p className="notice" role="status">{statusNotice}</p> : null}
 
       {section==="vencimentos" ? (
         <>
-          <div className="payment-reminder-strip">
-            <Bell size={19}/>
-            <div>
-              <strong>{notifications.length
-                ? notifications.length+" lembrete"+(notifications.length===1?"":"s")+" de pagamento"
-                : "Sem alertas urgentes"}</strong>
-              <p>{notifications.length
-                ? "Há pagamentos próximos ou atrasados. Os avisos aparecem dentro do Dengo."
-                : "Os próximos vencimentos serão destacados de acordo com o aviso configurado."}</p>
+          <section className="payment-dashboard-due" aria-label="Próximos pagamentos">
+            <div className="payment-dashboard-section-head">
+              <h3>Próximos vencimentos</h3>
+              {notifications.length > 0 ? (
+                <span className="payment-dashboard-alert"><Bell size={13}/>
+                  {notifications.length} {notifications.length===1?"aviso":"avisos"}
+                </span>
+              ) : null}
             </div>
-          </div>
-          <div className="payment-quick-create">
-            <button type="button" className="secondary" onClick={()=>openNew("subscription")}>
-              <Repeat2 size={17}/> Nova assinatura
-            </button>
-            <button type="button" className="secondary" onClick={()=>openNew("installment")}>
-              <CreditCard size={17}/> Parcelar compra
-            </button>
-            <button type="button" className="secondary" onClick={()=>openNew("bill")}>
-              <Receipt size={17}/> Conta fixa
-            </button>
-          </div>
-          <section className="panel payment-due-panel">
-            <div className="payment-panel-title"><div>
-              <span className="eyebrow">PRÓXIMOS VENCIMENTOS</span><h3>Para não esquecer</h3>
-            </div><CalendarClock size={22}/></div>
-            {overdue.length>0?<h4 className="payment-overdue-label">
-              <AlertCircle size={16}/> {due.filter(x=>x.overdue).length} atrasados
-              {due.filter(x=>x.overdue).length>6?" · mostrando os mais recentes":""}
-            </h4>:null}
-            {[...overdue,...upcoming].length? [...overdue,...upcoming].map((alert,index)=>(
+            {visibleDue.length ? visibleDue.map((alert,index)=>(
               <div className={"payment-due-row"+(alert.overdue?" is-overdue":"")} key={
                 (alert.charge?.plan.id||alert.expense?.id||"other")+"-"+(alert.charge?.cycle??index)
               }>
@@ -237,14 +235,72 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
                     <Check size={15}/> Pagar
                   </button>}
               </div>
-            )): <div className="empty"><Check size={24}/>
-              <h3>Nenhuma conta pendente por aqui.</h3>
-              <p>Cadastrem uma assinatura, uma compra parcelada ou uma conta fixa.</p>
-            </div>}
-            <p className="payment-small-note">
-              Vencimentos atrasados dos últimos 60 dias e próximos 45 dias.
-              Um lembrete no Dengo não é uma notificação push do iPhone.
-            </p>
+            )) : (
+              <div className="payment-dashboard-empty">
+                <Check size={18}/>
+                <span>Nenhum pagamento pendente nos próximos dias.</span>
+              </div>
+            )}
+            {dueList.length>4 ? (
+              <button type="button" className="payment-dashboard-expand"
+                aria-expanded={showAllDue} onClick={()=>setShowAllDue(value=>!value)}>
+                {showAllDue?"Mostrar menos":"Ver todos os "+dueList.length+" vencimentos"}
+              </button>
+            ) : null}
+          </section>
+
+          <section className="payment-management" aria-label="Organizar os tipos de pagamento">
+            <div className="payment-dashboard-section-head">
+              <h3>Organizar pagamentos</h3>
+              <div className="payment-add-menu">
+                <button type="button" className="primary payment-add-trigger"
+                  aria-expanded={showCreateMenu} aria-controls="payment-create-options"
+                  onClick={()=>setShowCreateMenu(value=>!value)}>
+                  {showCreateMenu?<X size={16}/>:<Plus size={16}/>}
+                  {showCreateMenu?"Fechar":"Adicionar"}
+                </button>
+              </div>
+            </div>
+            {showCreateMenu ? (
+              <div id="payment-create-options" className="payment-create-options"
+                role="group" aria-label="Tipo de pagamento para cadastrar">
+                <button type="button" onClick={()=>openNew("subscription")}>
+                  <Repeat2 size={17}/> Assinatura
+                </button>
+                <button type="button" onClick={()=>openNew("installment")}>
+                  <CreditCard size={17}/> Compra parcelada
+                </button>
+                <button type="button" onClick={()=>openNew("bill")}>
+                  <Receipt size={17}/> Conta fixa
+                </button>
+              </div>
+            ) : null}
+            <div className="payment-management-list">
+              <Link href="/compras?aba=pagamentos&sec=assinaturas" className="payment-management-link">
+                <span className="payment-management-icon"><Repeat2 size={19}/></span>
+                <span className="payment-management-copy"><strong>Assinaturas</strong>
+                  <small>{planList(entries,"subscription").length} cadastradas</small></span>
+                <ArrowRight size={17}/>
+              </Link>
+              <Link href="/compras?aba=pagamentos&sec=parcelas" className="payment-management-link">
+                <span className="payment-management-icon"><CreditCard size={19}/></span>
+                <span className="payment-management-copy"><strong>Compras parceladas</strong>
+                  <small>{planList(entries,"installment").length} cadastradas</small></span>
+                <ArrowRight size={17}/>
+              </Link>
+              <Link href="/compras?aba=pagamentos&sec=contas" className="payment-management-link">
+                <span className="payment-management-icon"><Receipt size={19}/></span>
+                <span className="payment-management-copy"><strong>Contas fixas</strong>
+                  <small>{planList(entries,"bill").length} cadastradas</small></span>
+                <ArrowRight size={17}/>
+              </Link>
+              <Link href="/compras?aba=pagamentos&sec=extrato" className="payment-management-link">
+                <span className="payment-management-icon"><CircleDollarSign size={19}/></span>
+                <span className="payment-management-copy"><strong>Extrato e acertos</strong>
+                  <small>Gastos registrados e divisão entre vocês</small></span>
+                <ArrowRight size={17}/>
+              </Link>
+            </div>
           </section>
         </>
       ):null}

@@ -124,10 +124,11 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                 (isTask && overdue ? " · " + overdue + " atrasados" : "")}</p>
           </div>
         ) : (
-          <p className="clean-embedded-count" aria-live="polite">
-            {all.length === 0 ? "Sua lista está vazia" :
-              pending + " para comprar · " + (all.length - pending) + " comprados"}
-          </p>
+          all.length > 0 ? (
+            <p className="clean-embedded-count" aria-live="polite">
+              {pending} para comprar · {all.length-pending} comprados
+            </p>
+          ) : null
         )}
         <button type="button" className="primary clean-create-button"
           aria-expanded={formOpen} aria-controls="new-entry"
