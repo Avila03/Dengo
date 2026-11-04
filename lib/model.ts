@@ -1,6 +1,20 @@
 import { DEFAULT_CALENDAR_TOPICS, type CalendarTopic } from "./calendar-topics.ts";
 export type Kind =
   "shopping" | "task" | "expense" | "transfer" | "event" | "movie" | "place";
+export type EventOccurrenceChanges = {
+  canceled?: boolean;
+  title?: string;
+  detail?: string;
+  assignee?: string;
+  due?: string;
+  endDate?: string;
+  time?: string;
+  endTime?: string;
+  location?: string;
+  topicId?: string;
+  sourceId?: string;
+  sourceKind?: Kind;
+};
 export type Details = {
   amount?: number;
   payer?: 0 | 1;
@@ -10,7 +24,14 @@ export type Details = {
   recurrence?: "none" | "daily" | "weekly" | "monthly";
   alternate?: boolean;
   time?: string;
+  endTime?: string;
+  endDate?: string;
   location?: string;
+  eventRepeatUntil?: string;
+  eventOccurrenceDate?: string;
+  eventOverrides?: Record<string, EventOccurrenceChanges>;
+  /** Preparativos do evento ou de uma ocorrência: ID ou ID::YYYY-MM-DD. */
+  eventInstanceKey?: string;
   topicId?: string;
   /** Datas especiais: independentes de tarefas recorrentes. */
   eventRepeat?: "none" | "monthly" | "yearly";
@@ -186,6 +207,37 @@ export function validateDraft(d: Draft) {
   if (d.kind === "event" && d.data?.eventRepeat &&
       !["none", "monthly", "yearly"].includes(d.data.eventRepeat))
     throw new Error("Selecione uma repetição válida para o calendário.");
+  if (d.kind === "event") {
+    const details = d.data;
+    if (details?.endDate && !isDate(details.endDate))
+      throw new Error("Data final inválida.");
+    if (details?.endDate && details.endDate < d.due)
+      throw new Error("O término não pode ser anterior ao início.");
+    const start = details?.time || "";
+    const end = details?.endTime || "";
+    if (start && !/^([01]\d|2[0-3]):[0-5]\d$/.test(start))
+      throw new Error("Horário inicial inválido.");
+    if (end && !/^([01]\d|2[0-3]):[0-5]\d$/.test(end))
+      throw new Error("Horário final inválido.");
+    if (end && !start) throw new Error("Informe o horário inicial para definir o término.");
+    if (start && end && (!details?.endDate || details.endDate === d.due) && end <= start)
+      throw new Error("O término deve ser depois do horário inicial.");
+    if (details?.endDate) {
+      const duration = Math.round((Date.parse(details.endDate + "T12:00:00Z") - Date.parse(d.due + "T12:00:00Z")) / 86400000);
+      if (duration > 60) throw new Error("Eventos podem durar até 61 dias.");
+    }
+    if (details?.eventRepeatUntil && !isDate(details.eventRepeatUntil))
+      throw new Error("Data limite da recorrência inválida.");
+    if (details?.eventOverrides) {
+      if (Object.keys(details.eventOverrides).length > 300)
+        throw new Error("Esta série excedeu o limite de exceções.");
+      for (const [scheduledDate, change] of Object.entries(details.eventOverrides)) {
+        if (!isDate(scheduledDate)) throw new Error("Ocorrência inválida.");
+        if (change.due && !isDate(change.due)) throw new Error("Data de remarcação inválida.");
+        if (change.endDate && !isDate(change.endDate)) throw new Error("Data final da exceção inválida.");
+      }
+    }
+  }
   if (d.kind === "event" && d.data?.eventCounter &&
       !["elapsed", "together", "age", "off"].includes(d.data.eventCounter))
     throw new Error("Selecione uma contagem válida para a data especial.");

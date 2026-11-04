@@ -63,12 +63,16 @@ function escapeICS(s: string) {
 export function eventICS(e: Entry) {
   const date = e.due.replaceAll("-", "");
   const time = e.data?.time?.replace(":", "");
+  const finish = eventFinish(e);
   const start = time
     ? new Date(`${e.due}T${e.data!.time}:00-03:00`)
     : new Date(`${e.due}T12:00:00Z`);
-  const end = new Date(start);
-  if (time) end.setUTCHours(end.getUTCHours() + 1);
-  else end.setUTCDate(end.getUTCDate() + 1);
+  const end = time
+    ? e.data?.endTime
+      ? new Date(`${finish}T${e.data.endTime}:00-03:00`)
+      : finish > e.due ? new Date(`${finish}T23:59:00-03:00`)
+        : new Date(start.getTime() + 3600000)
+    : new Date(addCalendarDays(finish, 1) + "T12:00:00Z");
   const utc = (d: Date) =>
     d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
   const lines = [
@@ -109,21 +113,25 @@ export function eventICS(e: Entry) {
 
 export function googleCalendarUrl(e: Entry) {
   const date = e.due.replaceAll("-", "");
+  const last = eventFinish(e);
   const time = e.data?.time?.replace(":", "");
-  let dates = date + "/" + date;
+  let dates: string;
   if (time) {
-    const start = `${date}T${time}00`;
-    const endDate = new Date(`${e.due}T${e.data!.time}:00-03:00`);
-    endDate.setUTCHours(endDate.getUTCHours() + 1);
-    const end = new Date(endDate.getTime() - 3 * 3600000)
-      .toISOString()
-      .replace(/[-:]/g, "")
-      .slice(0, 15);
-    dates = `${start}/${end}`;
+    const start = date + "T" + time + "00";
+    let end: string;
+    if (e.data?.endTime) {
+      end = last.replaceAll("-", "") + "T" + e.data.endTime.replace(":", "") + "00";
+    } else if (last > e.due) {
+      end = last.replaceAll("-", "") + "T235900";
+    } else {
+      const hour = new Date(e.due + "T" + e.data!.time + ":00-03:00");
+      hour.setTime(hour.getTime() + 3600000);
+      const brazil = new Date(hour.getTime() - 3 * 3600000);
+      end = brazil.toISOString().replace(/[-:]/g, "").slice(0, 15);
+    }
+    dates = start + "/" + end;
   } else {
-    const end = new Date(`${e.due}T12:00:00Z`);
-    end.setUTCDate(end.getUTCDate() + 1);
-    dates = `${date}/${end.toISOString().slice(0, 10).replaceAll("-", "")}`;
+    dates = date + "/" + addCalendarDays(last, 1).replaceAll("-", "");
   }
   return (
     "https://calendar.google.com/calendar/render?" +

@@ -2,6 +2,17 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Entrega 1.4 — experiências do calendário
+
+- **1. Visualização rápida**: toque no título do evento na agenda completa ou em Nosso dia para abrir os detalhes em uma janela compacta, sem sair da página; inclui edição, exclusão, vínculos e preparativos.
+- **3. Contagem regressiva**: Nosso dia destaca a próxima data recorrente especial com dias restantes, respeitando mêsversários, aniversários e seus contadores. Não usa notificações push.
+- **4. Início e término**: um evento pode ter data/hora de início e data/hora de término, incluindo viagens de vários dias. As cores aparecem em cada dia abrangido, e a exportação para Google Agenda/ICS respeita o período.
+- **5. Recorrências flexíveis**: editar/excluir somente uma ocorrência, esta e as próximas, ou toda a série. Uma data individual remarcada não move as outras. O split da série cria outro registro; em caso de falha entre operações, o aplicativo alerta para verificar duplicações.
+- **6. Filtro por tópicos**: seleção de cor/assunto tanto na agenda completa quanto no calendário compacto de Nosso dia.
+- **7. Links internos**: ao criar ou editar um evento, vincular um lugar ou filme/série já existente no Dengo. Exibir o vínculo nos detalhes e oferecer um acesso à aba de origem.
+- **8. Preparativos vinculados**: adicionar tarefas e compras dentro dos detalhes do evento, com responsáveis, prazos opcionais para tarefas e conclusão rápida. Continuam visíveis também nas abas de Compromissos e Compras; cada ocorrência recorrente tem sua própria lista.
+- Persistência existente em JSONB de entries.data; não precisa de migração. Os eventos de demonstração não têm prioridade de preservação, mas os registros antigos continuam legíveis.
+
 ## Ajuste 1.3.1 — quanto tempo estamos juntos?
 
 - Eventos mensais e anuais agora podem mostrar automaticamente a duração desde a data real de início, sem refazer a contagem manualmente.

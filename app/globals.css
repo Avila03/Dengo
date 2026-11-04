@@ -2314,3 +2314,69 @@ progress {
 .day-anniversary-duration{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--rose);margin-top:4px;line-height:1.45}
 .day-anniversary-duration svg{flex-shrink:0}
 @media(max-width:580px){.event-duration{font-size:11px}.day-anniversary-duration{font-size:10px}}
+
+/* Dengo 1.4 — agenda detalhada, datas especiais e preparativos */
+.calendar-filter-bar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:4px 0 12px}
+.calendar-filter-bar .secondary{display:inline-flex;align-items:center;gap:7px;min-height:40px}
+.calendar-topic-filters{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:6px 0 17px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+.calendar-topic-filters button{min-height:36px;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid var(--line);border-radius:20px;padding:6px 12px;background:transparent;color:var(--ink);font-size:12px;cursor:pointer}
+.calendar-topic-filters button.selected{border-color:var(--rose);background:var(--rose-light);color:var(--rose);font-weight:700}
+.calendar-topic-filters .topic-legend-dot{width:8px;height:8px;min-width:8px}
+.home-calendar-filter-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:8px}
+.home-calendar-filter-toggle .text-link{display:inline-flex;gap:6px;align-items:center;font-size:11px}
+.calendar-event-title,.day-agenda-preview{border:0;background:transparent;padding:0;margin:0;color:var(--ink);font:inherit;cursor:pointer;text-align:left}
+.calendar-event-title h3{margin:8px 0 4px}
+.calendar-event-title:hover,.day-agenda-preview:hover{text-decoration:underline;text-decoration-color:var(--rose)}
+.calendar-quick-button{display:inline-flex;align-items:center;gap:5px;font-size:11px;min-height:33px}
+.day-countdown{display:flex;align-items:center;gap:11px;margin:0 0 12px;padding:11px 14px;border:1px solid var(--line);border-radius:15px;background:var(--paper);color:var(--ink);font-size:12px}
+.day-countdown>svg{color:var(--rose);flex-shrink:0}
+.day-countdown>div{flex:1;min-width:0}
+.day-countdown strong{color:var(--rose)}
+.day-countdown small{display:inline;font-size:11px;color:var(--muted)}
+.day-countdown .icon-btn{width:35px;height:35px;min-height:35px;flex-shrink:0}
+.event-quick-backdrop{position:fixed;inset:0;z-index:180;background:rgba(23,27,27,.56);display:flex;align-items:center;justify-content:center;padding:18px;overflow:hidden}
+.event-quick-panel{background:var(--paper);border:1px solid var(--line);border-radius:22px;box-shadow:0 20px 70px rgba(0,0,0,.23);color:var(--ink);width:min(100%,570px);max-height:min(90dvh,850px);overflow-y:auto;overscroll-behavior:contain;padding:22px;display:flex;flex-direction:column;gap:12px}
+.event-quick-panel h2{font-size:25px;line-height:1.17;margin:2px 0}
+.event-quick-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.event-quick-head-title{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:12px;font-weight:700;color:var(--muted)}
+.event-quick-repeat{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--rose)}
+.event-quick-info{display:flex;flex-direction:column;gap:8px;margin:4px 0 8px}
+.event-quick-info p{display:flex;align-items:flex-start;gap:9px;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.event-quick-info p svg{color:var(--rose);flex-shrink:0}
+.event-quick-info .event-quick-anniversary{font-weight:700;color:var(--rose)}
+.event-quick-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:12px}
+.event-quick-actions{display:flex;gap:9px;flex-wrap:wrap}
+.event-quick-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;flex:1}
+.event-quick-edit{display:flex;flex-direction:column;gap:11px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface,rgba(255,255,255,.4))}
+.event-quick-edit label,.event-prep-form label,.event-quick-confirm label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;min-width:0}
+.event-quick-edit input,.event-quick-edit select,.event-quick-edit textarea,.event-prep-form input,.event-prep-form select,.event-quick-confirm select{width:100%;min-width:0}
+.event-quick-edit .primary,.event-prep-form .primary{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px}
+.event-quick-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.event-quick-confirm{display:flex;flex-direction:column;gap:11px;border:1px solid #d79c96;border-radius:13px;padding:14px}
+.event-quick-confirm p{font-size:12px;margin:0;line-height:1.5}
+.event-quick-danger{display:inline-flex;align-items:center;justify-content:center;gap:7px;color:#b94d44;font-weight:700}
+.event-preparations{border-top:1px solid var(--line);padding-top:16px;margin-top:9px}
+.event-prep-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.event-prep-head h3{font-size:17px;margin:0 0 3px}
+.event-prep-head p,.event-prep-empty{font-size:12px;color:var(--muted);margin:0}
+.event-prep-head button{display:inline-flex;align-items:center;gap:5px;min-height:37px}
+.event-prep-item{display:flex;align-items:center;gap:9px;min-height:40px;border-bottom:1px solid var(--line);padding:7px 0}
+.event-prep-item>.check{flex-shrink:0;width:28px;height:28px;min-height:28px}
+.event-prep-item>span{flex:1;font-size:13px}
+.event-prep-done{text-decoration:line-through;opacity:.6}
+.event-prep-form{display:flex;flex-direction:column;gap:9px;margin-top:13px}
+.event-prep-form .primary{width:100%}
+.event-preparations .notice{font-size:12px}
+.event-quick-panel :focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+@media(max-width:650px){
+ .event-quick-backdrop{align-items:flex-end;padding:0}
+ .event-quick-panel{width:100%;max-height:91dvh;padding:18px 15px max(25px,env(safe-area-inset-bottom));border-radius:21px 21px 0 0;gap:11px}
+ .event-quick-panel h2{font-size:21px}
+ .event-quick-pair{gap:7px}
+ .event-quick-info p{font-size:12px}
+ .event-quick-actions button{font-size:12px}
+ .calendar-topic-filters{gap:5px;padding:8px}
+ .calendar-topic-filters button{min-height:36px;padding:6px 9px;font-size:11px}
+ .day-countdown{padding:10px 11px}
+ .calendar-quick-button{min-height:35px}
+}

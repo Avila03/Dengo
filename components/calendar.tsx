@@ -1,5 +1,5 @@
 "use client";
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   CalendarDays,
@@ -9,6 +9,7 @@ import {
   Download,
   ExternalLink,
   Pencil,
+  Filter,
   Palette,
   Repeat2,
 } from "lucide-react";
@@ -16,9 +17,10 @@ import { Shell } from "./shell";
 import { eventDurationLabel, type EventCounter } from "@/lib/calendar-anniversaries";
 import { EntryAudit } from "./entry-audit";
 import { TopicManager } from "./topic-manager";
+import { EventQuickView } from "./event-quick-view";
 import { TopicDots } from "./topic-dots";
 import { calendarTopics, calendarEntryColor, eventTopicLabel, EXPENSE_CALENDAR_COLOR, TASK_CALENDAR_COLOR } from "@/lib/calendar-topics";
-import { PageHeading, DeleteButton } from "./ui";
+import { PageHeading } from "./ui";
 import { useDengo } from "./provider";
 import { type Entry, type Draft, localToday, dayLabel, isDate, addMonths } from "@/lib/model";
 import {
@@ -26,6 +28,8 @@ import {
   eventICS,
   googleCalendarUrl,
   downloadFile,
+  calendarDayMap,
+  eventRangeLabel,
 } from "@/lib/calendar";
 const labels = {
   task: "Tarefa",
@@ -33,7 +37,7 @@ const labels = {
   event: "Compromisso",
 };
 export function Calendar() {
-  const { entries, names, busy, add, update, remove, preferences, saveCalendarTopics } = useDengo();
+  const { entries, names, busy, add, update, preferences, saveCalendarTopics } = useDengo();
   const search = useSearchParams();
   const router = useRouter();
   const source = entries.find((e) => e.id === search.get("origem"));
@@ -49,24 +53,37 @@ export function Calendar() {
     [topicId, setTopicId] = useState(source?.kind === "movie" ? "filmes" :
       source?.kind === "place" ? "passeio" : "janta"),
     [eventRepeat, setEventRepeat] = useState<"none" | "monthly" | "yearly">("none"),
-    [eventCounter, setEventCounter] = useState<EventCounter>("elapsed");
-  const items = calendarEntries(entries, { from: month + "-01", to: month + "-31" });
-  const byDay = new Map<string, Entry[]>();
-  for (const entry of items) {
-    const day = byDay.get(entry.due) || [];
-    day.push(entry);
-    byDay.set(entry.due, day);
-  }
+    [eventCounter, setEventCounter] = useState<EventCounter>("elapsed"),
+    [linkedSourceId, setLinkedSourceId] = useState(source?.id || ""),
+    [topicFilter, setTopicFilter] = useState("all"),
+    [showFilters, setShowFilters] = useState(false),
+    [preview, setPreview] = useState<Entry | null>(null);
   const [y, m] = month.split("-").map(Number);
   const start = new Date(y, m - 1, 1).getDay();
   const days = new Date(y, m, 0).getDate();
-  const daily = items
-    .filter((e) => e.due === selected)
+  const monthInterval = { from: month + "-01", to: month + "-" + String(days).padStart(2, "0") };
+  const filterEntries = (records: Entry[]) => topicFilter === "all"
+    ? records
+    : records.filter((entry) => entry.kind === "event" && (
+      entry.data?.topicId === topicFilter ||
+      (topicFilter === "outros" && !topics.some((t) => t.id === entry.data?.topicId))
+    ));
+  const unfilteredDays = calendarDayMap(entries, monthInterval);
+  const byDay = new Map<string, Entry[]>();
+  for (const [date, dayItems] of unfilteredDays)
+    byDay.set(date, filterEntries(dayItems));
+  const daily = (byDay.get(selected) || [])
     .sort((a, b) => (a.data?.time || "").localeCompare(b.data?.time || ""));
-  const upcoming = calendarEntries(entries, { from: today, to: addMonths(today, 12) })
-    .filter((e) => !e.done)
+  const upcoming = filterEntries(calendarEntries(entries, { from: today, to: addMonths(today, 12) }))
+    .filter((entry) => !entry.done)
     .sort((a, b) => a.due.localeCompare(b.due))
     .slice(0, 5);
+  useEffect(() => {
+    if (!source) return;
+    setLinkedSourceId(source.id);
+    setOpen(true);
+    setTopicId(source.kind === "movie" ? "filmes" : "passeio");
+  }, [source?.id]);
   function shift(n: number) {
     const d = new Date(y, m - 1 + n, 1);
     const next = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -76,6 +93,8 @@ export function Calendar() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const f = new FormData(event.currentTarget);
+    const chosen = entries.find((entry) =>
+      (entry.kind === "place" || entry.kind === "movie") && entry.id === linkedSourceId);
     const draft: Draft = {
       kind: "event",
       title: String(f.get("title") || "").trim(),
@@ -85,18 +104,14 @@ export function Calendar() {
       done: editing?.done ?? false,
       data: {
         time: String(f.get("time") || ""),
-        location: String(f.get("location") || ""),
+        endTime: String(f.get("endTime") || ""),
+        endDate: String(f.get("endDate") || ""),
+        location: String(f.get("location") || "") || (chosen?.kind === "place" ? chosen.data?.address || "" : ""),
         topicId: topics.some((topic) => topic.id === topicId) ? topicId : topics[0].id,
         eventRepeat,
         eventCounter: eventRepeat === "none" ? "off" : eventCounter,
-        ...(source
-          ? { sourceId: source.id, sourceKind: source.kind }
-          : editing?.data?.sourceId
-            ? {
-                sourceId: editing.data.sourceId,
-                sourceKind: editing.data.sourceKind,
-              }
-            : {}),
+        sourceId: chosen?.id || "",
+        sourceKind: chosen?.kind,
       },
     };
     if (await (editing ? update(editing, draft) : add(draft))) {
@@ -127,6 +142,7 @@ export function Calendar() {
             setTopicId("janta");
             setEventRepeat("none");
             setEventCounter("elapsed");
+            setLinkedSourceId("");
           }}
         >
           <Plus size={18} />
@@ -177,6 +193,10 @@ export function Calendar() {
                 required
                 defaultValue={editing?.due || selected}
               />
+            </label>
+            <label>
+              Data de término (opcional)
+              <input name="endDate" type="date" defaultValue={editing?.data?.endDate || ""} />
             </label>
             <label>
               Tópico
@@ -234,6 +254,10 @@ export function Calendar() {
               />
             </label>
             <label>
+              Horário de término (opcional)
+              <input name="endTime" type="time" defaultValue={editing?.data?.endTime || ""} />
+            </label>
+            <label>
               Participantes
               <select
                 name="assignee"
@@ -244,13 +268,23 @@ export function Calendar() {
                 ))}
               </select>
             </label>
+            <label className="full">
+              Vincular a um lugar, filme ou série do Dengo
+              <select value={linkedSourceId} onChange={(event) => setLinkedSourceId(event.target.value)}>
+                <option value="">Sem vínculo</option>
+                {entries.filter((entry) => entry.kind === "place" || entry.kind === "movie")
+                  .map((entry) => <option value={entry.id} key={entry.id}>
+                    {entry.kind === "place" ? "Lugar · " : "Filme/série · "}{entry.title}
+                  </option>)}
+              </select>
+            </label>
             <label>
               Local opcional
               <input
                 name="location"
                 maxLength={240}
                 defaultValue={
-                  editing?.data?.location || source?.data?.address || ""
+                  editing?.data?.location || entries.find((entry) => entry.id === linkedSourceId)?.data?.address || ""
                 }
               />
             </label>
@@ -267,6 +301,28 @@ export function Calendar() {
             {busy ? "Salvando…" : "Salvar compromisso"}
           </button>
         </form>
+      ) : null}
+      <div className="calendar-filter-bar">
+        <button type="button" className="secondary" aria-expanded={showFilters}
+          onClick={() => setShowFilters((value) => !value)}>
+          <Filter size={16} /> {topicFilter === "all" ? "Filtrar por tópico" : "Filtro: " + (topics.find(t => t.id === topicFilter)?.name || "Outros")}
+        </button>
+        {topicFilter !== "all" ? (
+          <button type="button" className="text-link" onClick={() => setTopicFilter("all")}>Limpar</button>
+        ) : null}
+      </div>
+      {showFilters ? (
+        <div className="calendar-topic-filters" role="group" aria-label="Filtrar por tópico">
+          <button type="button" className={topicFilter === "all" ? "selected" : ""}
+            onClick={() => setTopicFilter("all")}>Todos</button>
+          {topics.map((topic) => (
+            <button type="button" key={topic.id}
+              className={topicFilter === topic.id ? "selected" : ""}
+              onClick={() => setTopicFilter(topic.id)}>
+              <i className="topic-legend-dot" style={{backgroundColor: topic.color}} />{topic.name}
+            </button>
+          ))}
+        </div>
       ) : null}
       <div className="calendar-layout">
         <section className="panel">
@@ -343,6 +399,7 @@ export function Calendar() {
                 setTopicId("janta");
                 setEventRepeat("none");
                 setEventCounter("elapsed");
+                setLinkedSourceId("");
               }}
             >
               <Plus />
@@ -363,12 +420,17 @@ export function Calendar() {
                     <span className="calendar-repeat-tag"><Repeat2 size={12} /> {e.data.eventRepeat === "monthly" ? "Mensal" : "Anual"}</span>
                   ) : null}
                 </span>
-                <h3>{e.title}</h3>
+                {e.kind === "event" ? (
+                  <button type="button" className="calendar-event-title"
+                    onClick={() => setPreview(e)} aria-label={"Ver detalhes de " + e.title}>
+                    <h3>{e.title}</h3>
+                  </button>
+                ) : <h3>{e.title}</h3>}
                 {eventDurationLabel(e) ? (
                   <p className="event-duration"><Repeat2 size={15} /> {eventDurationLabel(e)}</p>
                 ) : null}
                 <p>
-                  {e.data?.time || "Dia inteiro"} · {e.assignee}
+                  {eventRangeLabel(e, selected)} · {e.assignee}
                 </p>
                 {e.data?.location ? <p>{e.data.location}</p> : null}
                 <EntryAudit entry={series} />
@@ -391,27 +453,10 @@ export function Calendar() {
                     <Download size={16} />
                   </button>
                   {e.kind === "event" ? (
-                    <>
-                      <button
-                        className="icon-btn"
-                        aria-label={`Editar ${e.data?.eventRepeat && e.data.eventRepeat !== "none" ? "série " : ""}${e.title}`}
-                        onClick={() => {
-                          setEditing(series);
-                          setTopicId(series.data?.topicId || "outros");
-                          setEventRepeat(series.data?.eventRepeat || "none");
-                          setEventCounter(series.data?.eventCounter || "elapsed");
-                          setOpen(true);
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <DeleteButton
-                        label={e.data?.eventRepeat && e.data.eventRepeat !== "none" ? e.title + " (toda a série recorrente)" : e.title}
-                        disabled={busy}
-                        onDelete={() => void remove(series)}
-                      />
-                    </>
+                    <button type="button" className="secondary calendar-quick-button"
+                      onClick={() => setPreview(e)}>
+                      <Pencil size={15} /> Detalhes / editar
+                    </button>
                   ) : null}
                 </div>
               </article>
@@ -452,6 +497,8 @@ export function Calendar() {
           não são sincronizadas automaticamente.
         </p>
       </section>
+      {preview ? <EventQuickView key={preview.id} occurrence={preview}
+        onClose={() => setPreview(null)} /> : null}
     </Shell>
   );
 }

@@ -3,15 +3,17 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Repeat2,
-  Clock3, Heart, Palette, Plus,
+  Clock3, Heart, Palette, Plus, Filter,
 } from "lucide-react";
 import { Shell } from "./shell";
 import { TopicDots } from "./topic-dots";
+import { EventQuickView } from "./event-quick-view";
 import { eventDurationLabel } from "@/lib/calendar-anniversaries";
 import { calendarTopics, calendarEntryColor, eventTopicLabel } from "@/lib/calendar-topics";
 import { useDengo } from "./provider";
 import { dayLabel, localToday } from "@/lib/model";
-import { calendarEntries } from "@/lib/calendar";
+import { calendarEntries, calendarDayMap, eventDaysUntil } from "@/lib/calendar";
+import { addCalendarDays, eventStartTimeLabel } from "@/lib/calendar-schedule";
 import { todayEntries, addDaysISO, weekDates, calendarMonthDays, shiftMonth } from "@/lib/today";
 import { money } from "@/lib/finance";
 import type { Entry } from "@/lib/model";
@@ -36,20 +38,34 @@ export function Home() {
   const [monthOpen, setMonthOpen] = useState(false);
   const [month, setMonth] = useState(today.slice(0, 7));
   const [allVisible, setAllVisible] = useState(false);
+  const [showTopicFilters, setShowTopicFilters] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState("all");
+  const [preview, setPreview] = useState<Entry | null>(null);
   const week = weekDates(selected);
-  const selectedItems = todayEntries(entries, selected);
+  const visible = (entry: Entry) => selectedTopic === "all" ||
+    (entry.kind === "event" && (
+      entry.data?.topicId === selectedTopic ||
+      (selectedTopic === "outros" && !topics.some((topic) => topic.id === entry.data?.topicId))
+    ));
+  const selectedItems = todayEntries(entries, selected).filter(visible);
   const todayItems = todayEntries(entries, today);
   const todayPending = todayItems.filter((entry) => !entry.done).length;
-  const byDay = new Map<string, Entry[]>();
-  const intervalDates = [today, week[0], week[6], selected, month + "-01", month + "-31"].sort();
-  for (const item of calendarEntries(entries, {
+  const intervalDates = [today, week[0], week[6], selected, month + "-01",
+    month + "-" + String(new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0).getDate()).padStart(2,"0")].sort();
+  const allDays = calendarDayMap(entries, {
     from: intervalDates[0],
     to: intervalDates[intervalDates.length - 1],
-  })) {
-    const list = byDay.get(item.due) || [];
-    list.push(item);
-    byDay.set(item.due, list);
-  }
+  });
+  const byDay = new Map<string, Entry[]>();
+  for (const [date, events] of allDays)
+    byDay.set(date, events.filter(visible));
+  const nextSpecial = calendarEntries(entries, {from: today, to: addCalendarDays(today, 400)})
+    .filter((entry) => entry.kind === "event" &&
+      (entry.data?.eventRepeat === "monthly" || entry.data?.eventRepeat === "yearly") &&
+      (entry.data?.eventCounter === "age" || entry.data?.eventCounter === "together" ||
+       entry.data?.eventCounter === "elapsed"))
+    .sort((a,b) => a.due.localeCompare(b.due))[0];
+  const daysToSpecial = nextSpecial ? eventDaysUntil(today, nextSpecial.due) : 0;
   const displayed = allVisible ? selectedItems : selectedItems.slice(0, 3);
   const selectedIsToday = selected === today;
   const dateText = new Intl.DateTimeFormat("pt-BR", {
@@ -83,6 +99,20 @@ export function Home() {
         <span><Clock3 size={15} /> {todayPending} {todayPending === 1 ? "pendente" : "pendentes"}</span>
       </section>
 
+      {nextSpecial ? (
+        <section className="day-countdown" aria-label="Próxima data especial">
+          <Heart size={17} />
+          <div><strong>{daysToSpecial === 0 ? "É hoje!" : daysToSpecial === 1 ? "Falta 1 dia" :
+            "Faltam " + daysToSpecial + " dias"}</strong>
+            <span> para {nextSpecial.title}</span>
+            {eventDurationLabel(nextSpecial) ? <small> · {eventDurationLabel(nextSpecial)}</small> : null}
+          </div>
+          <button type="button" className="icon-btn" aria-label="Ver data especial"
+            onClick={() => { chooseDay(nextSpecial.due); setPreview(nextSpecial); }}>
+            <ArrowRight size={17} />
+          </button>
+        </section>
+      ) : null}
       <section className="panel day-calendar" aria-label="Calendário">
         <div className="day-calendar-top">
           <div>
@@ -123,6 +153,28 @@ export function Home() {
             Agenda completa <ArrowRight size={15} />
           </Link>
         </div>
+        <div className="home-calendar-filter-toggle">
+          <button type="button" className="text-link" aria-expanded={showTopicFilters}
+            onClick={() => setShowTopicFilters(!showTopicFilters)}>
+            <Filter size={14} /> {selectedTopic === "all" ? "Filtrar tópicos" :
+              topics.find(t => t.id === selectedTopic)?.name || "Tópico"} 
+          </button>
+          {selectedTopic !== "all" ? <button type="button" className="text-link"
+            onClick={() => setSelectedTopic("all")}>Limpar</button> : null}
+        </div>
+        {showTopicFilters ? (
+          <div className="calendar-topic-filters" role="group" aria-label="Filtrar calendário">
+            <button type="button" className={selectedTopic === "all" ? "selected" : ""}
+              onClick={() => setSelectedTopic("all")}>Todos</button>
+            {topics.map((topic) => (
+              <button key={topic.id} type="button"
+                className={selectedTopic === topic.id ? "selected" : ""}
+                onClick={() => setSelectedTopic(topic.id)}>
+                <i className="topic-legend-dot" style={{backgroundColor:topic.color}} /> {topic.name}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {monthOpen ? (
           <div className="day-month" id="day-month-view">
             <div className="day-month-header">
@@ -163,12 +215,20 @@ export function Home() {
           <div className="day-agenda-list">
             {displayed.map((entry) => (
               <article className={"day-agenda-row" + (entry.done ? " done" : "")} key={entry.id}>
-                <div className="day-agenda-time">{entry.data?.time || "Dia todo"}</div>
+                <div className="day-agenda-time">{eventStartTimeLabel(entry, selected)}</div>
                 <div className="day-agenda-detail">
-                  <Link href={detailLink(entry)} className="day-agenda-title">
-                    <span className="day-entry-dot" style={{ backgroundColor: calendarEntryColor(entry, topics) }} aria-hidden="true" />
-                    {entry.title}
-                  </Link>
+                  {entry.kind === "event" ? (
+                    <button type="button" className="day-agenda-title day-agenda-preview"
+                      onClick={() => setPreview(entry)} aria-label={"Abrir detalhes de " + entry.title}>
+                      <span className="day-entry-dot" style={{backgroundColor:calendarEntryColor(entry,topics)}} aria-hidden="true" />
+                      {entry.title}
+                    </button>
+                  ) : (
+                    <Link href={detailLink(entry)} className="day-agenda-title">
+                      <span className="day-entry-dot" style={{backgroundColor:calendarEntryColor(entry,topics)}} aria-hidden="true" />
+                      {entry.title}
+                    </Link>
+                  )}
                   <small>{entry.kind === "event" ? eventTopicLabel(entry, topics) : labelByKind[entry.kind]}
                     {entry.kind === "event" && entry.data?.eventRepeat &&
                       entry.data.eventRepeat !== "none" ? (
@@ -204,6 +264,8 @@ export function Home() {
           </button>
         ) : null}
       </section>
+      {preview ? <EventQuickView key={preview.id} occurrence={preview}
+        onClose={() => setPreview(null)} /> : null}
     </Shell>
   );
 }

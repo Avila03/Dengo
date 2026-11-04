@@ -16,6 +16,9 @@ import {
 } from "../lib/calendar.ts";
 import { normalizeMovies } from "../lib/movies.ts";
 import { todayEntries, weekDates, calendarMonthDays, shiftMonth, addDaysISO } from "../lib/today.ts";
+import { calendarDayMap, eventRangeLabel, eventDaysUntil, recurringInstanceKey,
+  withOccurrenceOverride, splitFutureSeries, recurrenceSeries } from "../lib/calendar.ts";
+import { calendarDayDifference, eventFinish } from "../lib/calendar-schedule.ts";
 import { DEFAULT_CALENDAR_TOPICS, calendarTopics, calendarEntryColor, eventTopicLabel, validateCalendarTopics } from "../lib/calendar-topics.ts";
 import { filterResponsible, sortTaskEntries, taskSection } from "../lib/task-filters.ts";
 import { elapsedCalendarMonths, formatYearsAndMonths, eventDurationLabel } from "../lib/calendar-anniversaries.ts";
@@ -377,4 +380,90 @@ test("calendar event counter accepts expected values and rejects invalid values"
   assert.throws(() => validateDraft({
     ...sample, data: { eventRepeat: "monthly", eventCounter: "bad" as "age" },
   }), /contagem válida/);
+});
+
+test("multi-day events appear on each date, including a month boundary", () => {
+  const trip: Entry = { ...task, id: "trip", kind: "event", due: "2026-11-29",
+    data: { endDate: "2026-12-02", time: "", endTime: "", topicId: "viagem" } };
+  const byDay = calendarDayMap([trip], {from:"2026-11-28",to:"2026-12-03"});
+  assert.deepEqual([...byDay.keys()], [
+    "2026-11-29","2026-11-30","2026-12-01","2026-12-02",
+  ]);
+  assert.equal(byDay.get("2026-12-01")?.length, 1);
+  assert.equal(todayEntries([trip], "2026-12-01").length, 1);
+  assert.equal(eventFinish(trip), "2026-12-02");
+  assert.match(eventICS(trip), /DTEND;VALUE=DATE:20261203/);
+  assert.equal(new URL(googleCalendarUrl(trip)).searchParams.get("dates"),
+    "20261129/20261203");
+});
+test("timed events can end on the next day in ICS and Google Calendar", () => {
+  const dinner: Entry = { ...task, id: "dinner", kind: "event", due: "2026-11-03",
+    data: {time:"20:00",endTime:"01:00",endDate:"2026-11-04"} };
+  assert.match(eventICS(dinner), /DTSTART:20261103T230000Z/);
+  assert.match(eventICS(dinner), /DTEND:20261104T040000Z/);
+  assert.equal(new URL(googleCalendarUrl(dinner)).searchParams.get("dates"),
+    "20261103T200000/20261104T010000");
+  assert.equal(calendarDayMap([dinner], {from:"2026-11-03",to:"2026-11-04"}).size,2);
+  assert.match(eventRangeLabel(dinner), /20:00 até 01:00/);
+});
+test("event ranges reject reversed dates, invalid hours and long spans", () => {
+  const sample: Entry = { ...task, kind:"event", data:{endDate:"2026-11-02"} };
+  assert.throws(()=>validateDraft(sample), /término/);
+  assert.throws(()=>validateDraft({...sample,data:{time:"24:80"}}), /inválido/);
+  assert.throws(()=>validateDraft({...sample,data:{endTime:"21:00"}}), /inicial/);
+  assert.throws(()=>validateDraft({...sample,data:{time:"21:00",endTime:"20:30"}}), /posterior/);
+  assert.throws(()=>validateDraft({...sample,data:{endDate:"2027-02-10"}}), /61 dias/);
+  assert.doesNotThrow(()=>validateDraft({
+    ...sample, data:{time:"21:00",endTime:"01:00",endDate:"2026-11-04"},
+  }));
+});
+test("one occurrence can be rescheduled, canceled or edited without affecting others", () => {
+  const anniversary: Entry = { ...task, id:"series", kind:"event", due:"2026-01-15",
+    data:{eventRepeat:"monthly",topicId:"janta"} };
+  const feb = calendarEntries([anniversary],{from:"2026-02-01",to:"2026-02-28"})[0];
+  const shifted = withOccurrenceOverride(anniversary,feb,{
+    title:"Jantar remarcado",due:"2026-02-16",topicId:"passeio",endDate:"2026-02-17",
+  });
+  const febView = calendarEntries([shifted],{from:"2026-02-01",to:"2026-02-28"});
+  assert.equal(febView.length,1);
+  assert.equal(febView[0].title,"Jantar remarcado");
+  assert.equal(febView[0].due,"2026-02-16");
+  assert.equal(eventFinish(febView[0]),"2026-02-17");
+  assert.equal(febView[0].data?.eventOccurrenceDate,"2026-02-15");
+  assert.equal(calendarEntries([shifted],{from:"2026-03-01",to:"2026-03-31"})[0].due,"2026-03-15");
+  const canceled = withOccurrenceOverride(shifted,
+    calendarEntries([shifted],{from:"2026-03-01",to:"2026-03-31"})[0], {canceled:true});
+  assert.equal(calendarEntries([canceled],{from:"2026-03-01",to:"2026-03-31"}).length,0);
+  assert.equal(calendarEntries([canceled],{from:"2026-04-01",to:"2026-04-30"}).length,1);
+  assert.equal(recurrenceSeries([shifted],febView[0]).id,"series");
+});
+test("editing this and following splits future from past dates", () => {
+  const series: Entry = {...task,id:"original",kind:"event",due:"2026-01-10",
+    data:{eventRepeat:"monthly",eventCounter:"together",topicId:"janta"}};
+  const april = calendarEntries([series],{from:"2026-04-01",to:"2026-04-30"})[0];
+  const planned = splitFutureSeries(series,april,{
+    title:"Novo mêsversário",detail:"",assignee:"Nós dois",due:"2026-04-20",
+    data:{time:"20:00",topicId:"passeio"},
+  });
+  const newSeries:Entry = {...planned.future,id:"future",created_at:task.created_at};
+  const all = calendarEntries([planned.original,newSeries],{from:"2026-01-01",to:"2026-06-30"});
+  assert.deepEqual(all.map(e=>e.due), [
+    "2026-01-10","2026-02-10","2026-03-10",
+    "2026-04-20","2026-05-20","2026-06-20",
+  ]);
+  assert.equal(planned.original.data?.eventRepeatUntil,"2026-04-10");
+  assert.equal(newSeries.data?.eventAnchorDate,"2026-01-10");
+});
+test("event preparations link to exactly one occurrence and countdown is date-safe", () => {
+  const source:Entry = {...task,id:"event1",kind:"event",due:"2026-01-15",
+    data:{eventRepeat:"yearly"}};
+  const next = calendarEntries([source],{from:"2027-01-01",to:"2027-01-31"})[0];
+  const prep:Entry = {...task,id:"prep1",kind:"shopping",data:{
+    eventInstanceKey:recurringInstanceKey(next),
+  }};
+  assert.equal(prep.data?.eventInstanceKey,"event1::2027-01-15");
+  assert.equal(recurringInstanceKey(source),"event1::2026-01-15");
+  assert.equal(eventDaysUntil("2026-11-03","2026-11-13"),10);
+  assert.equal(eventDaysUntil("2026-12-31","2027-01-01"),1);
+  assert.equal(calendarDayDifference("2026-11-03","2026-11-13"),10);
 });
