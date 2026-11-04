@@ -73,7 +73,7 @@ test("appearance persists per login in auth metadata, not shared couple settings
   const provider=read("components/provider.tsx");
   const settings=read("components/settings.tsx");
   assert.match(appearance,/user\?\.user_metadata\?\.dengo_appearance/);
-  assert.match(appearance,/supabase\.auth\.updateUser\(\{data:\{dengo_appearance:appearance\}\}\)/);
+  assert.match(appearance,/client\.auth\.updateUser\(\{data:\{dengo_appearance:appearance\}\}\)/);
   assert.match(appearance,/appearanceStorageKey\(userId\)/);
   assert.match(appearance,/lastRemote\.current/);
   assert.match(appearance,/previousId:Record<string,Appearance\["theme"\]>/);
