@@ -1,5 +1,6 @@
 "use client";
 import { currentPushSubscription, disconnectPush, PUSH_OWNER_KEY } from "@/lib/push-client";
+import { completeTaskChildren, cloneSubtasks, withoutEntryAndChildren } from "@/lib/couple-planning";
 import { Brand } from "./brand";
 import {
   createContext,
@@ -235,20 +236,15 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
   }
   function appendSuccessor(list: Entry[], entry: Entry) {
     const next = entry.done ? successor(entry, preferences.names) : null;
-    if (!next || list.some((i) => i.occurrence_from === entry.id)) return list;
-    return [
-      {
-        ...next,
-        id: crypto.randomUUID(),
-        created_at: new Date().toISOString(),
-        created_by_slot: 0 as const,
-        updated_by_slot: 0 as const,
-        updated_at: new Date().toISOString(),
-        occurrence_from: entry.id,
-      },
-      ...list,
-    ];
+    const completed = completeTaskChildren(list, entry);
+    if (!next || list.some((i) => i.occurrence_from === entry.id)) return completed;
+    const following: Entry = {
+      ...next, id: crypto.randomUUID(), created_at: new Date().toISOString(),
+      created_by_slot: 0, updated_by_slot: 0, updated_at: new Date().toISOString(), occurrence_from: entry.id,
+    };
+    return [following, ...cloneSubtasks(completed, entry, following), ...completed];
   }
+
   function writeLocal(next: Entry[]) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     setEntries(next);
@@ -274,6 +270,10 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
       };
       if (demoMode) {
         let list = readEntries(localStorage.getItem(STORAGE_KEY));
+        if (d.kind === "subtask" && !list.some(parent => parent.id === d.data?.parentId && parent.kind === "task" && !parent.done))
+          throw new Error("Reabra a responsabilidade antes de adicionar passos.");
+        if (d.kind === "saving" && !list.some(goal => goal.id === d.data?.goalId && goal.kind === "goal"))
+          throw new Error("Esta meta não está disponível.");
         if (d.kind === "expense" && d.data?.sourceId) {
           if (
             list.some(
@@ -362,7 +362,6 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         const current = list.find((i) => i.id === e.id);
         if (!current) throw new Error("Registro não encontrado.");
         const done = !current.done;
-        const next = done ? successor(current, preferences.names) : null;
         list = list.map((i) =>
           i.id === e.id
             ? {
@@ -373,17 +372,8 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
               }
             : i,
         );
-        if (next && !list.some((i) => i.occurrence_from === e.id))
-          list.unshift({
-            ...next,
-            id: crypto.randomUUID(),
-            created_at: new Date().toISOString(),
-            created_by_slot: 0 as const,
-            updated_by_slot: 0 as const,
-            updated_at: new Date().toISOString(),
-            occurrence_from: e.id,
-          });
-        writeLocal(list);
+        const changed = list.find(item => item.id === e.id)!;
+        writeLocal(appendSuccessor(list, changed));
       } else {
         const r = await supabase!.rpc("toggle_entry", { entry_id: e.id });
         if (r.error)
@@ -396,9 +386,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
     return action(async () => {
       if (demoMode)
         writeLocal(
-          readEntries(localStorage.getItem(STORAGE_KEY)).filter(
-            (i) => i.id !== e.id,
-          ),
+          withoutEntryAndChildren(readEntries(localStorage.getItem(STORAGE_KEY)), e.id),
         );
       else {
         const r = await supabase!

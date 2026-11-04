@@ -1,6 +1,7 @@
 import { DEFAULT_CALENDAR_TOPICS, type CalendarTopic } from "./calendar-topics.ts";
 export type Kind =
-  "shopping" | "task" | "expense" | "transfer" | "event" | "movie" | "place";
+  "shopping" | "task" | "expense" | "transfer" | "event" | "movie" | "place" |
+  "subtask" | "goal" | "saving";
 export type EventOccurrenceChanges = {
   canceled?: boolean;
   done?: boolean;
@@ -19,6 +20,12 @@ export type EventOccurrenceChanges = {
 };
 export type Details = {
   amount?: number;
+  parentId?: string;
+  goalId?: string;
+  goalTarget?: number;
+  quantityMilli?: number;
+  unit?: string;
+  unitPrice?: number;
   /** Modelos de pagamentos recorrentes/parcelados; não contam como gasto pago. */
   paymentPlanType?: "subscription" | "installment" | "bill";
   planStatus?: "active" | "paused" | "canceled";
@@ -139,6 +146,7 @@ const kinds: Kind[] = [
   "event",
   "movie",
   "place",
+  "subtask", "goal", "saving",
 ];
 export function isDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -226,6 +234,22 @@ export function validateDraft(d: Draft) {
   if (d.detail.length > 240)
     throw new Error("A observação deve ter até 240 caracteres.");
   if (d.due && !isDate(d.due)) throw new Error("Informe uma data válida.");
+  if (d.kind === "subtask" && !d.data?.parentId)
+    throw new Error("Escolha a responsabilidade desta subtarefa.");
+  if (d.kind === "goal" && (!Number.isSafeInteger(d.data?.goalTarget) || d.data!.goalTarget! < 1 || d.data!.goalTarget! > 100000000))
+    throw new Error("Informe o valor da meta entre R$ 0,01 e R$ 1.000.000,00.");
+  if (d.kind === "saving" && (!d.data?.goalId || !Number.isSafeInteger(d.data?.amount) || d.data!.amount! < 1 || d.data!.amount! > 100000000 || ![0,1].includes(d.data?.payer ?? -1)))
+    throw new Error("Confira a meta, o valor reservado e quem contribuiu.");
+  if (d.kind === "shopping" && d.data?.quantityMilli !== undefined) {
+    const q=d.data.quantityMilli, price=d.data.unitPrice;
+    if (!Number.isSafeInteger(q) || q < 1 || q > 1000000000 || !["un","kg","g","l","ml","pacote","caixa","garrafa"].includes(d.data.unit || ""))
+      throw new Error("Confira a quantidade e a unidade do item.");
+    if (price !== undefined && (!Number.isSafeInteger(price) || price < 0 || price > 100000000))
+      throw new Error("Confira o preço por unidade.");
+    if (price !== undefined && d.data.budget !== Number((BigInt(q)*BigInt(price)+500n)/1000n))
+      throw new Error("O total do item precisa corresponder à quantidade e ao preço.");
+    if ((d.data.budget || 0)>100000000) throw new Error("O total do item ultrapassa R$ 1.000.000,00.");
+  }
   if (d.kind === "event" && d.data?.eventRepeat &&
       !["none", "weekly", "monthly", "yearly"].includes(d.data.eventRepeat))
     throw new Error("Selecione uma repetição válida para o calendário.");

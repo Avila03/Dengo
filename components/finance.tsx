@@ -9,6 +9,7 @@ import {
   Check,
   Repeat2,
 } from "lucide-react";
+import { ExpenseSplit } from "./expense-split";
 import { RepeatFields } from "./repeat-fields";
 import { EntryDetails } from "./entry-details";
 import { Shell } from "./shell";
@@ -22,6 +23,7 @@ import {
   balance,
   monthlySummary,
   parseMoney,
+  parseSharePercent,
   money,
   CATEGORIES,
 } from "@/lib/finance";
@@ -44,6 +46,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
     [editing, setEditing] = useState<Entry | null>(null),
     [month, setMonth] = useState(localToday().slice(0, 7)),
     [localError, setLocalError] = useState(""),
+    [amountText, setAmountText] = useState(""),
     [recurrence, setRecurrence] = useState<"none" | "daily" | "weekly" | "monthly">("none"),
     [paid, setPaid] = useState(true),
     [preview, setPreview] = useState<Entry | null>(() => entries.find((e) => e.id === query.get("registro") && ["expense", "transfer"].includes(e.kind)) || null);
@@ -56,6 +59,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
     )
     .sort((a, b) => b.due.localeCompare(a.due));
   function editEntry(entry: Entry) {
+    setAmountText(entry.data?.amount ? (entry.data.amount / 100).toFixed(2).replace(".", ",") : "");
     setEditing(entry); setPaid(entry.done); setRecurrence(entry.data?.recurrence || "none");
     setPreview(null); setLocalError(""); setForm(entry.kind === "transfer" ? "transfer" : "expense");
   }
@@ -82,7 +86,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
           shareFirst:
             kind === "transfer"
               ? 5000
-              : Math.round(Number(f.get("share")) * 100),
+              : parseSharePercent(String(f.get("sharePercent") || "")),
           category: String(f.get("category") || "Outros"),
           paymentMethod: String(f.get("method") || editing?.data?.paymentMethod || "pix") as PayMethod,
           paymentPaidAt: kind==="expense" && f.get("paid")==="on"
@@ -119,7 +123,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
           className="primary"
           onClick={() => {
             setForm(form ? null : "expense");
-            setEditing(null); setPaid(true); setRecurrence("none"); setLocalError("");
+            setEditing(null); setAmountText(""); setPaid(true); setRecurrence("none"); setLocalError("");
           }}
         >
           <Plus size={18} />
@@ -146,6 +150,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
             className="secondary"
             onClick={() => {
               setForm("transfer");
+              setAmountText(totalBalance ? (Math.abs(totalBalance)/100).toFixed(2).replace(".",",") : "");
               setEditing(null);
             }}
           >
@@ -211,13 +216,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
                 inputMode="decimal"
                 required
                 placeholder="Ex.: 123,45"
-                defaultValue={
-                  editing?.data?.amount
-                    ? String(editing.data.amount / 100).replace(".", ",")
-                    : form === "transfer" && totalBalance
-                      ? String(Math.abs(totalBalance) / 100).replace(".", ",")
-                      : ""
-                }
+                value={amountText} onChange={event => setAmountText(event.target.value)}
               />
             </label>
             <label>
@@ -249,6 +248,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
                 defaultValue={editing?.due || localToday()}
               />
             </label>
+            {form === "expense" ? <ExpenseSplit key={editing?.id || "new"} amount={amountText} names={names} initial={editing?.data?.shareFirst ?? 5000} /> : null}
             {form === "expense" ? <>
               <label className="checkbox-label full">
                 <input name="paid" type="checkbox" checked={paid} onChange={(e) => setPaid(e.target.checked)} />
@@ -260,7 +260,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
               <RepeatFields value={recurrence} onChange={setRecurrence} />
             </> : null}
             <details className="form-details full" open={editing ? true : undefined}>
-              <summary>Divisão, pagamento e observação</summary>
+              <summary>Categoria, pagamento e observação</summary>
               <div className="form-grid">
             <label>
               Forma de pagamento
@@ -275,11 +275,6 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
                     <select name="category" defaultValue={editing?.data?.category || "Mercado"}>
                       {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
                     </select>
-                  </label>
-                  <label>Parte de {names[0]} (%)
-                    <input name="share" type="number" min="0" max="100" step="0.01" required
-                      defaultValue={(editing?.data?.shareFirst ?? 5000) / 100} />
-                    <small>O restante fica para {names[1]}. Use 50 para dividir igualmente.</small>
                   </label>
                 </> : null}
             <label className="full">

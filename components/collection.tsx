@@ -12,12 +12,15 @@ import {
   Repeat2,
   Wallet,
 } from "lucide-react";
+import { ShoppingFields } from "./shopping-fields";
+import { ExpenseSplit } from "./expense-split";
+import { subtaskProgress } from "@/lib/couple-planning";
 import { RepeatFields } from "./repeat-fields";
 import { EntryDetails } from "./entry-details";
 import { Shell } from "./shell";
 import { CleanSheet } from "./clean-sheet";
-import { money, parseMoney, CATEGORIES } from "@/lib/finance";
-import { makePurchaseExpense, relatedShoppingExpense, shoppingStatus } from "@/lib/shopping";
+import { money, parseMoney, CATEGORIES, parseSharePercent } from "@/lib/finance";
+import { makePurchaseExpense, relatedShoppingExpense, shoppingStatus, parseQuantity, shoppingItemTotal, quantityLabel, plannedShoppingTotal } from "@/lib/shopping";
 import { PAYMENT_METHODS, type PayMethod } from "@/lib/payment-plans";
 import { EntryAudit } from "./entry-audit";
 import { DeleteButton } from "./ui";
@@ -40,6 +43,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
     [responsible, setResponsible] = useState<ResponsibleFilter>("all"),
     [quickPurchaseId, setQuickPurchaseId] = useState<string | null>(null),
     [localError, setLocalError] = useState(""),
+    [purchaseAmount, setPurchaseAmount] = useState(""),
     [recurrence, setRecurrence] = useState<"none" | "daily" | "weekly" | "monthly">("none"),
     [preview, setPreview] = useState<Entry | null>(null);
   const notificationOpened = useRef(false);
@@ -52,6 +56,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
   const isTask = kind === "task";
   const all = entries.filter((e) => e.kind === kind),
     pending = all.filter((e) => !e.done).length;
+  const unpriced = all.filter(e => !e.done && e.data?.unitPrice === undefined && !e.data?.budget).length;
   const today = localToday();
   const overdue = isTask ? all.filter((e) => isOverdue(e, today)).length : 0;
   const filtered = all.filter(
@@ -71,10 +76,13 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
     setLocalError("");
     const f = new FormData(event.currentTarget);
     let budget = editing?.data?.budget || 0;
+    let quantityMilli = 1000, unitPrice: number | undefined;
     try {
       if (kind === "shopping") {
-        const text = String(f.get("budget") || "").trim();
-        budget = text ? parseMoney(text) : 0;
+        quantityMilli = parseQuantity(String(f.get("quantity") || ""));
+        const text = String(f.get("unitPrice") || "").trim();
+        unitPrice = text ? /^0([,.]0{1,2})?$/.test(text) ? 0 : parseMoney(text) : undefined;
+        budget = unitPrice === undefined ? 0 : shoppingItemTotal(quantityMilli, unitPrice);
       }
     } catch (error) {
       setLocalError(error instanceof Error ? error.message : "Valor previsto inválido.");
@@ -89,7 +97,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
       done: editing?.done ?? false,
       data: {
         ...editing?.data,
-        ...(isTask ? {} : { budget }),
+        ...(isTask ? {} : { budget, quantityMilli, unitPrice, unit: String(f.get("unit") || "un") }),
         recurrence: String(f.get("recurrence") || "none") as
           "none" | "daily" | "weekly" | "monthly",
         alternate: f.get("alternate") === "on",
@@ -112,7 +120,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
       const draft = makePurchaseExpense(item, {
         amount: String(form.get("amount") || ""),
         payer: Number(form.get("payer") || 0) as 0 | 1,
-        shareFirst: Number(form.get("share") || 5000) as 0 | 5000 | 10000,
+        shareFirst: parseSharePercent(String(form.get("sharePercent") || "")),
         paid: form.get("paid") === "on",
         date: String(form.get("date") || localToday()),
         category: String(form.get("category") || "Mercado"),
@@ -151,6 +159,10 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
           {formOpen ? "Fechar" : isTask ? "Nova responsabilidade" : "Adicionar item"}
         </button>
       </section>
+      {!isTask && all.length > 0 ? <div className="shopping-total-row">
+        <div><span>Previsão do que falta comprar</span><strong>{money(plannedShoppingTotal(all))}</strong></div>
+        <small>{unpriced ? `${unpriced} item(ns) sem preço definido · ` : ""}Lista inteira · somente itens pendentes</small>
+      </div> : null}
       {formOpen ? (
         <CleanSheet title={editing ? "Editar " + editing.title : isTask ? "Nova responsabilidade" : "Adicionar item"}
           onClose={() => {setFormOpen(false);setEditing(null);}}>
@@ -201,18 +213,11 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                 <RepeatFields value={recurrence} onChange={setRecurrence} task alternate={editing?.data?.alternate} />
               </>
             ) : null}
-            {!isTask ? (
-              <label>
-                Valor previsto (R$)
-                <input name="budget" inputMode="decimal" placeholder="Ex.: 49,90"
-                  defaultValue={editing?.data?.budget
-                    ? String(editing.data.budget / 100).replace(".", ",") : ""} />
-              </label>
-            ) : null}
+            {!isTask ? <ShoppingFields initial={editing} /> : null}
             <details className="form-details full" open={editing?.detail ? true : undefined}>
-              <summary>{isTask ? "Observação" : "Quantidade ou observação"}</summary>
+              <summary>{isTask ? "Observação" : "Observação"}</summary>
             <label className="full">
-              {isTask ? "Observação" : "Quantidade ou observação"}
+              {isTask ? "Observação" : "Observação"}
               <input
                 name="detail"
                 maxLength={240}
@@ -305,6 +310,8 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                     <button type="button" className="entry-title-button" aria-label={"Ver detalhes de " + e.title}
                       onClick={() => setPreview(e)}>{e.title}</button>
                     {e.detail ? <p>{e.detail}</p> : null}
+                    {isTask && subtaskProgress(entries, e.id).total ? <small className="subtask-count">{subtaskProgress(entries,e.id).done}/{subtaskProgress(entries,e.id).total} subtarefas concluídas</small> : null}
+                    {!isTask && quantityLabel(e) ? <p className="shopping-quantity">{quantityLabel(e)}{e.data?.unitPrice !== undefined ? ` · ${money(e.data.unitPrice)} por ${e.data.unit === "l" ? "litro" : e.data.unit === "ml" ? "mL" : e.data.unit === "un" ? "unidade" : e.data.unit}` : ""}</p> : null}
                     <div className="entry-meta">
                       <span className="tag">{e.assignee}</span>
                       {!isTask ? (
@@ -353,6 +360,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                           aria-expanded={quickPurchaseId === e.id}
                           onClick={() => {
                             setLocalError("");
+                            setPurchaseAmount(e.data?.budget ? (e.data.budget / 100).toFixed(2).replace(".", ",") : "");
                             setQuickPurchaseId((current) => current === e.id ? null : e.id);
                           }}>
                           <Wallet size={16} /> Registrar gasto
@@ -382,8 +390,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                       <div className="purchase-quick-fields">
                         <label>Valor pago ou a pagar (R$)
                           <input name="amount" required inputMode="decimal"
-                            defaultValue={e.data?.budget
-                              ? String(e.data.budget / 100).replace(".", ",") : ""}
+                            value={purchaseAmount} onChange={event => setPurchaseAmount(event.target.value)}
                             placeholder="Ex.: 49,90" />
                         </label>
                         <label>Quem pagou ou vai pagar?
@@ -391,16 +398,11 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                             {names.map((name, index) => <option key={name} value={index}>{name}</option>)}
                           </select>
                         </label>
+                        <ExpenseSplit key={e.id} amount={purchaseAmount} names={names} basis />
                         <details className="form-details full">
-                          <summary>Divisão e pagamento</summary>
+                          <summary>Categoria e pagamento</summary>
                           <div className="form-grid">
-                        <label>Como dividir?
-                          <select name="share" defaultValue="5000">
-                            <option value="5000">50% para cada</option>
-                            <option value="10000">100% para {names[0]}</option>
-                            <option value="0">100% para {names[1]}</option>
-                          </select>
-                        </label>
+
                         <label>Categoria
                           <select name="category" defaultValue="Mercado">
                             {CATEGORIES.map((category) => <option key={category}>{category}</option>)}

@@ -5,6 +5,7 @@ import "./clarity.css";
 import "./themes.css";
 import "./refinements.css";
 import "./notifications.css";
+import "./planning.css";
 import { DengoProvider } from "@/components/provider";
 export const metadata: Metadata = {
   title: "Dengo · Nosso cotidiano",

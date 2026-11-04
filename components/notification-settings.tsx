@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
+import {useSearchParams,useRouter} from "next/navigation";
+import {NotificationInbox} from "./notification-inbox";
 import {
   ArrowLeft, Bell, CalendarClock, CalendarDays, CheckCircle2, Clock3,
   CreditCard, ListChecks, MapPin, Save, SlidersHorizontal, Smartphone, Sunrise,
@@ -38,9 +40,29 @@ const options = [
 export function NotificationSettings() {
   const { user, demo } = useDengo();
   const userId = user?.id || "demo";
-  // A keyed editor keeps drafts and pending saves isolated when the account changes.
-  return <Shell><NotificationEditor key={userId} userId={userId}
-    remote={user?.user_metadata?.[NOTIFICATION_METADATA_KEY]} demo={demo} /></Shell>;
+  const search=useSearchParams(),router=useRouter();
+  const tab=search.get("aba")==="preferencias"?"preferencias":"avisos";
+  const [unread,setUnread]=useState(0);
+  function selectTab(next:"avisos"|"preferencias") {
+    router.replace(next==="avisos"?"/notificacoes":"/notificacoes?aba=preferencias",{scroll:false});
+  }
+  return <Shell><div className="notification-settings">
+    <Link href="/" className="text-link notification-back"><ArrowLeft size={17}/>Voltar ao nosso dia</Link>
+    <header className="notification-heading"><div><h1>Notificações<span className="rose">.</span></h1>
+      <p>Seus avisos e suas preferências, em um só lugar.</p></div><span className="notification-heading-mark" aria-hidden="true"><Bell size={23}/></span></header>
+    <div className="notification-tabs" role="tablist" aria-label="Notificações">
+      {(["avisos","preferencias"] as const).map(key=><button key={key} id={"notification-tab-"+key} type="button" role="tab"
+        aria-selected={tab===key} aria-controls={"notification-panel-"+key} tabIndex={tab===key?0:-1}
+        onKeyDown={event=>{if(event.key==="ArrowRight"||event.key==="ArrowLeft"){event.preventDefault();const next=key==="avisos"?"preferencias":"avisos";selectTab(next);document.getElementById("notification-tab-"+next)?.focus();}}}
+        onClick={()=>selectTab(key)}>{key==="avisos"?"Avisos":"Preferências"}{key==="avisos"&&unread?<span>{unread}</span>:null}</button>)}
+    </div>
+    <div id="notification-panel-avisos" role="tabpanel" aria-labelledby="notification-tab-avisos" hidden={tab!=="avisos"}>
+      <NotificationInbox key={userId} onUnreadCount={setUnread}/>
+    </div>
+    <div id="notification-panel-preferencias" role="tabpanel" aria-labelledby="notification-tab-preferencias" hidden={tab!=="preferencias"}>
+      <NotificationEditor key={userId} userId={userId} remote={user?.user_metadata?.[NOTIFICATION_METADATA_KEY]} demo={demo}/>
+    </div>
+  </div></Shell>;
 }
 
 function NotificationEditor({ userId, remote, demo }: { userId: string; remote: unknown; demo: boolean }) {
@@ -108,13 +130,8 @@ function NotificationEditor({ userId, remote, demo }: { userId: string; remote: 
     } finally { lock.current = false; }
   }
 
-  return <div className="notification-settings">
-    <Link href="/" className="text-link notification-back"><ArrowLeft size={17} /> Voltar ao nosso dia</Link>
-    <header className="notification-heading">
-      <div><h1>Notificações<span className="rose">.</span></h1>
-        <p>Escolha os avisos que fazem sentido para você. Suas preferências são individuais.</p></div>
-      <span className="notification-heading-mark" aria-hidden="true"><Bell size={23} /></span>
-    </header>
+  return <div className="notification-preferences">
+    <p className="notification-preference-intro">Escolha os avisos que fazem sentido para você. Suas preferências são individuais.</p>
     <PushDevice />
     <form onSubmit={(event) => void save(event)}>
       <fieldset disabled={!ready || saving} className="notification-fieldset">

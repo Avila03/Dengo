@@ -9,6 +9,8 @@ import { useDengo } from "./provider";
 import { CleanSheet } from "./clean-sheet";
 import { DeleteButton } from "./ui";
 import { EntryAudit } from "./entry-audit";
+import { Subtasks } from "./subtasks";
+import { quantityLabel } from "@/lib/shopping";
 
 /** Tappable list titles open the same compact detail sheet in tasks and finances. */
 export function EntryDetails({ entry, onClose, onEdit }: {
@@ -40,7 +42,9 @@ export function EntryDetails({ entry, onClose, onEdit }: {
         {entry.data?.paymentMethod ? <div><dt>Pagamento</dt><dd>{paymentMethodLabel(entry.data.paymentMethod)}</dd></div> : null}
         {entry.data?.recurrence && entry.data.recurrence !== "none" ? <div><dt>Repetição</dt><dd>{{ daily: "Todo dia", weekly: "Toda semana", monthly: "Todo mês" }[entry.data.recurrence]}</dd></div> : null}
       </dl>
+      {entry.kind === "shopping" && quantityLabel(entry) ? <p>{quantityLabel(entry)}{entry.data?.unitPrice !== undefined ? ` · ${money(entry.data.unitPrice)} por unidade` : ""}{entry.data?.budget ? ` · Total: ${money(entry.data.budget)}` : ""}</p> : null}
       {entry.detail ? <p>{entry.detail}</p> : null}
+      {entry.kind === "task" ? <Subtasks parent={entry} /> : null}
       <EntryAudit entry={entry} />
       {error ? <p className="error" role="alert">{error}</p> : null}
       <div className="record-detail-actions">

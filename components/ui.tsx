@@ -5,15 +5,17 @@ export function DeleteButton({
   label,
   onDelete,
   disabled,
+  message = "Excluir este registro?",
 }: {
   label: string;
   onDelete: () => void;
   disabled: boolean;
+  message?: string;
 }) {
   const [confirm, setConfirm] = useState(false);
   return confirm ? (
     <div className="delete-confirm">
-      <span>Excluir este registro?</span>
+      <span>{message}</span>
       <button
         className="danger"
         disabled={disabled}

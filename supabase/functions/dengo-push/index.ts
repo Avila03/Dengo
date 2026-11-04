@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
 import webpush from "npm:web-push@3.6.7";
 import { loadAllEntries } from "../../../lib/records.ts";
+import {parseNotificationPreferences} from "../../../lib/notification-preferences.ts";
 import { planPushMessages } from "../../../lib/push-planner.ts";
 
 const db=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -37,28 +38,51 @@ async function send(device:any,message:any,config:any):Promise<string> {
 }
 async function dispatch(config:any) {
  const now=new Date(), devices=await rows("push_devices",q=>q.limit(100));
- let sent=0,failed=0;
+ const memberships=await rows("memberships",q=>q.limit(1000));
+ let sent=0,failed=0,inbox=0;
  const spaces=new Map();
- for(const device of devices) {
-  const memberships=await rows("memberships",q=>q.eq("user_id",device.user_id));
-  const member=memberships[0];if(!member)continue;
+ for(const member of memberships) {
   let context=spaces.get(member.space_id);
   if(!context) {
    const [spaceRows,entries,changes]=await Promise.all([
-    rows("spaces",q=>q.eq("id",member.space_id)),
-    loadAllEntries(db,member.space_id),
+    rows("spaces",q=>q.eq("id",member.space_id)),loadAllEntries(db,member.space_id),
     rows("push_changes",q=>q.eq("space_id",member.space_id).gte("created_at",new Date(now.getTime()-86400000).toISOString()).order("id",{ascending:false}).limit(1000)),
    ]);
    context={space:spaceRows[0],entries,changes};spaces.set(member.space_id,context);
   }
-  const user=await db.auth.admin.getUserById(device.user_id);if(user.error || !user.data.user)continue;
-  const candidates=planPushMessages({now,userId:device.user_id,slot:member.slot,names:context.space.names,
-    preferences:user.data.user.user_metadata?.dengo_notifications_v1,entries:context.entries,changes:context.changes,deviceSince:device.created_at});
-  for(const candidate of candidates.slice(0,30)) {
-   const result=await send(device,candidate,config);if(result==="sent")sent++;if(result==="failed")failed++;
+  if(!context.space)continue;
+  const user=await db.auth.admin.getUserById(member.user_id);if(user.error || !user.data.user)continue;
+  const state=await rows("notification_state",q=>q.eq("user_id",member.user_id));
+  if(!state.length)continue;
+  const prefs=parseNotificationPreferences(user.data.user.user_metadata?.dengo_notifications_v1);
+  const candidates=planPushMessages({now,userId:member.user_id,slot:member.slot,names:context.space.names,
+    preferences:{...prefs,hidePreview:false},entries:context.entries,changes:context.changes,deviceSince:state[0].started_at});
+  if(candidates.length) {
+   const history=await db.from("notification_inbox").upsert(candidates.map(candidate=>({
+     user_id:member.user_id,space_id:member.space_id,message_key:candidate.key,type:candidate.type,
+     title:candidate.title,body:candidate.body,url:candidate.url,
+   })),{onConflict:"user_id,message_key",ignoreDuplicates:true});
+   if(history.error)throw new Error("Inbox write failed");inbox+=candidates.length;
+  }
+  for(const device of devices.filter(d=>d.user_id===member.user_id)) {
+   const deliveryStates=new Map();
+   for(let offset=0;offset<candidates.length;offset+=100) {
+    const previous=await rows("push_deliveries",q=>q.eq("device_id",device.id).in("message_key",candidates.slice(offset,offset+100).map(c=>c.key)));
+    for(const delivery of previous)deliveryStates.set(delivery.message_key,delivery);
+   }
+   const pending=candidates.filter(candidate=>{
+    const previous=deliveryStates.get(candidate.key);
+    if(previous && (previous.state==="sent" || previous.attempts>=5 || Date.parse(previous.retry_at)>now.getTime()))return false;
+    const actionDate=candidate.key.startsWith("change:")?context.changes.find(c=>candidate.key.split(":")[1]===String(c.id))?.created_at:null;
+    return !actionDate || actionDate>=device.created_at;
+   });
+   for(const candidate of pending.slice(0,30)) {
+    const payload=prefs.hidePreview?{...candidate,title:"Dengo",body:"Você tem um novo aviso no Dengo."}:candidate;
+    const result=await send(device,payload,config);if(result==="sent")sent++;if(result==="failed")failed++;
+   }
   }
  }
- return {sent,failed,devices:devices.length};
+ return {sent,failed,devices:devices.length,inbox};
 }
 Deno.serve(async(req:Request)=>{
  const headers={...cors(req),"Content-Type":"application/json","Cache-Control":"no-store"};
@@ -108,7 +132,7 @@ Deno.serve(async(req:Request)=>{
   if(body.action==="test") {
    if(!device)return reply({error:"Ative este aparelho primeiro."},400);
    const key=`test:${Math.floor(Date.now()/30000)}`;
-   const state=await send(device,{key,title:"Dengo",body:"Pronto! Este aparelho já recebe notificações do Dengo.",url:"/notificacoes"},config);
+   const state=await send(device,{key,title:"Dengo",body:"Pronto! Este aparelho já recebe notificações do Dengo.",url:"/notificacoes?aba=preferencias"},config);
    if(state==="sent")return reply({sent:true});
    return reply({error:state==="skipped"?"Aguarde 30 segundos antes de testar novamente.":"Não foi possível enviar. Reative este aparelho e tente novamente."},400);
   }

@@ -8,6 +8,18 @@ export const CATEGORIES = [
   "Viagens",
   "Outros",
 ];
+export function parseSharePercent(text:string):number {
+  if (!/^\d{1,3}(?:[.,]\d{1,2})?$/.test(text.trim())) throw new Error("Informe uma porcentagem entre 0 e 100, com até duas casas decimais.");
+  const [whole,fraction=""]=text.trim().replace(",",".").split(".");
+  const basis=Number(whole)*100+Number(fraction.padEnd(2,"0"));
+  if(basis>10000)throw new Error("A divisão deve ficar entre 0 e 100%.");
+  return basis;
+}
+export function splitAmount(amount:number, shareFirst:number):[number,number] {
+  if(!Number.isSafeInteger(amount)||amount<0||!Number.isInteger(shareFirst)||shareFirst<0||shareFirst>10000)throw new Error("Valor ou divisão inválida.");
+  const first=Number((BigInt(amount)*BigInt(shareFirst)+5000n)/10000n);
+  return [first,amount-first];
+}
 export function parseMoney(value: string) {
   const v = value.trim().replace(/\s|R\$/g, "");
   if (!/^\d+(?:[.,]\d{1,2})?$/.test(v))

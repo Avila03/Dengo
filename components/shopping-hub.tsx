@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ShoppingBag, Wallet } from "lucide-react";
 import { Shell } from "./shell";
 import { Collection } from "./collection";
+import { Goals } from "./goals";
 import { Finance } from "./finance";
 import { PaymentCenter, PAYMENT_SECTIONS, type PaymentSection } from "./payment-center";
 
@@ -54,7 +55,7 @@ export function ShoppingHub() {
               <ArrowLeft size={17}/> Voltar aos pagamentos
             </button>
           ) : null}
-          {section === "extrato" ? <Finance embedded /> : <PaymentCenter section={section} key={section} />}
+          {section === "metas" ? <Goals /> : section === "extrato" ? <Finance embedded /> : <PaymentCenter section={section} key={section} />}
         </div>
       )}
     </Shell>

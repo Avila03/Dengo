@@ -7,11 +7,12 @@ import {
 } from "lucide-react";
 import { useDengo } from "./provider";
 import { CleanSheet } from "./clean-sheet";
+import { ExpenseSplit } from "./expense-split";
 import { CoupleBalance } from "./couple-balance";
 import { DeleteButton } from "./ui";
 import { type Draft, type Entry, localToday } from "@/lib/model";
 import { addMonths } from "@/lib/model";
-import { CATEGORIES, money, parseMoney } from "@/lib/finance";
+import { CATEGORIES, money, parseMoney, parseSharePercent } from "@/lib/finance";
 import {
   type PlanCharge, type PlanKind, type PayMethod, type PlanStatus,
   PAYMENT_METHODS, PLAN_TYPE_LABEL, isPlan, planStatus,
@@ -20,13 +21,14 @@ import {
   paymentMethodLabel,
 } from "@/lib/payment-plans";
 
-export type PaymentSection = "vencimentos" | "assinaturas" | "parcelas" | "contas" | "extrato";
+export type PaymentSection = "vencimentos" | "assinaturas" | "parcelas" | "contas" | "extrato" | "metas";
 export const PAYMENT_SECTIONS: {value:PaymentSection;title:string}[] = [
   {value:"vencimentos",title:"Vencimentos"},
   {value:"assinaturas",title:"Assinaturas"},
   {value:"parcelas",title:"Parcelas"},
   {value:"contas",title:"Contas fixas"},
   {value:"extrato",title:"Extrato e acertos"},
+  {value:"metas",title:"Metas do casal"},
 ];
 
 const defaultPlanKind:Record<string,PlanKind> = {
@@ -55,6 +57,7 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
   const [showAllDue,setShowAllDue]=useState(false);
   const [editing,setEditing]=useState<Entry|null>(null);
   const [formError,setFormError]=useState("");
+  const [planAmount,setPlanAmount]=useState("");
   const [paymentTarget,setPaymentTarget]=useState<PlanCharge|null>(null);
   const [paymentError,setPaymentError]=useState("");
   const [statusNotice,setStatusNotice]=useState("");
@@ -70,12 +73,12 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
   const selectedPlan=editing && isPlan(editing)?editing:null;
 
   function openNew(kind:PlanKind) {
-    setFormType(kind);setEditing(null);setFormError("");setShowCreateMenu(false);
+    setPlanAmount("");setFormType(kind);setEditing(null);setFormError("");setShowCreateMenu(false);
     setPaymentTarget(null);setStatusNotice("");
     window.requestAnimationFrame(()=>document.getElementById("payment-plan-form")?.scrollIntoView({behavior:"smooth",block:"start"}));
   }
   function editPlan(plan:Entry) {
-    setFormType(plan.data!.paymentPlanType!);setEditing(plan);
+    setPlanAmount(asInputMoney(plan.data?.amount));setFormType(plan.data!.paymentPlanType!);setEditing(plan);
     setFormError("");setPaymentTarget(null);setStatusNotice("");
     window.requestAnimationFrame(()=>document.getElementById("payment-plan-form")?.scrollIntoView({behavior:"smooth",block:"start"}));
   }
@@ -100,7 +103,7 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
         frequency:String(f.get("frequency")||"monthly") as "monthly"|"yearly",
         count,
         payer:Number(f.get("payer")||0) as 0|1,
-        shareFirst:Math.round(Number(f.get("share")||50)*100),
+        shareFirst:parseSharePercent(String(f.get("sharePercent")||"")),
         category:String(f.get("category")||"Casa"),
         method:String(f.get("method")||"pix") as PayMethod,
         remind:Number(f.get("remind")||0) as 0|1|3|7,
@@ -251,6 +254,9 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
             ) : null}
           </section>
 
+          <Link href="/compras?aba=pagamentos&sec=metas" className="payment-management-link goal-shortcut">
+            <CircleDollarSign size={21}/><span className="payment-management-copy"><strong>Metas do casal</strong><small>Valor reservado e quanto falta guardar</small></span><ArrowRight size={17}/>
+          </Link>
           <section className="payment-management" aria-label="Organizar os tipos de pagamento">
             <div className="payment-dashboard-section-head">
               <h3>Organizar pagamentos</h3>
@@ -422,7 +428,7 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
             <label>Valor {formType==="installment"?"total da compra":
               formType==="bill"?"estimado":"da assinatura"} (R$)
               <input name="amount" inputMode="decimal" placeholder="Ex.: 89,90"
-                required={formType!=="bill"} defaultValue={asInputMoney(selectedPlan?.data?.amount)}/>
+                required={formType!=="bill"} value={planAmount} onChange={event=>setPlanAmount(event.target.value)}/>
             </label>
             <label>Primeiro vencimento
               <input required type="date" name="due" defaultValue={selectedPlan?.due||today}
@@ -442,14 +448,11 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
                 {names.map((name,index)=><option key={index} value={index}>{name}</option>)}
               </select>
             </label>
+            <ExpenseSplit key={selectedPlan?.id || formType} amount={planAmount} names={names} initial={selectedPlan?.data?.shareFirst ?? 5000}
+              note={formType === "installment" ? "Prévia da divisão do valor total da compra. Cada parcela mantém essa proporção." : undefined} />
             <details className="form-details full" open={selectedPlan ? true : undefined}>
-              <summary>Divisão, lembrete e observação</summary>
+              <summary>Pagamento, lembrete e observação</summary>
               <div className="payment-form-grid">
-            <label>Divisão: parte de {names[0]} (%)
-              <input required type="number" name="share" min={0} max={100} step={0.01}
-                defaultValue={(selectedPlan?.data?.shareFirst??5000)/100}/>
-              <small>O restante fica para {names[1]}.</small>
-            </label>
             <label>Forma de pagamento
               <select name="method" defaultValue={selectedPlan?.data?.paymentMethod||"pix"}>
                 {PAYMENT_METHODS.map(x=><option key={x.value} value={x.value}>{x.label}</option>)}
