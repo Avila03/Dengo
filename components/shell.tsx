@@ -8,6 +8,7 @@ import {
   Wallet,
   ListChecks,
   Settings,
+  Bell,
   ArrowUpRight,
   RefreshCw,
   LogOut,
@@ -99,6 +100,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
             >
               <RefreshCw size={17} />
             </button>
+            <Link
+              href="/notificacoes"
+              className={"icon-btn settings-shortcut notifications-shortcut" + (path === "/notificacoes" ? " active" : "")}
+              aria-label="Preferências de notificações"
+              aria-current={path === "/notificacoes" ? "page" : undefined}
+              title="Notificações"
+            >
+              <Bell size={20} />
+            </Link>
             <Link
               href="/configuracoes"
               className={"icon-btn settings-shortcut" + (path === "/configuracoes" ? " active" : "")}

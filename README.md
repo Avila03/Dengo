@@ -1,3 +1,13 @@
+## Dengo 2.5 — preferências individuais de notificações
+
+- Sininho ao lado da engrenagem no cabeçalho, no computador e no celular, abre a tela própria **Notificações** em `/notificacoes`.
+- Oito tipos escolhidos por Bruno: compromisso chegando; compromisso alterado/cancelado; nova responsabilidade; pagamento próximo do vencimento; pendência atrasada; conclusão pelo par; novo filme/série/lugar; resumo do dia. O aviso de responsabilidade no dia do prazo não faz parte da seleção.
+- Controles individuais para antecedência do compromisso, antecedência dos pagamentos, aviso no vencimento, pagamentos próprios ou de todo o casal e horário do resumo. Os controles aparecem conforme os avisos selecionados.
+- Horário de silêncio e privacidade da tela bloqueada ficam em um painel recolhido. Horários usam Brasília; pagamentos próprios são o padrão.
+- Preferências salvas no login em `user_metadata.dengo_notifications_v1`, sem alterar as configurações compartilhadas do casal. Cache separado por usuário e modo demonstração separado; validação e erros preservam o formulário para tentar novamente.
+- Esta entrega implementa **a tela e a persistência das escolhas**. O envio Web Push, inscrição de aparelhos, service worker e processo de disparo ainda não estão ativos; a própria tela informa esse estado e não solicita permissão ao sistema antes de haver entrega funcional.
+- Controles acessíveis por teclado, botões tocáveis, campos em coluna no celular e cores dos temas individuais preservadas.
+
 ## Dengo 2.4 — formulários e rotina mais claros
 
 - Navegação: **Responsabilidades** e **Financeiro**, com os endereços existentes preservados.
