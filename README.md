@@ -1,3 +1,12 @@
+## Dengo 2.3.1 — identidade aprovada
+
+- Logo escolhida por Bruno: **variação 2 do monograma D com coração/faixa em curvas**, em azul-escuro e coral/rosa.
+- A mesma identidade aparece no login, recuperação de senha, lobby, navegação desktop e cabeçalho do celular.
+- Ícones preparados a partir da arte aprovada: favicon, PNGs 32/192/512 e Apple Touch Icon RGB de 180 × 180, sem a moldura clara da prancha de apresentação.
+- Metadados Apple identificam o aplicativo como Dengo; o manifesto permite abertura em modo standalone ao adicionar à tela inicial.
+- A cor do nome acompanha o contraste dos temas individuais; o símbolo mantém as cores aprovadas.
+- Atalhos já instalados podem manter o ícone em cache: nesse caso, remover o atalho e adicionar novamente pelo Safari.
+
 ## Dengo 2.3 — Dengo Studio · Personalização individual
 
 - **13 temas confirmados:** Dengo Original, Noite a Dois, Lavanda, Jardim da Sálvia, Íris Azul, Grafite Minimal, Floresta Secreta, Ametista Profunda, Cobalto Elétrico, Vermelho Atelier, Fúcsia Pop, Neon Arcade e Preto & Branco. Paletas claras, escuras e vibrantes.

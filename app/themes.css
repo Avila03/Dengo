@@ -300,3 +300,25 @@
  .appearance-actions{align-items:flex-start}
  .appearance-theme-choice{min-height:49px}
 }
+
+/* Approved variation 2. Keep the mark consistent while the name follows each theme's contrast. */
+.brand-link { display: inline-flex; align-items: center; flex-shrink: 0; text-decoration: none; }
+.dengo-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); line-height: 1; flex-shrink: 0; }
+.dengo-brand-symbol { width: 44px; height: 44px; display: block; border-radius: 23%; flex-shrink: 0; }
+.dengo-brand-copy { display: flex; flex-direction: column; gap: 5px; }
+.dengo-brand-name { font-family: Arial, Helvetica, sans-serif; font-size: 35px; line-height: 1.05; font-weight: 800; letter-spacing: -1.6px; }
+.dengo-brand-tagline { color: var(--nav-muted, var(--muted)); font-family: Arial, Helvetica, sans-serif; font-size: 9px; font-weight: 400; letter-spacing: 1.5px; white-space: nowrap; }
+.dengo-brand-compact { gap: 7px; }
+.dengo-brand-compact .dengo-brand-symbol { width: 30px; height: 30px; }
+.dengo-brand-compact .dengo-brand-name { font-size: 25px; letter-spacing: -1px; }
+.mobile-brand-link { display: none; }
+.login > .dengo-brand { margin-bottom: 32px; }
+@media(max-width:760px) {
+  .mobile-brand-link { display: inline-flex; }
+  .lobby-header .dengo-brand-symbol { width: 36px; height: 36px; }
+  .lobby-header .dengo-brand-name { font-size: 28px; }
+  .lobby-header .dengo-brand-tagline { font-size: 8px; letter-spacing: .8px; }
+  .dengo-brand-compact .dengo-brand-name { font-size: 23px; }
+}
+
+.sidebar .dengo-brand, .topbar .dengo-brand { color: var(--nav-ink, var(--ink)); }

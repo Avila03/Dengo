@@ -1,4 +1,5 @@
 "use client";
+import { Brand } from "./brand";
 import { useState, useEffect, useRef, type FormEvent } from "react";
 import {
   Heart,
@@ -116,10 +117,7 @@ export function Lobby({
   return (
     <main className="lobby">
       <header className="lobby-header">
-        <div className="brand">
-          <Heart fill="currentColor" />
-          dengo<span>um lugar para nós</span>
-        </div>
+        <Brand tagline />
         <button className="secondary" onClick={signOut} disabled={demo}>
           <LogOut size={16} />
           Sair da conta

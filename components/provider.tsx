@@ -1,4 +1,5 @@
 "use client";
+import { Brand } from "./brand";
 import {
   createContext,
   useContext,
@@ -611,10 +612,7 @@ function Login() {
   }
   return (
     <main className="login">
-      <div className="brand">
-        <Heart fill="currentColor" />
-        dengo<span>um lugar para nós</span>
-      </div>
+      <Brand tagline />
       <form
         key={signup ? "signup" : recovery ? "recovery" : "login"}
         className="panel login-form"

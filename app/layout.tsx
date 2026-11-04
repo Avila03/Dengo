@@ -8,7 +8,26 @@ import { DengoProvider } from "@/components/provider";
 export const metadata: Metadata = {
   title: "Dengo · Nosso cotidiano",
   description: "Um lugar para cuidar da vida a dois.",
-  icons: { icon: "/icon.svg" },
+  applicationName: "Dengo",
+  appleWebApp: { capable: true, title: "Dengo", statusBarStyle: "default" },
+  icons: {
+    icon: [
+      { url: "/brand/dengo-icon-32-v2.png", sizes: "32x32", type: "image/png" },
+      {
+        url: "/brand/dengo-icon-192-v2.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
+    ],
+    shortcut: "/favicon.ico?v=logo2",
+    apple: [
+      {
+        url: "/apple-touch-icon.png?v=logo2",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
 };
 export const viewport: Viewport = {
   width: "device-width",

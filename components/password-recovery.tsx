@@ -1,4 +1,5 @@
 "use client";
+import { Brand } from "./brand";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Heart, LockKeyhole, ArrowLeft, ShieldCheck } from "lucide-react";
@@ -58,7 +59,7 @@ export function PasswordRecovery() {
 
   return (
     <main className="login">
-      <div className="brand"><Heart fill="currentColor" /> dengo<span>um lugar para nós</span></div>
+      <Brand tagline />
       <section className="panel login-form">
         {done ? <ShieldCheck size={32} /> : <LockKeyhole size={32} />}
         <h1>{done ? "Senha atualizada!" : "Uma nova senha para você."}</h1>

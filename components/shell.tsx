@@ -1,4 +1,5 @@
 "use client";
+import { Brand } from "./brand";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -38,10 +39,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         Pular para o conteúdo
       </a>
       <aside className="sidebar">
-        <Link href="/" className="brand">
-          <Heart fill="currentColor" />
-          dengo<span>um lugar para nós</span>
-        </Link>
+        <Link href="/" className="brand-link" aria-label="Dengo — Nosso dia"><Brand tagline /></Link>
         <div className="nav-label">NOSSO COTIDIANO</div>
         <nav aria-label="Navegação principal">
           {links.map(({ href, label, icon: Icon }) => (
@@ -88,10 +86,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <div className="main-wrap">
         <header className="topbar">
           <span className="desktop-only clean-desktop-caption">Nosso espaço</span>
-          <Link href="/" className="mobile-brand">
-            dengo
-            <Heart size={18} fill="currentColor" />
-          </Link>
+          <Link href="/" className="brand-link mobile-brand-link" aria-label="Dengo — Nosso dia"><Brand compact /></Link>
           <div className="topbar-right">
             <span className="status-dot" />
             <button className="lobby-shortcut" onClick={openLobby}>
