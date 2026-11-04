@@ -1,3 +1,15 @@
+## Dengo 2.2 — seis temas de personalidade própria
+
+Temas aprovados: **Dengo Original**, **Noite a Dois**, **Lavanda**, **Jardim da Sálvia**, **Céu de Inverno** e **Preto & Ouro**.
+
+- Diferenciação forte, não apenas alterações pastel: Noite a Dois é grafite escuro com fúcsia vibrante; Lavanda é fundo lilás claro com roxo profundo; Jardim da Sálvia é verde-floresta escuro com detalhes lima; Céu de Inverno usa branco/gelo e azul-cobalto; Preto & Ouro é preto profundo com ouro acetinado; Original mantém o rosé/off-white.
+- **Nosso espaço → Aparência** apresenta as seis miniaturas. Ao tocar numa delas, a aparência do site inteiro muda como **prévia ao vivo**. O botão **Aplicar tema** grava a escolha; se sair sem salvar, volta ao tema anterior. Há também **Restaurar Original**.
+- A escolha é **individual**, por pessoa autenticada. Ela fica em **Supabase Auth user_metadata.dengo_theme** (dado de aparência sem efeito em autorizações) e cache local por ID da conta. A outra pessoa pode usar uma paleta diferente sem qualquer alteração em preferências compartilhadas ou nos registros do casal.
+- No modo demonstração a preferência fica apenas no navegador.
+- Um novo arquivo CSS é carregado por último e substitui tokens e componentes necessários (fundos, painéis, botões, cabeçalhos, inputs, navegação inferior, formulários e menus). Temas escuros recebem superfícies, texto e bordas realmente escuros.
+- A cor da barra do navegador acompanha a seleção quando suportada. Opções e dados não são removidos.
+- Testes novos verificam as seis IDs, persistência por usuário, prévia, sincronização e contraste WCAG AA entre texto/superfície e texto dos botões.
+
 ## Dengo 2.1 — Compras simplificadas
 
 - Compras agora tem **duas escolhas claras**: **Lista de compras** e **Pagamentos**. A aba de pagamentos deixou de ter cinco subabas horizontais confusas.

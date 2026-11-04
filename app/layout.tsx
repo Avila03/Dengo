@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./clean.css";
 import "./clarity.css";
+import "./themes.css";
 import { DengoProvider } from "@/components/provider";
 export const metadata: Metadata = {
   title: "Dengo · Nosso cotidiano",

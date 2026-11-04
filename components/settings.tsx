@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Shell } from "./shell";
 import { useDengo } from "./provider";
+import { ThemePicker } from "./theme-picker";
 import { CATEGORIES, parseMoney } from "@/lib/finance";
 import { localToday } from "@/lib/model";
 export function Settings() {
@@ -208,6 +209,7 @@ export function Settings() {
           {busy ? "Salvando…" : "Salvar nosso espaço"}
         </button>
       </form>
+      <ThemePicker />
       <section className="panel settings-account-panel">
         <div className="stat-icon sage">
           <ShieldCheck />
