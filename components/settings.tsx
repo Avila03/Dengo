@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, type FormEvent } from "react";
 import {
-  Download,
   ShieldCheck,
   Heart,
   Cloud,
@@ -12,11 +11,9 @@ import {
 import { Shell } from "./shell";
 import { useDengo } from "./provider";
 import { CATEGORIES, parseMoney } from "@/lib/finance";
-import { downloadFile } from "@/lib/calendar";
 import { localToday } from "@/lib/model";
 export function Settings() {
   const {
-    entries,
     demo,
     preferences,
     busy,
@@ -204,68 +201,27 @@ export function Settings() {
           {busy ? "Salvando…" : "Salvar nosso espaço"}
         </button>
       </form>
-      <div className="two-columns">
-        <section className="panel">
-          <div className="stat-icon sage">
-            <ShieldCheck />
-          </div>
-          <h2>
-            {demo ? "Conhecendo o Dengo" : "Privacidade em primeiro lugar"}
-          </h2>
-          <p>
-            {demo
-              ? "Esta é uma demonstração. Os registros ficam neste navegador, sem compartilhar com outro aparelho."
-              : "O acesso aos registros é restrito às contas vinculadas ao espaço do casal."}
-          </p>
-          <span className="tag">
-            {demo ? <Monitor size={14} /> : <Cloud size={14} />}{" "}
-            {demo ? "Armazenamento local" : "Dados compartilhados"}
-          </span>
-          {!demo ? (
-            <button className="secondary spaced" onClick={signOut}>
-              <LogOut size={16} />
-              Sair da conta
-            </button>
-          ) : null}
-        </section>
-        <section className="panel">
-          <h2>Uma cópia da nossa história</h2>
-          <p>
-            Exporte os registros e a personalização em JSON. A importação ainda
-            não está disponível.
-          </p>
-          <button
-            className="secondary"
-            onClick={() =>
-              downloadFile(
-                "dengo-dados.json",
-                JSON.stringify(
-                  {
-                    version: 2,
-                    exported_at: new Date().toISOString(),
-                    entries,
-                    preferences,
-                  },
-                  null,
-                  2,
-                ),
-                "application/json",
-              )
-            }
-          >
-            <Download size={17} />
-            Exportar meus dados
-          </button>
-        </section>
-      </div>
-      <section className="panel">
-        <h2>Conexões externas</h2>
+      <section className="panel settings-account-panel">
+        <div className="stat-icon sage">
+          <ShieldCheck />
+        </div>
+        <h2>{demo ? "Modo demonstração" : "Conta e privacidade"}</h2>
         <p>
-          Google Maps abre o endereço salvo. Google Agenda recebe uma cópia do
-          compromisso confirmada por você; não há sincronização automática. O
-          catálogo TMDB precisa de uma credencial configurada na hospedagem e
-          tem cadastro manual como alternativa.
+          {demo
+            ? "Nesta demonstração, os registros ficam somente neste navegador."
+            : "Os registros são compartilhados apenas entre as contas vinculadas ao espaço do casal."}
         </p>
+        <span className="tag">
+          {demo ? <Monitor size={14} /> : <Cloud size={14} />}
+          {" "}
+          {demo ? "Armazenamento local" : "Dados do casal"}
+        </span>
+        {!demo ? (
+          <button type="button" className="secondary spaced" onClick={signOut}>
+            <LogOut size={16} />
+            Sair da conta
+          </button>
+        ) : null}
       </section>
     </Shell>
   );

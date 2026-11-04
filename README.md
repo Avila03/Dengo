@@ -1,3 +1,9 @@
+## Ajuste 1.7.1 — configurações mais objetivas
+
+- Removidas de **Nosso espaço** as seções **Uma cópia da nossa história / Exportar meus dados** e **Conexões externas**, que não são necessárias no cotidiano. A importação de backups ainda não existe.
+- Mantidas **Nossa identidade**, foto, nomes, início do relacionamento, limites mensais e uma seção enxuta de **Conta e privacidade** com Sair da conta.
+- As integrações com Google Maps, Google Agenda e TMDB seguem disponíveis nas respectivas abas; os dados do casal não foram apagados.
+
 ## Entrega 1.7 — cinco abas fixas e configuração na engrenagem
 
 - Navegação inferior em cinco destinos no celular: **Nosso dia**, **Compromissos**, **Compras**, **Lugares** e **Filmes**.
