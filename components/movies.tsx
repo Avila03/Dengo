@@ -6,6 +6,7 @@ import {
   Heart, TrendingUp, Star, LoaderCircle, ListVideo, Play, BookOpen,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { CleanSheet } from "./clean-sheet";
 import { EntryAudit } from "./entry-audit";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
@@ -282,6 +283,8 @@ export function Movies() {
       </section>
 
       {open ? (
+        <CleanSheet title={editing ? "Editar " + editing.title : "Adicionar título"}
+          onClose={() => {setOpen(false);setEditing(null);setFormError("");}}>
         <form key={editing?.id || "new"} id="media-entry-form"
           className="panel entry-form media-editor" onSubmit={(event) => void manual(event)}>
           <h2>{editing ? "Editar " + editing.title : "Adicionar um título"}</h2>
@@ -359,6 +362,7 @@ export function Movies() {
             }}>Cancelar</button>
           </div>
         </form>
+        </CleanSheet>
       ) : null}
 
       <section className="saved-media-section" id="nossa-lista" aria-label="Nossa lista de filmes e séries">

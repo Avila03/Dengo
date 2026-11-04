@@ -10,6 +10,7 @@ import {
   Repeat2,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { CleanSheet } from "./clean-sheet";
 import { EntryAudit } from "./entry-audit";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
@@ -161,6 +162,8 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
         </section>
       </div>
       {form ? (
+        <CleanSheet title={editing ? "Editar registro" : form === "transfer" ? "Novo acerto" : "Novo gasto"}
+          onClose={() => {setForm(null);setEditing(null);}}>
         <form
           key={`${form}-${editing?.id || source?.id || "new"}`}
           className="panel entry-form"
@@ -323,6 +326,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
             {busy ? "Salvando…" : "Salvar registro"}
           </button>
         </form>
+        </CleanSheet>
       ) : null}
       <section className="panel">
         <div className="section-title">

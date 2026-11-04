@@ -90,7 +90,7 @@ export function Settings() {
           </h1>
           <p>O cotidiano com a cara de vocês.</p>
         </div>
-        <Heart className="rose" size={35} />
+
       </section>
       <form
         key={preferences.names.join("-") + preferences.since}
@@ -167,8 +167,12 @@ export function Settings() {
             />
           </label>
         </div>
-        <h2>Limites mensais por categoria</h2>
-        <p>Valores em reais. Deixe em branco para não definir limite.</p>
+        <details className="clean-settings-advanced">
+          <summary>
+            <span>Orçamentos por categoria</span>
+            <small>Definir limites mensais</small>
+          </summary>
+          <p>Valores em reais. Deixe em branco para não definir limite.</p>
         <div className="form-grid">
           {CATEGORIES.map((c) => (
             <label key={c}>
@@ -186,6 +190,7 @@ export function Settings() {
             </label>
           ))}
         </div>
+        </details>
         {error ? (
           <p role="alert" className="error">
             {error}

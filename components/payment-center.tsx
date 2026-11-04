@@ -5,6 +5,7 @@ import {
   Pencil, Plus, Repeat2, Play, Receipt, Trash2, X, AlertCircle,
 } from "lucide-react";
 import { useDengo } from "./provider";
+import { CleanSheet } from "./clean-sheet";
 import { DeleteButton } from "./ui";
 import { type Draft, type Entry, localToday } from "@/lib/model";
 import { addMonths } from "@/lib/model";
@@ -338,6 +339,8 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
       ):null}
 
       {formType ? (
+        <CleanSheet title={selectedPlan ? "Editar pagamento" : "Novo pagamento"}
+          onClose={() => {setFormType(null);setEditing(null);}}>
         <form key={selectedPlan?.id||formType} className="panel payment-plan-form"
           id="payment-plan-form" onSubmit={(e)=>void savePlan(e)}>
           <div className="payment-form-header"><div>
@@ -413,9 +416,12 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
             <button type="button" className="secondary" onClick={()=>setFormType(null)}>Cancelar</button>
           </div>
         </form>
+        </CleanSheet>
       ):null}
 
-      {paymentTarget ? <form className="panel payment-plan-form" id="plan-payment-form"
+      {paymentTarget ? (
+        <CleanSheet title="Registrar pagamento" onClose={() => setPaymentTarget(null)}>
+        <form className="panel payment-plan-form" id="plan-payment-form"
         key={paymentTarget.plan.id+"-"+paymentTarget.cycle} onSubmit={(e)=>void savePayment(e)}>
         <div className="payment-form-header"><div>
           <span className="eyebrow">REGISTRAR PAGAMENTO</span>
@@ -454,7 +460,9 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
           <button type="button" className="secondary" onClick={()=>setPaymentTarget(null)}>Cancelar</button>
         </div>
         <small>O registro entra no extrato e é dividido entre vocês quando estiver marcado como pago.</small>
-      </form>:null}
+      </form>
+      </CleanSheet>
+      ):null}
     </section>
   );
 }

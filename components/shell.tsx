@@ -55,15 +55,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
-        <div className="sidebar-note">
-          <Heart size={22} />
-          <p>
-            As pequenas coisas
-            <br />
-            também são amor.
-          </p>
-          <span>Um dia de cada vez, juntos.</span>
-        </div>
+
         <div className="couple">
           <div className="avatar">
             {preferences.photo ? (
@@ -94,7 +86,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </aside>
       <div className="main-wrap">
         <header className="topbar">
-          <span className="desktop-only">FEITO DE PEQUENOS MOMENTOS</span>
+          <span className="desktop-only clean-desktop-caption">Nosso espaço</span>
           <Link href="/" className="mobile-brand">
             dengo
             <Heart size={18} fill="currentColor" />
@@ -131,16 +123,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
         ) : null}
-        <main id="conteudo" tabIndex={-1}>
+        <main id="conteudo" className="clean-main" tabIndex={-1}>
           {error ? (
             <div role="alert" className="error">
               {error} <button onClick={refresh}>Tentar novamente</button>
             </div>
           ) : null}
           {children}
-          <footer>
-            Com carinho, para a vida que vocês constroem. <Heart size={13} />
-          </footer>
+
         </main>
       </div>
       <nav className="bottom-nav" aria-label="Navegação no celular">

@@ -1,3 +1,17 @@
+## Dengo 2.0 Clean — redesign integral, funcionalidades preservadas
+
+- **Identidade preservada**: off-white, rosa queimado, tipografia serifada, ícones e cinco destinos inferiores continuam; a nova camada \`app/clean.css\` centraliza o sistema visual sem reescrever as regras de negócio.
+- **Navegação e apresentação**: cabeçalho discreto, espaçamentos e tipografia consistentes, menos bordas coloridas, cartões mais leves, menos textos decorativos e rodapé repetitivo removido.
+- **Nosso dia**: mantém a semana, os pontos de cores ilimitados, o calendário mensal, o resumo das tarefas e as datas especiais. Removido o segundo resumo de três chips; filtros e personalização dos tópicos disponíveis em um único bloco expansível.
+- **Compromissos e lista de compras**: cada registro prioriza o nome, o responsável, o status e a ação de concluir. Editar/excluir ficam em **Opções**, e registrar gasto permanece um botão visível.
+- **Compras e pagamentos**: resumo inicial destaca só o número de compras pendentes e o valor a pagar. Todos os outros indicadores ficam disponíveis em **Ver resumo financeiro completo**; extrato, assinaturas, parcelas, contas fixas, avisos e filtros seguem intactos. Dados e comandos avançados dos planos ficam dentro de **Detalhes e opções**.
+- **Nossos lugares**: título, endereço, coleção, favorito e botões de visita/agendamento aparecem primeiro. Orçamento, memórias, link de TikTok/Maps, mapa, edição e exclusão continuam em **Detalhes e links**.
+- **Filmes e séries**: contadores compactos abrem a lista salva. Status, temporada/episódio e feedback seguem visíveis; ações administrativas ficam em **Avaliação e opções**; catálogo TMDB só expande quando escolhido.
+- **Calendário e Nosso espaço**: legenda, eventos futuros, ajuda de exportação e orçamentos por categoria ficam em painéis expansíveis. Gerenciamento de cores, eventos recorrentes, aniversários e fotos não muda.
+- **Formulários**: componente reutilizável \`CleanSheet\` move criação/edição de tarefas, compras, locais, filmes, eventos, gastos e planos para uma janela central no desktop e uma folha inferior no iPhone, com rolagem interna, foco de teclado, Escape e botão para fechar.
+- **Mobile-first**: controles tocáveis, safe areas do iOS, bar inferior de 5 ícones, largura limitada, sem rolagem horizontal desnecessária, campos grandes o bastante para Safari não dar zoom involuntário.
+- **Dados**: nenhum registro foi apagado e nenhuma migração Supabase foi necessária; apenas layout, visibilidade e organização dos comandos foram alterados. Testes de domínio e compilação permanecem obrigatórios.
+
 ## Entrega 1.8 — pagamentos do casal, assinaturas e parcelamentos
 
 - **Compras** agora tem dois destinos principais: **Lista de compras** e **Pagamentos**. Em Pagamentos, atalhos internos compactos para Vencimentos, Assinaturas, Parcelas, Contas fixas e Extrato e acertos. O caminho antigo \`/compras?aba=gastos\` continua abrindo o extrato.

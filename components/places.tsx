@@ -6,6 +6,7 @@ import {
   Link2, MapPinned, Heart, FolderHeart, CalendarCheck2,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { CleanSheet } from "./clean-sheet";
 import { EntryAudit } from "./entry-audit";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
@@ -174,6 +175,8 @@ export function Places() {
       </section>
 
       {open ? (
+        <CleanSheet title={editing ? "Editar lugar" : "Adicionar local"}
+          onClose={() => {setOpen(false);setEditing(null);setError("");}}>
         <form
           key={editing?.id || "new"}
           className="panel entry-form setup-note"
@@ -260,6 +263,7 @@ export function Places() {
             </button>
           </div>
         </form>
+        </CleanSheet>
       ) : null}
 
       <section className="places-filter-panel" aria-label="Organizar lugares">

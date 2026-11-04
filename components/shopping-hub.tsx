@@ -38,10 +38,17 @@ export function ShoppingHub() {
     <Shell>
       <section className="purchases-header">
         <div>
-          <span className="eyebrow">O QUE PRECISAMOS E O QUE JÁ FIZEMOS</span>
+          <span className="eyebrow">NOSSA ORGANIZAÇÃO</span>
           <h1>Compras<span className="rose">.</span></h1>
-          <p>Lista de compras, pagamentos recorrentes, parcelas e acertos em um só lugar.</p>
+          <p>O que comprar e o que pagar, sem complicação.</p>
         </div>
+        <div className="clean-shopping-summary">
+          <span><ShoppingBag size={16} /> <strong>{pending}</strong> a comprar</span>
+          <span><CalendarClock size={16} /> <strong>{money(financial.remaining)}</strong> a pagar</span>
+        </div>
+      </section>
+      <details className="clean-summary-details">
+        <summary>Ver resumo financeiro completo</summary>
         <div className="purchases-stats">
           <span><ShoppingBag size={18} /> <strong>{pending}</strong> pendentes</span>
           <span><Check size={18} /> <strong>{bought}</strong> comprados</span>
@@ -50,7 +57,7 @@ export function ShoppingHub() {
           {paymentPending > 0 ? <span><Wallet size={18} /> <strong>{paymentPending}</strong> aguardando pagamento</span> : null}
           {financial.remaining>0 ? <span><CalendarClock size={18}/> <strong>{money(financial.remaining)}</strong> a pagar neste mês</span>:null}
         </div>
-      </section>
+      </details>
       {reminders.length>0 && tab==="lista" ? (
         <button type="button" className="shopping-reminder-shortcut"
           onClick={()=>changeTab("pagamentos")}>

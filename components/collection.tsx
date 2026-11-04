@@ -13,6 +13,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { CleanSheet } from "./clean-sheet";
 import { money, parseMoney, CATEGORIES } from "@/lib/finance";
 import { makePurchaseExpense, plannedShoppingTotal, relatedShoppingExpense, shoppingStatus } from "@/lib/shopping";
 import { PAYMENT_METHODS, type PayMethod } from "@/lib/payment-plans";
@@ -156,6 +157,8 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
         </span>
       </div>
       {formOpen ? (
+        <CleanSheet title={editing ? "Editar " + editing.title : isTask ? "Nova tarefa" : "Adicionar item"}
+          onClose={() => {setFormOpen(false);setEditing(null);}}>
         <form
           key={editing?.id || "new"}
           id="new-entry"
@@ -254,6 +257,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
             {busy ? "Salvando…" : "Salvar"}
           </button>
         </form>
+        </CleanSheet>
       ) : null}
       <section className="panel list-panel">
         <div className="list-toolbar">

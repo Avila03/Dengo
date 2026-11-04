@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Repeat2,
-  Clock3, Heart, Palette, Plus, Filter, Bell,
+  Heart, Palette, Plus, Filter, Bell,
 } from "lucide-react";
 import { Shell } from "./shell";
 import { TopicDots } from "./topic-dots";
@@ -40,7 +40,6 @@ export function Home() {
   const [monthOpen, setMonthOpen] = useState(false);
   const [month, setMonth] = useState(today.slice(0, 7));
   const [allVisible, setAllVisible] = useState(false);
-  const [showTopicFilters, setShowTopicFilters] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState("all");
   const [preview, setPreview] = useState<Entry | null>(null);
   const week = weekDates(selected);
@@ -86,20 +85,15 @@ export function Home() {
     <Shell>
       <section className="day-head">
         <div>
-          <span className="eyebrow">NOSSA ROTINA, DO NOSSO JEITO</span>
+          <span className="eyebrow">HOJE, JUNTOS</span>
           <h1>Nosso dia<span className="rose">.</span></h1>
-          <p>{dateText}</p>
+          <p>{dateText} <span className="clean-day-count">· {todayPending} {todayPending === 1 ? "pendência" : "pendências"}</span></p>
         </div>
         <Link href={"/calendario?data=" + today + "&novo=1"} className="primary day-add" aria-label="Adicionar compromisso ao calendário">
           <Plus size={18} /> <span>Adicionar</span>
         </Link>
       </section>
 
-      <section className="day-status" aria-label="Resumo do dia">
-        <span><Heart size={16} /> {preferences.names.join(" & ")}</span>
-        <span>{todayItems.length} {todayItems.length === 1 ? "registro" : "registros"} hoje</span>
-        <span><Clock3 size={15} /> {todayPending} {todayPending === 1 ? "pendente" : "pendentes"}</span>
-      </section>
 
       {paymentReminders.length>0 ? (
         <Link href="/compras?aba=pagamentos&sec=vencimentos" className="day-payment-alert">
@@ -126,7 +120,6 @@ export function Home() {
       <section className="panel day-calendar" aria-label="Calendário">
         <div className="day-calendar-top">
           <div>
-            <span className="eyebrow">CALENDÁRIO</span>
             <h2>Esta semana</h2>
           </div>
           <div className="day-calendar-tools">
@@ -154,25 +147,23 @@ export function Home() {
           <button type="button" className="text-link day-month-toggle"
             aria-expanded={monthOpen} aria-controls="day-month-view"
             onClick={() => setMonthOpen((value) => !value)}>
-            <CalendarDays size={16} /> {monthOpen ? "Ocultar mês" : "Ver mês"} <ChevronDown size={16} />
+            <CalendarDays size={16} /> {monthOpen ? "Fechar mês" : "Ver mês"} <ChevronDown size={15} />
           </button>
-          <Link href="/calendario?topicos=1" className="text-link">
-            <Palette size={15} /> Tópicos
-          </Link>
           <Link href={"/calendario?data=" + selected} className="text-link">
             Agenda completa <ArrowRight size={15} />
           </Link>
         </div>
-        <div className="home-calendar-filter-toggle">
-          <button type="button" className="text-link" aria-expanded={showTopicFilters}
-            onClick={() => setShowTopicFilters(!showTopicFilters)}>
-            <Filter size={14} /> {selectedTopic === "all" ? "Filtrar tópicos" :
-              topics.find(t => t.id === selectedTopic)?.name || "Tópico"} 
-          </button>
-          {selectedTopic !== "all" ? <button type="button" className="text-link"
-            onClick={() => setSelectedTopic("all")}>Limpar</button> : null}
-        </div>
-        {showTopicFilters ? (
+        <details className="clean-inline-options">
+          <summary><Filter size={15} /> {selectedTopic === "all" ? "Tópicos e filtros" :
+            "Filtrando: " + (topics.find(t => t.id === selectedTopic)?.name || "Outros")}
+          </summary>
+          <div className="home-calendar-filter-toggle">
+            <Link href="/calendario?topicos=1" className="text-link">
+              <Palette size={15} /> Editar tópicos e cores
+            </Link>
+            {selectedTopic !== "all" ? <button type="button" className="text-link"
+              onClick={() => setSelectedTopic("all")}>Limpar filtro</button> : null}
+          </div>
           <div className="calendar-topic-filters" role="group" aria-label="Filtrar calendário">
             <button type="button" className={selectedTopic === "all" ? "selected" : ""}
               onClick={() => setSelectedTopic("all")}>Todos</button>
@@ -184,7 +175,7 @@ export function Home() {
               </button>
             ))}
           </div>
-        ) : null}
+        </details>
         {monthOpen ? (
           <div className="day-month" id="day-month-view">
             <div className="day-month-header">

@@ -14,6 +14,7 @@ import {
   Repeat2,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { CleanSheet } from "./clean-sheet";
 import { eventDurationLabel, type EventCounter } from "@/lib/calendar-anniversaries";
 import { EntryAudit } from "./entry-audit";
 import { TopicManager } from "./topic-manager";
@@ -154,6 +155,8 @@ export function Calendar() {
           topics={topics} busy={busy} onSave={saveCalendarTopics} />
       ) : null}
       {open ? (
+        <CleanSheet title={editing ? "Editar compromisso" : "Novo compromisso"}
+          onClose={() => {setOpen(false);setEditing(null);}}>
         <form
           className="panel entry-form"
           key={editing?.id || source?.id || "new"}
@@ -301,6 +304,7 @@ export function Calendar() {
             {busy ? "Salvando…" : "Salvar compromisso"}
           </button>
         </form>
+        </CleanSheet>
       ) : null}
       <div className="calendar-filter-bar">
         <button type="button" className="secondary" aria-expanded={showFilters}
