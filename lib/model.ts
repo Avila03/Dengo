@@ -286,7 +286,7 @@ export function validateDraft(d: Draft) {
     if (d.data?.paymentPlanType) {
       const plan = d.data;
       if (d.kind !== "expense" ||
-          !["subscription", "installment", "bill"].includes(plan.paymentPlanType))
+          !["subscription", "installment", "bill"].includes(plan.paymentPlanType || ""))
         throw new Error("Tipo de pagamento recorrente inválido.");
       if (!d.due) throw new Error("Defina a data do primeiro vencimento.");
       if (!["active", "paused", "canceled"].includes(plan.planStatus || "active"))
