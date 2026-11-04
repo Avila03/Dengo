@@ -260,12 +260,7 @@ export function Movies() {
         </button>
       </PageHeading>
 
-      <section className="catalog-intro panel">
-        <div>
-          <span className="eyebrow">NOSSA LISTA, NOSSO RITMO</span>
-          <h2>O que vamos assistir?</h2>
-          <p>Os títulos salvos ficam logo abaixo. Toquem nos números para abrir cada lista.</p>
-        </div>
+      <section className="clean-media-toolbar" aria-label="Resumo de filmes e séries">
         <div className="catalog-stats">
           <button type="button" onClick={() => selectSaved("pending")}
             aria-label={"Abrir " + counters.pending + " títulos na lista"}>
@@ -466,8 +461,11 @@ export function Movies() {
                         <p>{feedback}</p>
                       </div>
                     ) : null}
-                    <EntryAudit entry={entry} />
-                    <div className="row-actions">
+                    <details className="clean-media-details">
+                      <summary><Pencil size={14} /> Avaliação e opções</summary>
+                      <div className="clean-media-expanded">
+                        <EntryAudit entry={entry} />
+                        <div className="row-actions">
                       <button type="button" className="secondary saved-media-edit"
                         onClick={() => beginManual(entry)}>
                         <Pencil size={15} /> Editar / avaliar
@@ -477,7 +475,9 @@ export function Movies() {
                         <CalendarDays size={17} />
                       </Link>
                       <DeleteButton label={entry.title} disabled={busy} onDelete={() => void remove(entry)} />
-                    </div>
+                        </div>
+                      </div>
+                    </details>
                   </div>
                 </article>
               );
@@ -491,19 +491,21 @@ export function Movies() {
               "Escolham outro filtro para ver os títulos já salvos."}</p>
             <button type="button" className="secondary" onClick={() => {
               if (all.length) setFilter("all");
-              else document.getElementById("descobrir-filmes")?.scrollIntoView({behavior:"smooth",block:"start"});
+              else {
+                const discover = document.getElementById("descobrir-filmes");
+                if (discover instanceof HTMLDetailsElement) discover.open = true;
+                discover?.scrollIntoView({behavior:"smooth",block:"start"});
+              }
             }}>{all.length ? "Ver todos os títulos" : "Explorar catálogo"}</button>
           </section>
         )}
       </section>
 
-      <section id="descobrir-filmes" className="media-discover" aria-label="Descobrir novos títulos">
-        <div className="saved-media-heading">
-          <div><span className="eyebrow">ENCONTREM ALGO NOVO</span>
-            <h2>Descobrir filmes e séries</h2>
-            <p>Pesquisem ou explorem os títulos em alta e salvem na lista do casal.</p>
-          </div>
-        </div>
+      <details id="descobrir-filmes" className="media-discover clean-discover"
+        aria-label="Descobrir novos títulos">
+        <summary><span><Search size={18} /> Descobrir filmes e séries</span>
+          <span>Pesquisar no catálogo</span></summary>
+        <div className="clean-discover-content">
         <form className="panel catalog-search" onSubmit={search}>
           <label>Buscar no catálogo
             <input name="q" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)}
@@ -593,7 +595,8 @@ export function Movies() {
             ) : null}
           </section>
         ) : null}
-      </section>
+        </div>
+      </details>
 
       <div className="tmdb-credit">
         <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer">

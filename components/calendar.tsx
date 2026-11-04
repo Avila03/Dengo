@@ -381,7 +381,9 @@ export function Calendar() {
               );
             })}
           </div>
-          <div className="calendar-legend topics-legend" aria-label="Legenda de cores">
+          <details className="clean-calendar-legend">
+            <summary>Legenda de cores</summary>
+            <div className="calendar-legend topics-legend" aria-label="Legenda de cores">
             {topics.map((topic) => (
               <span key={topic.id}>
                 <i className="topic-legend-dot" style={{ backgroundColor: topic.color }} /> {topic.name}
@@ -389,7 +391,8 @@ export function Calendar() {
             ))}
             <span><i className="topic-legend-dot" style={{ backgroundColor: TASK_CALENDAR_COLOR }} /> Tarefas</span>
             <span><i className="topic-legend-dot" style={{ backgroundColor: EXPENSE_CALENDAR_COLOR }} /> Contas</span>
-          </div>
+            </div>
+          </details>
         </section>
         <section className="panel">
           <div className="section-title">
@@ -475,8 +478,9 @@ export function Calendar() {
           )}
         </section>
       </div>
-      <section className="panel setup-note">
-        <h2>Vem por aí</h2>
+      <details className="clean-calendar-upcoming">
+        <summary>Próximos compromissos <span className="clean-summary-count">{upcoming.length}</span></summary>
+        <div className="panel clean-upcoming-content">
         {upcoming.length ? (
           upcoming.map((e) => (
             <button
@@ -495,12 +499,16 @@ export function Calendar() {
         ) : (
           <p>Nenhum plano pendente a partir de hoje.</p>
         )}
-        <p className="helper">
-          Google Agenda abre um evento para você confirmar. O arquivo .ics pode
-          ser importado em outros calendários. Alterações posteriores no Dengo
-          não são sincronizadas automaticamente.
-        </p>
-      </section>
+        <details className="clean-calendar-help">
+          <summary>Sobre a exportação para outros calendários</summary>
+          <p className="helper">
+            Google Agenda abre um evento para você confirmar. O arquivo .ics pode
+            ser importado em outros calendários. Alterações posteriores no Dengo
+            não são sincronizadas automaticamente.
+          </p>
+        </details>
+        </div>
+      </details>
       {preview ? <EventQuickView key={preview.id} occurrence={preview}
         onClose={() => setPreview(null)} /> : null}
     </Shell>

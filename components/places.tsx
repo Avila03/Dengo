@@ -166,14 +166,6 @@ export function Places() {
         </button>
       </PageHeading>
 
-      <section className="panel place-intro places-intro-compact">
-        <FolderHeart />
-        <div>
-          <h2>Nosso mapa de ideias.</h2>
-          <p>Organizem lugares por coleção, guardem favoritos e registrem os passeios feitos juntos.</p>
-        </div>
-      </section>
-
       {open ? (
         <CleanSheet title={editing ? "Editar lugar" : "Adicionar local"}
           onClose={() => {setOpen(false);setEditing(null);setError("");}}>
@@ -324,6 +316,22 @@ export function Places() {
                   {placeCollection(entry.data?.placeCollection)}</span>
                 <h2>{entry.title}</h2>
                 <p>{entry.data?.address}</p>
+                {entry.done ? <span className="clean-place-status">
+                  <CalendarCheck2 size={14} /> Já fomos
+                </span> : null}
+                <div className="clean-place-quick-actions">
+                  <Link href={"/calendario?origem=" + entry.id} className="clean-place-plan">
+                    <CalendarDays size={16} /> Planejar
+                  </Link>
+                  <button type="button" className="clean-place-visited" disabled={busy}
+                    aria-label={(entry.done ? "Voltar aos planos: " : "Marcar como visitado: ") + entry.title}
+                    onClick={() => void markVisited(entry)}>
+                    <Check size={15} /> {entry.done ? "Desfazer visita" : "Já fomos"}
+                  </button>
+                </div>
+                <details className="clean-place-details">
+                  <summary>Detalhes e links</summary>
+                  <div className="clean-place-expanded">
                 {entry.detail ? <p>{entry.detail}</p> : null}
                 {entry.data?.budget ? <strong>Previsto: {money(entry.data.budget)}</strong> : null}
                 {entry.done ? <p className="places-visited-label">
@@ -355,20 +363,14 @@ export function Places() {
                 </a>
                 <EntryAudit entry={entry} />
                 <div className="row-actions places-row-actions">
-                  <button disabled={busy} type="button" className="icon-btn"
-                    aria-label={(entry.done ? "Voltar aos planos " : "Marcar como visitado ") + entry.title}
-                    onClick={() => void markVisited(entry)}>
-                    <Check size={17} />
+                  <button type="button" className="secondary" onClick={() => editPlace(entry)}>
+                    <Pencil size={16} /> Editar lugar
                   </button>
-                  <Link className="text-link" href={"/calendario?origem=" + entry.id}>
-                    <CalendarDays size={16} /> Planejar visita
-                  </Link>
-                  <button type="button" className="icon-btn" aria-label={"Editar " + entry.title}
-                    onClick={() => editPlace(entry)}>
-                    <Pencil size={17} />
-                  </button>
-                  <DeleteButton label={entry.title} disabled={busy} onDelete={() => void remove(entry)} />
+                  <DeleteButton label={entry.title} disabled={busy}
+                    onDelete={() => void remove(entry)} />
                 </div>
+                  </div>
+                </details>
               </article>
             );
           })}

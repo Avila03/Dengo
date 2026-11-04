@@ -296,6 +296,15 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
                       {" "}Parcelas divididas em centavos, sem arredondar o valor total.</small>
                   </>
                 ):null}
+                {next && !complete ? (
+                  <button type="button" className="primary clean-plan-pay" disabled={busy}
+                    onClick={() => openCharge(next)}>
+                    <Check size={15} /> {next.payment ? "Atualizar pagamento" : "Registrar pagamento"}
+                  </button>
+                ) : null}
+                <details className="clean-plan-details">
+                  <summary>Detalhes e opções</summary>
+                  <div className="clean-plan-expanded">
                 <div className="payment-plan-meta">
                   <span><CalendarClock size={15}/> Primeiro vencimento: {dateDisplay(plan.due)}</span>
                   <span><CreditCard size={15}/> {paymentMethodLabel(plan.data?.paymentMethod)}</span>
@@ -304,10 +313,6 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
                   {next?<span>Próximo pendente: {dateDisplay(next.due)} · {moneyOrEstimate(next.amount)}</span>:null}
                 </div>
                 <div className="payment-plan-actions">
-                  {next && !complete ? <button type="button" className="primary"
-                    disabled={busy} onClick={()=>openCharge(next)}>
-                      <Check size={15}/> {next.payment?"Atualizar":"Registrar parcela"}
-                    </button>:null}
                   <button type="button" className="secondary" onClick={()=>editPlan(plan)}>
                     <Pencil size={15}/> Editar
                   </button>
@@ -326,6 +331,8 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
                   {registered===0 ? <DeleteButton label={plan.title} disabled={busy}
                     onDelete={()=>void remove(plan)}/>:null}
                 </div>
+                  </div>
+                </details>
               </article>;
             })}
           </div>

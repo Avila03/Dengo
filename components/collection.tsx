@@ -362,39 +362,39 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                     ) : null}
                     <EntryAudit entry={e} />
                   </div>
-                  <div className="row-actions">
+                  <div className="clean-entry-actions">
                     {!isTask ? (
                       linkedExpense ? (
-                        <Link className="icon-btn" aria-label={"Ver gasto de " + e.title}
-                          href="/compras?aba=gastos"><Wallet size={18} /></Link>
+                        <Link className="clean-entry-payment" aria-label={"Ver gasto de " + e.title}
+                          href="/compras?aba=gastos"><Wallet size={16} /> Ver gasto</Link>
                       ) : (
-                        <button type="button" className="icon-btn"
+                        <button type="button" className="clean-entry-payment"
                           aria-label={"Registrar valor de " + e.title}
                           aria-expanded={quickPurchaseId === e.id}
                           onClick={() => {
                             setLocalError("");
                             setQuickPurchaseId((current) => current === e.id ? null : e.id);
                           }}>
-                          <Wallet size={18} />
+                          <Wallet size={16} /> Registrar gasto
                         </button>
                       )
                     ) : null}
-                    <button
-                      className="icon-btn"
-                      aria-label={`Editar ${e.title}`}
-                      onClick={() => {
-                        setEditing(e);
-                        setFormOpen(true);
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                    >
-                      <Pencil size={17} />
-                    </button>
-                    <DeleteButton
-                      label={e.title}
-                      disabled={busy}
-                      onDelete={() => void remove(e)}
-                    />
+                    <details className="clean-item-menu">
+                      <summary aria-label={"Mais ações para " + e.title}>Opções</summary>
+                      <div className="row-actions">
+                        <button type="button" className="secondary"
+                          aria-label={`Editar ${e.title}`}
+                          onClick={() => {
+                            setEditing(e);
+                            setFormOpen(true);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}>
+                          <Pencil size={16} /> Editar
+                        </button>
+                        <DeleteButton label={e.title} disabled={busy}
+                          onDelete={() => void remove(e)} />
+                      </div>
+                    </details>
                   </div>
                   {!isTask && quickPurchaseId === e.id && !linkedExpense ? (
                     <form className="purchase-quick-form" onSubmit={(event) => void registerPurchase(event, e)}>
