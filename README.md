@@ -2,6 +2,12 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Ajuste 1.2.1 — todos os indicadores do calendário
+
+- Removido o limite de três pontos por dia: cada compromisso, tarefa ou conta com data exibe uma bolinha própria, preservando a cor de seu tópico.
+- As bolinhas se distribuem em linhas adicionais nas visões semanal, mensal e na agenda completa, sem ocultar registros e mantendo a leitura possível em telas pequenas.
+- Removido o limite arbitrário de 16 tópicos; permanece uma verificação de tamanho máximo do conjunto de preferências, para evitar dados excessivos no banco.
+
 ## Entrega 1.2 — tópicos coloridos e compromissos organizados
 
 - Cinco tópicos iniciais: Janta, Filmes, Passeio, Viagem e Outros. O casal pode criar, renomear, escolher cores ou excluir tópicos, com até 16 opções compartilhadas.

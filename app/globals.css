@@ -2242,3 +2242,54 @@ progress {
   .day-week-day .topic-dots-more{font-size:7px}
   .calendar-day .topic-dots{gap:2px}
 }
+
+/* Dengo 1.2.1 — um indicador por compromisso, sem limite de três. */
+.topic-dots {
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
+  white-space: normal;
+  align-content: center;
+  row-gap: 3px;
+}
+.day-week-day {
+  height: auto;
+  justify-content: flex-start;
+}
+.day-week-day .topic-dots {
+  margin-top: auto;
+  min-height: 8px;
+}
+.day-month-cell {
+  height: auto;
+  gap: 3px;
+  padding: 5px 1px;
+}
+.day-month-cell .topic-dots {
+  min-height: 0;
+}
+.calendar-day {
+  height: auto;
+  min-height: 55px;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 8px 2px 6px;
+}
+.calendar-day .topic-dots {
+  position: static;
+  inset: auto;
+  width: 100%;
+  min-height: 0;
+}
+@media (max-width: 760px) {
+  .topic-dots { gap: 2px; row-gap: 3px; }
+  .day-week-day .topic-dot,
+  .day-month-cell .topic-dot,
+  .calendar-day .topic-dot {
+    width: 5px;
+    min-width: 5px;
+    height: 5px;
+  }
+  .day-week-day { min-height: 63px; padding: 8px 1px 6px; }
+  .calendar-day { min-height: 50px; padding: 7px 1px 5px; }
+}

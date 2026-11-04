@@ -249,3 +249,26 @@ test("commitment filtering uses current couple member and prioritizes late items
   assert.deepEqual(items.filter(x => filterResponsible(x,"mine",["Bruno","Par"],1)).map(x => x.id), ["partner"]);
   assert.deepEqual(items.filter(x => filterResponsible(x,"together",["Bruno","Par"],1)).map(x => x.id), ["joint"]);
 });
+
+test("more than three same-day entries preserve every color", () => {
+  const topics = DEFAULT_CALENDAR_TOPICS;
+  const items: Entry[] = Array.from({ length: 12 }, (_, i) => ({
+    ...task,
+    id: "many-" + i,
+    kind: "event" as const,
+    data: { topicId: topics[i % topics.length].id },
+  }));
+  const sameDay = calendarEntries(items).filter((item) => item.due === task.due);
+  assert.equal(sameDay.length, 12);
+  assert.deepEqual(sameDay.map((item) => calendarEntryColor(item, topics)),
+    items.map((item) => calendarEntryColor(item, topics)));
+});
+test("calendar accepts more than sixteen custom colored topics", () => {
+  const custom = Array.from({length: 30},(_, i) => ({
+    id: "tema_" + i,
+    name: "Tema " + i,
+    color: "#" + i.toString(16).padStart(6, "0"),
+  }));
+  validateCalendarTopics(custom);
+  assert.equal(calendarTopics(custom).length, 30);
+});

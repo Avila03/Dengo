@@ -83,14 +83,14 @@ export function TopicManager({
           Novo tópico
           <input type="text" value={name} maxLength={30}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Ex.: Aniversário" required disabled={draft.length >= 16} />
+            placeholder="Ex.: Aniversário" required />
         </label>
         <label className="topic-new-color">
           Cor
           <input type="color" value={newColor} onChange={(event) => setNewColor(event.target.value)}
             aria-label="Cor do novo tópico" />
         </label>
-        <button type="submit" className="secondary" disabled={draft.length >= 16 || !name.trim()}>
+        <button type="submit" className="secondary" disabled={!name.trim()}>
           <Plus size={17} /> Criar
         </button>
       </form>

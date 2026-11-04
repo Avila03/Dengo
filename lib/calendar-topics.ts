@@ -24,13 +24,14 @@ export function calendarTopics(value: unknown): CalendarTopic[] {
     if (!validCalendarTopic(item)) continue;
     if (result.some((topic) => topic.id === item.id || topic.name.toLocaleLowerCase("pt-BR") === item.name.trim().toLocaleLowerCase("pt-BR"))) continue;
     result.push({ id: item.id, name: item.name.trim(), color: item.color.toLowerCase() });
-    if (result.length === 16) break;
   }
   return result.length ? result : DEFAULT_CALENDAR_TOPICS;
 }
 export function validateCalendarTopics(value: CalendarTopic[]) {
-  if (!Array.isArray(value) || !value.length || value.length > 16)
-    throw new Error("Mantenha de 1 a 16 tópicos.");
+  if (!Array.isArray(value) || !value.length)
+    throw new Error("Mantenha pelo menos um tópico.");
+  if (JSON.stringify(value).length > 20000)
+    throw new Error("A lista de tópicos está grande demais para salvar.");
   const names = new Set<string>();
   const ids = new Set<string>();
   for (const topic of value) {
