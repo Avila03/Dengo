@@ -1,3 +1,17 @@
+## Dengo 2.3 — Dengo Studio · Personalização individual
+
+- **13 temas confirmados:** Dengo Original, Noite a Dois, Lavanda, Jardim da Sálvia, Íris Azul, Grafite Minimal, Floresta Secreta, Ametista Profunda, Cobalto Elétrico, Vermelho Atelier, Fúcsia Pop, Neon Arcade e Preto & Branco. Paletas claras, escuras e vibrantes.
+- **Aparência** em **Nosso espaço**: uma seção compacta com a escolha dos 13 temas e um painel de personalizações extras. O seletor antigo de seis temas foi substituído; os botões e opções não aparecem duplicados.
+- **Cartões:** Clássico, Minimalista, Vidro (com transparência e blur) e Editorial (bordas de destaque).
+- **Fundos:** Cor sólida, Degradê, Geométrico e Aura; todos baseados na identidade visual do tema escolhido.
+- **Tipografia:** Clássica, Moderna e Editorial. Sem download de fontes extras; mantém o desempenho do iPhone.
+- **Ícones:** Lineares, Preenchidos e Arredondados; variações nos ícones de navegação, sem alterar rotas ou funções.
+- **Preferência individual:** combinações ficam salvas por usuário, em \`supabase.auth.updateUser({data:{dengo_appearance}})\`, e em cache local separado por ID de conta. No modo demonstração, ficam apenas no navegador. Não são salvas nas preferências compartilhadas nem exigem migração de banco.
+- **Migração suave:** ao primeiro acesso, recupera temas antigos da conta quando não houver configuração nova; \`inverno\` vira Cobalto Elétrico e \`ouro\` vira Grafite Minimal, os equivalentes disponíveis na seleção atual.
+- **Aplicação imediata:** qualquer mudança de aparência atualiza a interface, é salva automaticamente e pode ser revertida pelo botão **Restaurar Original**.
+- **Acessibilidade:** tipografia legível, contraste mínimo AA nas superfícies e nos botões dos 13 temas; mudanças em fundos e cartões não escondem comandos nem dados.
+- **Regressão:** testes automatizados verificam a coleção, as cinco dimensões, a sincronização por login, os estilos e a migração. Nenhum registro do casal foi alterado.
+
 ## Dengo 2.2 — seis temas de personalidade própria
 
 Temas aprovados: **Dengo Original**, **Noite a Dois**, **Lavanda**, **Jardim da Sálvia**, **Céu de Inverno** e **Preto & Ouro**.

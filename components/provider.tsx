@@ -12,13 +12,10 @@ import type { User } from "@supabase/supabase-js";
 import { Heart, LockKeyhole, LogIn, KeyRound, ArrowLeft } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { PasswordRecovery } from "./password-recovery";
+import { AppearanceProvider } from "./appearance-provider";
 import { supabase, demoMode } from "@/lib/supabase";
 import { Lobby } from "./lobby";
 import { loadAllEntries } from "@/lib/records";
-import {
-  applyDocumentTheme, DEFAULT_THEME, isThemeId, normalizeTheme,
-  themeStorageKey, type ThemeId,
-} from "@/lib/themes";
 import { type CalendarTopic, validateCalendarTopics } from "@/lib/calendar-topics";
 import {
   Entry,
@@ -35,9 +32,6 @@ type Context = {
   entries: Entry[];
   names: string[];
   preferences: Preferences;
-  theme: ThemeId;
-  themeSaving: boolean;
-  saveTheme: (next: ThemeId) => Promise<boolean>;
   busy: boolean;
   error: string;
   demo: boolean;
@@ -73,9 +67,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
     [membershipLoaded, setMembershipLoaded] = useState(false),
     [memberCount, setMemberCount] = useState(0),
     [memberSlot, setMemberSlot] = useState(0),
-    [lobbyOpen, setLobbyOpen] = useState(true),
-    [theme, setTheme] = useState<ThemeId>(DEFAULT_THEME),
-    [themeSaving, setThemeSaving] = useState(false);
+    [lobbyOpen, setLobbyOpen] = useState(true);
   const lock = useRef(false),
     identity = useRef<string | null>(null),
     sequence = useRef(0);
@@ -117,51 +109,6 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
       data.subscription.unsubscribe();
     };
   }, []);
-  // The appearance belongs to the signed-in person, never the couple's space.
-  // Supabase Auth metadata synchronizes it between the person's devices.
-  useEffect(() => {
-    let locallySaved: string | null = null;
-    try {
-      locallySaved = localStorage.getItem(themeStorageKey(user?.id));
-    } catch {
-      // Private browsing/storage restrictions do not block the theme picker.
-    }
-    const stored = user?.user_metadata?.dengo_theme;
-    const selected = !demoMode && !user
-      ? DEFAULT_THEME
-      : normalizeTheme(isThemeId(stored) ? stored : locallySaved);
-    setTheme(selected);
-    applyDocumentTheme(selected);
-  }, [user?.id, user?.user_metadata?.dengo_theme]);
-
-  async function saveTheme(next: ThemeId): Promise<boolean> {
-    if (!isThemeId(next)) return false;
-    setThemeSaving(true);
-    try {
-      if (!demoMode) {
-        if (!supabase || !user) throw new Error("Entre na sua conta para salvar o tema.");
-        const { error: updateError } = await supabase.auth.updateUser({
-          data: { dengo_theme: next },
-        });
-        if (updateError) throw new Error("Não foi possível salvar seu tema na conta.");
-      }
-      try {
-        localStorage.setItem(themeStorageKey(user?.id), next);
-      } catch {
-        // The Auth metadata remains authoritative if browser storage is unavailable.
-      }
-      setTheme(next);
-      applyDocumentTheme(next);
-      return true;
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Não foi possível salvar o tema.");
-      applyDocumentTheme(theme);
-      return false;
-    } finally {
-      setThemeSaving(false);
-    }
-  }
-
   const refresh = useCallback(async () => {
     const request = ++sequence.current;
     setError("");
@@ -559,9 +506,6 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         entries,
         names: preferences.names,
         preferences,
-        theme,
-        themeSaving,
-        saveTheme,
         busy,
         error,
         demo: demoMode,
@@ -584,6 +528,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         },
       }}
     >
+      <AppearanceProvider user={user} demo={demoMode}>
       {(!demoMode && (lobbyOpen || !space)) || (demoMode && lobbyOpen) ? (
         <Lobby
           loading={!membershipLoaded}
@@ -592,6 +537,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
       ) : (
         children
       )}
+      </AppearanceProvider>
     </Data.Provider>
   );
 }

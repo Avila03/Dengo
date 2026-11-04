@@ -10,8 +10,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { AppearanceStudio } from "./appearance-studio";
 import { useDengo } from "./provider";
-import { ThemePicker } from "./theme-picker";
 import { CATEGORIES, parseMoney } from "@/lib/finance";
 import { localToday } from "@/lib/model";
 export function Settings() {
@@ -95,6 +95,7 @@ export function Settings() {
         </div>
 
       </section>
+      <AppearanceStudio />
       <form
         key={preferences.names.join("-") + preferences.since}
         className="panel entry-form"
@@ -209,7 +210,6 @@ export function Settings() {
           {busy ? "Salvando…" : "Salvar nosso espaço"}
         </button>
       </form>
-      <ThemePicker />
       <section className="panel settings-account-panel">
         <div className="stat-icon sage">
           <ShieldCheck />
