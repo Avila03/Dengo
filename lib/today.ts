@@ -1,11 +1,8 @@
 import type { Entry } from "./model";
+import { calendarEntries } from "./calendar.ts";
 
 export function todayEntries(entries: Entry[], date: string): Entry[] {
-  return entries
-    .filter((entry) =>
-      entry.due === date &&
-      (entry.kind === "event" || entry.kind === "task" || entry.kind === "expense"),
-    )
+  return calendarEntries(entries, { from: date, to: date })
     .sort((a, b) => {
       const timeA = a.data?.time || "00:00";
       const timeB = b.data?.time || "00:00";

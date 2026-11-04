@@ -1,8 +1,57 @@
 import type { Entry } from "./model";
-export function calendarEntries(entries: Entry[]) {
-  return entries.filter(
-    (e) => e.due && ["event", "task", "expense"].includes(e.kind),
+
+/** Preserva o dia de origem sempre que possível, mesmo depois de fevereiro. */
+export function eventDateInMonth(anchor: string, year: number, month: number): string {
+  const day = Number(anchor.slice(8, 10));
+  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return String(year).padStart(4, "0") + "-" +
+    String(month).padStart(2, "0") + "-" +
+    String(Math.min(day, last)).padStart(2, "0");
+}
+
+/**
+ * Sem intervalo, mantém as entradas originais.
+ * Com intervalo, projeta mensalidades/aniversários sem duplicar dados no banco.
+ */
+export function calendarEntries(
+  entries: Entry[],
+  interval?: { from: string; to: string },
+): Entry[] {
+  const dated = entries.filter(
+    (entry) => entry.due && ["event", "task", "expense"].includes(entry.kind),
   );
+  if (!interval) return dated;
+  const { from, to } = interval;
+  if (from > to) return [];
+  const result: Entry[] = [];
+  for (const entry of dated) {
+    const repeat = entry.kind === "event" ? entry.data?.eventRepeat : undefined;
+    if (repeat !== "monthly" && repeat !== "yearly") {
+      if (entry.due >= from && entry.due <= to) result.push(entry);
+      continue;
+    }
+    if (entry.due > to) continue;
+    const [baseYear, baseMonth] = entry.due.split("-").map(Number);
+    const [fromYear, fromMonth] = from.split("-").map(Number);
+    const [toYear, toMonth] = to.split("-").map(Number);
+    const lower = Math.max(baseYear * 12 + baseMonth - 1, fromYear * 12 + fromMonth - 1);
+    const upper = toYear * 12 + toMonth - 1;
+    for (let current = lower; current <= upper; current++) {
+      const year = Math.floor(current / 12);
+      const month = current % 12 + 1;
+      if (repeat === "yearly" && month !== baseMonth) continue;
+      const due = eventDateInMonth(entry.due, year, month);
+      if (due < entry.due || due < from || due > to) continue;
+      result.push(due === entry.due ? entry : {
+        ...entry,
+        id: entry.id + "::" + due,
+        due,
+        done: false,
+        data: { ...entry.data, eventSourceId: entry.id },
+      });
+    }
+  }
+  return result;
 }
 function escapeICS(s: string) {
   return s

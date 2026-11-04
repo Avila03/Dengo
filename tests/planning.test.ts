@@ -12,6 +12,7 @@ import {
   googleCalendarUrl,
   mapsUrl,
   calendarEntries,
+  eventDateInMonth,
 } from "../lib/calendar.ts";
 import { normalizeMovies } from "../lib/movies.ts";
 import { todayEntries, weekDates, calendarMonthDays, shiftMonth, addDaysISO } from "../lib/today.ts";
@@ -271,4 +272,56 @@ test("calendar accepts more than sixteen custom colored topics", () => {
   }));
   validateCalendarTopics(custom);
   assert.equal(calendarTopics(custom).length, 30);
+});
+
+test("monthly date anniversary repeats without duplicating database records", () => {
+  const anniversary: Entry = {
+    ...task, kind: "event", id: "anniversary", due: "2026-01-31",
+    title: "Mêsversário de namoro", data: { eventRepeat: "monthly", topicId: "janta" },
+  };
+  const projected = calendarEntries([anniversary], { from: "2026-01-01", to: "2026-04-30" });
+  assert.deepEqual(projected.map((e) => e.due), [
+    "2026-01-31", "2026-02-28", "2026-03-31", "2026-04-30",
+  ]);
+  assert.equal(projected[0].id, "anniversary");
+  assert.equal(projected[1].id, "anniversary::2026-02-28");
+  assert.equal(projected[1].data?.eventSourceId, "anniversary");
+  assert.equal(projected[2].data?.topicId, "janta");
+  assert.equal(calendarEntries([anniversary]).length, 1);
+  assert.equal(todayEntries([anniversary], "2026-03-31").length, 1);
+  assert.equal(todayEntries([anniversary], "2026-03-30").length, 0);
+});
+test("annual birthdays recur in every year with February 29 fallback", () => {
+  const birth: Entry = {
+    ...task, kind: "event", id: "birth", due: "2024-02-29",
+    title: "Aniversário", data: { eventRepeat: "yearly" },
+  };
+  const projected = calendarEntries([birth], { from: "2024-01-01", to: "2028-12-31" });
+  assert.deepEqual(projected.map((e) => e.due),
+    ["2024-02-29", "2025-02-28", "2026-02-28", "2027-02-28", "2028-02-29"]);
+  assert.equal(eventDateInMonth("2024-02-29", 2028, 2), "2028-02-29");
+  assert.equal(eventDateInMonth("2024-02-29", 2027, 2), "2027-02-28");
+});
+test("recurring special dates never appear before their start date", () => {
+  const special: Entry = {
+    ...task, kind: "event", due: "2026-11-20",
+    data: { eventRepeat: "monthly" },
+  };
+  assert.equal(calendarEntries([special], { from: "2026-11-01", to: "2026-11-19" }).length, 0);
+  assert.deepEqual(
+    calendarEntries([special], { from: "2026-12-01", to: "2027-02-28" }).map((e) => e.due),
+    ["2026-12-20", "2027-01-20", "2027-02-20"],
+  );
+  assert.equal(calendarEntries([special], { from: "2027-02-28", to: "2027-02-01" }).length, 0);
+});
+test("event repetition validates and stays separate from task repetition", () => {
+  const event: Entry = {
+    ...task, kind: "event", data: { eventRepeat: "yearly" },
+  };
+  assert.doesNotThrow(() => validateDraft(event));
+  assert.throws(() => validateDraft({ ...event, due: "" }), /data inicial/);
+  assert.throws(() => validateDraft({
+    ...event, data: { eventRepeat: "never" as "yearly" },
+  }), /repetição válida/);
+  assert.equal(nextDate(task.due, "weekly"), "2026-11-10");
 });

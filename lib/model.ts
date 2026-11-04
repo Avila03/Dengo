@@ -12,6 +12,10 @@ export type Details = {
   time?: string;
   location?: string;
   topicId?: string;
+  /** Datas especiais: independentes de tarefas recorrentes. */
+  eventRepeat?: "none" | "monthly" | "yearly";
+  /** Identificador da série original de um evento projetado. */
+  eventSourceId?: string;
   sourceId?: string;
   sourceKind?: Kind;
   mediaType?: "movie" | "tv";
@@ -175,6 +179,12 @@ export function validateDraft(d: Draft) {
   if (d.detail.length > 240)
     throw new Error("A observação deve ter até 240 caracteres.");
   if (d.due && !isDate(d.due)) throw new Error("Informe uma data válida.");
+  if (d.kind === "event" && d.data?.eventRepeat &&
+      !["none", "monthly", "yearly"].includes(d.data.eventRepeat))
+    throw new Error("Selecione uma repetição válida para o calendário.");
+  if (d.kind === "event" && d.data?.eventRepeat &&
+      d.data.eventRepeat !== "none" && !d.due)
+    throw new Error("Um evento recorrente precisa de uma data inicial.");
   if (d.data?.recurrence && d.data.recurrence !== "none" && !d.due)
     throw new Error("Uma repetição precisa de data inicial.");
   if (["expense", "transfer"].includes(d.kind)) {

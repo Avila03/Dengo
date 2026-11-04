@@ -2,6 +2,15 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Entrega 1.3 — datas especiais que se repetem
+
+- Em **Agenda completa → Novo compromisso**, o campo **Repetir esta data** oferece Não repetir, Todo mês (mêsversário de namoro) e Todo ano (aniversários).
+- Os registros com repetição aparecem automaticamente em **Nosso dia**, nos indicadores coloridos do calendário semanal e mensal, no calendário completo e na seção **Vem por aí**.
+- Mensalidades preservam a data de origem (31/01 → 28/02 → 31/03), usando o último dia de meses mais curtos. Aniversários em 29 de fevereiro caem em 28/02 nos anos comuns e voltam a 29/02 nos bissextos.
+- Somente a série original é salva no banco (metadado eventRepeat na coluna JSONB data), sem criar inúmeros registros. Para editar ou excluir uma ocorrência futura, o aplicativo identifica o registro original e deixa claro que a mudança vale para **toda a série**.
+- As exportações para Google Agenda e arquivo .ics continuam exportando apenas a ocorrência selecionada; a repetição automática funciona dentro do Dengo.
+- Não é necessária migração SQL. A recorrência de tarefas e contas mantém suas regras atuais separadas.
+
 ## Ajuste 1.2.1 — todos os indicadores do calendário
 
 - Removido o limite de três pontos por dia: cada compromisso, tarefa ou conta com data exibe uma bolinha própria, preservando a cor de seu tópico.

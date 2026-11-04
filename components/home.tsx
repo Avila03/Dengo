@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  ArrowRight, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
+  ArrowRight, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Repeat2,
   Clock3, Heart, Palette, Plus,
 } from "lucide-react";
 import { Shell } from "./shell";
@@ -40,7 +40,11 @@ export function Home() {
   const todayItems = todayEntries(entries, today);
   const todayPending = todayItems.filter((entry) => !entry.done).length;
   const byDay = new Map<string, Entry[]>();
-  for (const item of calendarEntries(entries)) {
+  const intervalDates = [today, week[0], week[6], selected, month + "-01", month + "-31"].sort();
+  for (const item of calendarEntries(entries, {
+    from: intervalDates[0],
+    to: intervalDates[intervalDates.length - 1],
+  })) {
     const list = byDay.get(item.due) || [];
     list.push(item);
     byDay.set(item.due, list);
@@ -164,7 +168,12 @@ export function Home() {
                     <span className="day-entry-dot" style={{ backgroundColor: calendarEntryColor(entry, topics) }} aria-hidden="true" />
                     {entry.title}
                   </Link>
-                  <small>{entry.kind === "event" ? eventTopicLabel(entry, topics) : labelByKind[entry.kind]} · {entry.assignee}
+                  <small>{entry.kind === "event" ? eventTopicLabel(entry, topics) : labelByKind[entry.kind]}
+                    {entry.kind === "event" && entry.data?.eventRepeat &&
+                      entry.data.eventRepeat !== "none" ? (
+                        <span className="day-repeat-mark"><Repeat2 size={12} /> {entry.data.eventRepeat === "monthly" ? "Mensal" : "Anual"}</span>
+                      ) : null}
+                    {" · " + entry.assignee}
                     {entry.data?.location ? " · " + entry.data.location : ""}
                     {entry.kind === "expense" && entry.data?.amount ? " · " + money(entry.data.amount) : ""}
                   </small>

@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Pencil,
   Palette,
+  Repeat2,
 } from "lucide-react";
 import { Shell } from "./shell";
 import { EntryAudit } from "./entry-audit";
@@ -18,7 +19,7 @@ import { TopicDots } from "./topic-dots";
 import { calendarTopics, calendarEntryColor, eventTopicLabel, EXPENSE_CALENDAR_COLOR, TASK_CALENDAR_COLOR } from "@/lib/calendar-topics";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
-import { type Entry, type Draft, localToday, dayLabel, isDate } from "@/lib/model";
+import { type Entry, type Draft, localToday, dayLabel, isDate, addMonths } from "@/lib/model";
 import {
   calendarEntries,
   eventICS,
@@ -45,8 +46,9 @@ export function Calendar() {
     [editing, setEditing] = useState<Entry | null>(null),
     [manageTopics, setManageTopics] = useState(search.get("topicos") === "1"),
     [topicId, setTopicId] = useState(source?.kind === "movie" ? "filmes" :
-      source?.kind === "place" ? "passeio" : "janta");
-  const items = calendarEntries(entries);
+      source?.kind === "place" ? "passeio" : "janta"),
+    [eventRepeat, setEventRepeat] = useState<"none" | "monthly" | "yearly">("none");
+  const items = calendarEntries(entries, { from: month + "-01", to: month + "-31" });
   const byDay = new Map<string, Entry[]>();
   for (const entry of items) {
     const day = byDay.get(entry.due) || [];
@@ -59,8 +61,8 @@ export function Calendar() {
   const daily = items
     .filter((e) => e.due === selected)
     .sort((a, b) => (a.data?.time || "").localeCompare(b.data?.time || ""));
-  const upcoming = items
-    .filter((e) => e.due >= today && !e.done)
+  const upcoming = calendarEntries(entries, { from: today, to: addMonths(today, 12) })
+    .filter((e) => !e.done)
     .sort((a, b) => a.due.localeCompare(b.due))
     .slice(0, 5);
   function shift(n: number) {
@@ -83,6 +85,7 @@ export function Calendar() {
         time: String(f.get("time") || ""),
         location: String(f.get("location") || ""),
         topicId: topics.some((topic) => topic.id === topicId) ? topicId : topics[0].id,
+        eventRepeat,
         ...(source
           ? { sourceId: source.id, sourceKind: source.kind }
           : editing?.data?.sourceId
@@ -119,6 +122,7 @@ export function Calendar() {
             setOpen(!open);
             setEditing(null);
             setTopicId("janta");
+            setEventRepeat("none");
           }}
         >
           <Plus size={18} />
@@ -142,6 +146,9 @@ export function Calendar() {
                 ? `Planejar: ${source.title}`
                 : "Um tempo reservado para nós"}
           </h2>
+          {editing?.data?.eventRepeat && editing.data.eventRepeat !== "none" ? (
+            <p className="helper calendar-repeat-series">Você está editando uma série recorrente. As mudanças valem para todas as datas dessa série.</p>
+          ) : null}
           <div className="form-grid">
             <label className="full">
               Título
@@ -179,6 +186,25 @@ export function Calendar() {
                 </select>
               </span>
             </label>
+            <label>
+              Repetir esta data
+              <span className="calendar-repeat-select">
+                <Repeat2 size={17} />
+                <select name="eventRepeat" value={eventRepeat}
+                  onChange={(e) => setEventRepeat(e.target.value as "none" | "monthly" | "yearly")}>
+                  <option value="none">Não repetir</option>
+                  <option value="monthly">Todo mês · mêsversário de namoro</option>
+                  <option value="yearly">Todo ano · aniversários</option>
+                </select>
+              </span>
+            </label>
+            {eventRepeat !== "none" ? (
+              <p className="helper full calendar-repeat-hint">
+                {eventRepeat === "monthly"
+                  ? "O Dengo marca essa data todos os meses. Se o dia não existir no mês, usa o último dia (ex.: 31/01 → 28/02)."
+                  : "O Dengo marca essa data todos os anos. Para 29 de fevereiro, usa 28/02 nos anos não bissextos."}
+              </p>
+            ) : null}
             <label>
               Horário opcional (Brasília)
               <input
@@ -295,25 +321,33 @@ export function Calendar() {
                 setOpen(true);
                 setEditing(null);
                 setTopicId("janta");
+                setEventRepeat("none");
               }}
             >
               <Plus />
             </button>
           </div>
           {daily.length ? (
-            daily.map((e) => (
+            daily.map((e) => {
+              const series = e.data?.eventSourceId
+                ? entries.find((sourceEntry) => sourceEntry.id === e.data?.eventSourceId) || e
+                : e;
+              return (
               <article className="agenda-item" key={e.id}>
                 <span className="tag">
                   <i className="topic-legend-dot" style={{ backgroundColor: calendarEntryColor(e, topics) }} />
                   {e.kind === "event" ? eventTopicLabel(e, topics) : labels[e.kind as keyof typeof labels]}
                   {e.done ? " · Concluído" : ""}
+                  {e.kind === "event" && e.data?.eventRepeat && e.data.eventRepeat !== "none" ? (
+                    <span className="calendar-repeat-tag"><Repeat2 size={12} /> {e.data.eventRepeat === "monthly" ? "Mensal" : "Anual"}</span>
+                  ) : null}
                 </span>
                 <h3>{e.title}</h3>
                 <p>
                   {e.data?.time || "Dia inteiro"} · {e.assignee}
                 </p>
                 {e.data?.location ? <p>{e.data.location}</p> : null}
-                <EntryAudit entry={e} />
+                <EntryAudit entry={series} />
                 <div className="row-actions">
                   <a
                     className="text-link"
@@ -336,10 +370,11 @@ export function Calendar() {
                     <>
                       <button
                         className="icon-btn"
-                        aria-label={`Editar ${e.title}`}
+                        aria-label={`Editar ${e.data?.eventRepeat && e.data.eventRepeat !== "none" ? "série " : ""}${e.title}`}
                         onClick={() => {
-                          setEditing(e);
-                          setTopicId(e.data?.topicId || "outros");
+                          setEditing(series);
+                          setTopicId(series.data?.topicId || "outros");
+                          setEventRepeat(series.data?.eventRepeat || "none");
                           setOpen(true);
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }}
@@ -347,15 +382,16 @@ export function Calendar() {
                         <Pencil size={16} />
                       </button>
                       <DeleteButton
-                        label={e.title}
+                        label={e.data?.eventRepeat && e.data.eventRepeat !== "none" ? e.title + " (toda a série recorrente)" : e.title}
                         disabled={busy}
-                        onDelete={() => void remove(e)}
+                        onDelete={() => void remove(series)}
                       />
                     </>
                   ) : null}
                 </div>
               </article>
-            ))
+              );
+            })
           ) : (
             <div className="empty">
               <CalendarDays />
