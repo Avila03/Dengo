@@ -2588,3 +2588,58 @@ progress {
   font-size:inherit;
   color:inherit;
 }
+
+/* Dengo 1.7 — cinco destinos na navegação inferior, ajustes na engrenagem. */
+.settings-shortcut {
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+}
+.settings-shortcut.active,
+.settings-shortcut:hover {
+  border-color: var(--rose);
+  background: var(--rose-light);
+  color: var(--rose);
+}
+@media (max-width: 760px) {
+  .topbar { gap: 8px; padding-left: 14px; padding-right: 12px; }
+  .topbar-right { gap: 3px; flex-shrink: 1; min-width: 0; }
+  .topbar-right .lobby-shortcut { max-width: 90px; line-height: 1.25; font-size: 11px; }
+  .topbar-right .status-dot { flex-shrink: 0; }
+  .topbar-right .icon-btn { width: 39px; min-width: 39px; height: 44px; }
+  .mobile-brand { flex-shrink: 0; font-size: 27px; }
+  .bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    justify-content: stretch;
+    gap: 2px;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  .bottom-nav a {
+    min-width: 0;
+    width: 100%;
+    padding: 5px 1px;
+    font-size: 10px;
+    line-height: 1.2;
+    text-align: center;
+    overflow-wrap: anywhere;
+    gap: 4px;
+    border-radius: 12px;
+  }
+  .bottom-nav a svg { width: 21px; height: 21px; }
+  .bottom-nav a span { display: block; }
+}
+@media (max-width: 390px) {
+  .mobile-brand { font-size: 25px; gap: 5px; }
+  .mobile-brand svg { width: 15px; height: 15px; }
+  .topbar-right .lobby-shortcut { max-width: 75px; font-size: 10px; }
+  .topbar-right .icon-btn { width: 35px; min-width: 35px; }
+  .bottom-nav a { font-size: 9px; }
+}
+@media (max-width: 340px) {
+  .topbar-right .status-dot { display: none; }
+  .topbar-right .lobby-shortcut { max-width: 62px; }
+  .bottom-nav a { font-size: 8px; }
+}

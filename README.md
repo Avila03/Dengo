@@ -1,3 +1,11 @@
+## Entrega 1.7 — cinco abas fixas e configuração na engrenagem
+
+- Navegação inferior em cinco destinos no celular: **Nosso dia**, **Compromissos**, **Compras**, **Lugares** e **Filmes**.
+- A seção **Nosso espaço** deixa de ocupar um destino de navegação e passa a ser aberta por um botão de engrenagem no cabeçalho, tanto no celular quanto no desktop.
+- A rota antiga **/mais** redireciona para a tela inicial; o conteúdo de Lugares, Filmes e Configurações segue acessível nas rotas originais.
+- Barra inferior em cinco colunas com rótulos compactos, ícones centralizados, área de toque e espaço para a zona segura inferior do iPhone. A engrenagem tem estado de seleção e rótulo acessível.
+- Nenhuma informação ou registro do casal é alterado.
+
 ## Entrega 1.6 — Filmes e séries, a lista em primeiro lugar
 
 - A seção **Nossa lista** aparece antes do catálogo TMDB: os títulos do casal ficam visíveis logo ao abrir Filmes e séries.

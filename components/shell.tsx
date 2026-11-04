@@ -6,13 +6,12 @@ import {
   House,
   ShoppingBag,
   ListChecks,
-  Settings2,
+  Settings,
   ArrowUpRight,
   RefreshCw,
   LogOut,
   Clapperboard,
   MapPin,
-  Menu,
 } from "lucide-react";
 import { useDengo } from "./provider";
 const links = [
@@ -21,23 +20,17 @@ const links = [
   { href: "/compras", label: "Compras", icon: ShoppingBag },
   { href: "/lugares", label: "Nossos lugares", icon: MapPin },
   { href: "/filmes", label: "Filmes e séries", icon: Clapperboard },
-  { href: "/configuracoes", label: "Nosso espaço", icon: Settings2 },
 ];
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const { demo, error, refresh, signOut, preferences, openLobby } = useDengo();
-  const mobileLinks = [
-    links[0], // Nosso dia
-    links[1], // Compromissos
-    links[2], // Compras
-    { href: "/mais", label: "Mais", icon: Menu },
-  ];
+  const mobileLinks = links.map((link) => ({
+    ...link,
+    label: link.href === "/lugares" ? "Lugares" :
+      link.href === "/filmes" ? "Filmes" : link.label,
+  }));
   const mobileActive = (href: string) =>
-    href === "/mais"
-      ? ["/mais", "/filmes", "/lugares", "/configuracoes"].includes(
-          path,
-        )
-      : href === "/" ? (path === "/" || path === "/calendario") : path === href;
+    href === "/" ? path === "/" || path === "/calendario" : path === href;
   return (
     <div className="app">
       <a className="skip" href="#conteudo">
@@ -112,12 +105,22 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {demo ? "Demonstração" : "Nosso casal"}
             </button>
             <button
-              className="icon-btn"
+              className="icon-btn topbar-refresh"
               onClick={refresh}
               aria-label="Atualizar dados"
+              title="Atualizar dados"
             >
               <RefreshCw size={17} />
             </button>
+            <Link
+              href="/configuracoes"
+              className={"icon-btn settings-shortcut" + (path === "/configuracoes" ? " active" : "")}
+              aria-label="Nosso espaço e configurações"
+              aria-current={path === "/configuracoes" ? "page" : undefined}
+              title="Nosso espaço"
+            >
+              <Settings size={20} />
+            </Link>
           </div>
         </header>
         {demo ? (
