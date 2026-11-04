@@ -47,7 +47,7 @@ test("empty places and films have compact empty states and hidden filters", () =
   assert.match(places, /<section className="clean-simple-empty"/);
   assert.doesNotMatch(places, /className="panel empty large"/);
   assert.match(movies, /all\.length > 0 \? <div className="saved-media-filters"/);
-  assert.match(movies, /defaultOpen=\{!all\.length\}/);
+  assert.match(movies, /open=\{!all\.length\}/);
   assert.match(movies, /className="clean-simple-empty"/);
 });
 test("clarity CSS loaded last without removing brand", () => {

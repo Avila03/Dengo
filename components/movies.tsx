@@ -498,7 +498,7 @@ export function Movies() {
       </section>
 
       <details id="descobrir-filmes" className="media-discover clean-discover"
-        aria-label="Descobrir novos títulos" key={all.length ? "saved" : "empty"} defaultOpen={!all.length}>
+        aria-label="Descobrir novos títulos" key={all.length ? "saved" : "empty"} open={!all.length}>
         <summary><span><Search size={18} /> Descobrir filmes e séries</span>
           <span>Pesquisar no catálogo</span></summary>
         <div className="clean-discover-content">
