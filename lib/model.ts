@@ -44,6 +44,10 @@ export type Details = {
   sourceId?: string;
   sourceKind?: Kind;
   mediaType?: "movie" | "tv";
+  watchStatus?: "not_started" | "watching" | "watched";
+  mediaFeedback?: string;
+  currentSeason?: number;
+  currentEpisode?: number;
   tmdbId?: number;
   poster?: string;
   overview?: string;
@@ -249,6 +253,23 @@ export function validateDraft(d: Draft) {
     throw new Error("Um evento recorrente precisa de uma data inicial.");
   if (d.data?.recurrence && d.data.recurrence !== "none" && !d.due)
     throw new Error("Uma repetição precisa de data inicial.");
+  if (d.kind === "movie") {
+    if (d.data?.mediaFeedback !== undefined &&
+        (typeof d.data.mediaFeedback !== "string" || d.data.mediaFeedback.length > 800))
+      throw new Error("O feedback deve ter até 800 caracteres.");
+    if (d.data?.watchStatus && !["not_started", "watching", "watched"].includes(d.data.watchStatus))
+      throw new Error("Escolha um status de acompanhamento válido.");
+    for (const [field, number] of [
+      ["temporada", d.data?.currentSeason],
+      ["episódio", d.data?.currentEpisode],
+    ] as const) {
+      if (number !== undefined && (!Number.isInteger(number) || number < 1 || number > 999))
+        throw new Error("Informe um número válido para " + field + " (1 a 999).");
+    }
+    if (d.data?.mediaType === "movie" &&
+        (d.data?.currentSeason !== undefined || d.data?.currentEpisode !== undefined))
+      throw new Error("Acompanhamento por temporada e episódio é exclusivo de séries.");
+  }
   if (["expense", "transfer"].includes(d.kind)) {
     if (
       !Number.isSafeInteger(d.data?.amount) ||

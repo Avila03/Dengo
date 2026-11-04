@@ -1,3 +1,15 @@
+## Entrega 1.6 — Filmes e séries, a lista em primeiro lugar
+
+- A seção **Nossa lista** aparece antes do catálogo TMDB: os títulos do casal ficam visíveis logo ao abrir Filmes e séries.
+- Os contadores **Na lista**, **Assistindo** e **Assistidos** são botões acessíveis que mudam o filtro e levam à lista salva.
+- Três status para filmes e séries: **Não assistiu**, **Assistindo** e **Assistido**, editáveis diretamente no cartão sem abrir o formulário. As entradas antigas que utilizavam apenas \`done\` continuam compatíveis.
+- Séries em andamento podem registrar **temporada e episódio atuais** em um formulário compacto dentro do cartão, sem perder a informação ao alternar status.
+- Depois de assistir, o casal pode registrar notas individuais (1 a 10) e um **feedback compartilhado** de até 800 caracteres.
+- O botão **Editar / avaliar** abre os detalhes completos, e o botão de agendar continua conectando o título ao calendário.
+- A lista tem filtros para **Na lista**, **Assistindo**, **Não assistiu**, **Assistidos**, **Interesse dos dois** e **Todos**, com a descoberta de novos títulos em uma seção separada.
+- Os cartões salvos foram reduzidos para melhor aproveitamento de espaço, inclusive no iPhone, e o catálogo de descoberta continua usando TMDB.
+- Os novos campos ficam no JSONB de entries.data, sem migração SQL.
+
 # Dengo
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
