@@ -2,6 +2,16 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Entrega 1.5 — Compras, Nossos lugares e refinamento para iPhone
+
+- **Compras em um só fluxo:** a lista agora registra um valor previsto opcional para cada item, sem confundir estimativa com despesa paga. Toque na carteira do item para registrar diretamente valor efetivo, data, pagador, divisão entre o casal e se já foi pago. O backend vincula o gasto à compra e marca o item como comprado na mesma operação.
+- **Status financeiro claro:** A comprar, Comprado sem gasto registrado, Pagamento pendente ou Pago. Itens pagos aparecem no extrato e entram no saldo devido entre as pessoas. Itens não pagos não entram no saldo até o pagamento; no extrato é possível marcar como pago, alterar percentual de divisão ou registrar um acerto.
+- **Compras** mantém as abas Lista de compras e Extrato e acertos, sem página independente de Finanças. O resumo separa gastos pagos neste mês das estimativas de compras ainda pendentes.
+- **Nossos lugares com coleções:** sugestões iniciais Encontros, Cafés, Viagens e Ideias, e liberdade para digitar novos nomes de coleções (até 40 caracteres) ao cadastrar ou editar. As coleções ficam compartilhadas como atributos dos lugares salvos; coleções vazias e não predefinidas deixam de aparecer nos filtros.
+- **Favoritos e visitas:** cada lugar permite favoritar com um toque, filtrar favoritos, alternar Entre Queremos conhecer / Já fomos / Todos, salvar data de visita e filtrar por coleção. O link do TikTok ou Google Maps continua opcional e é preservado.
+- **iPhone:** controles com áreas de toque adequadas, formulários com fonte de 16 px para evitar zoom involuntário do Safari, conteúdo com espaço para a barra inferior e áreas seguras, chips de coleção com rolagem horizontal, cartões em coluna única e modais com rolagem confortável.
+- Alterações usam os campos JSONB existentes, sem migração SQL. Testes automatizados cobrindo estados financeiros e filtros de lugares.
+
 ## Entrega 1.4 — experiências do calendário
 
 - **1. Visualização rápida**: toque no título do evento na agenda completa ou em Nosso dia para abrir os detalhes em uma janela compacta, sem sair da página; inclui edição, exclusão, vínculos e preparativos.

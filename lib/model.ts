@@ -60,6 +60,9 @@ export type Details = {
   budget?: number;
   url?: string;
   review?: string;
+  placeCollection?: string;
+  favorite?: boolean;
+  visitedAt?: string;
 };
 export type Entry = {
   id: string;

@@ -2380,3 +2380,86 @@ progress {
  .day-countdown{padding:10px 11px}
  .calendar-quick-button{min-height:35px}
 }
+
+/* Dengo 1.5 — coleções de lugares, compra em um passo e iPhone */
+.shopping-inline-title{margin:3px 0 7px;font-size:25px}
+.purchases-inner-heading{margin-bottom:15px}
+.purchases-inner-heading .eyebrow{font-size:10px}
+.purchase-budget-line,.purchase-amount-line{font-size:12px;line-height:1.4;margin:5px 0;color:var(--muted)}
+.purchase-amount-line{font-weight:700;color:var(--green)}
+.purchase-status{white-space:normal}
+.purchase-status.paid{background:var(--sage);color:var(--green)}
+.purchase-status.payment-pending{background:#fff1dc;color:#916020}
+.purchase-status.bought{background:var(--rose-light);color:var(--rose)}
+.purchase-quick-form{display:flex;flex-direction:column;flex:1 1 100%;width:100%;min-width:0;gap:12px;margin-top:12px;padding:15px;border:1px solid var(--line);border-radius:14px;background:var(--bg)}
+.purchase-quick-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.purchase-quick-heading strong{font-size:14px}
+.purchase-quick-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.purchase-quick-fields label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;min-width:0}
+.purchase-quick-fields input,.purchase-quick-fields select{width:100%;min-width:0}
+.purchase-quick-fields .purchase-paid-label{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:9px;margin-top:auto;padding:10px 0;font-size:12px}
+.purchase-paid-label input{width:auto}
+.purchase-quick-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.purchase-quick-actions button{display:inline-flex;gap:7px;align-items:center;justify-content:center;min-height:44px}
+.purchase-quick-form>small{font-size:11px;line-height:1.45;color:var(--muted)}
+.places-intro-compact{padding:16px 18px;margin-bottom:13px;align-items:center}
+.places-intro-compact h2{font-size:20px;margin-bottom:3px}
+.places-filter-panel{margin:0 0 18px;min-width:0}
+.places-status-row{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:11px}
+.places-status-row button,.places-collection-list button{display:inline-flex;gap:6px;align-items:center;justify-content:center;white-space:nowrap;min-height:40px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:8px 12px;font-size:12px;font-weight:700}
+.places-status-row button.selected,.places-collection-list button.selected{background:var(--rose-light);border-color:var(--rose);color:var(--rose)}
+.places-status-row .places-favorite-filter{margin-left:auto}
+.places-collection-list{display:flex;align-items:center;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;padding:2px 1px 9px;scrollbar-width:thin;scroll-snap-type:x proximity}
+.places-collection-list button{scroll-snap-align:start;flex-shrink:0}
+.places-card-tags{display:flex;align-items:center;gap:6px}
+.places-heart{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;min-height:42px;border:1px solid var(--line);border-radius:12px;color:var(--muted);background:var(--paper)}
+.places-heart.is-favorite{color:var(--rose);background:var(--rose-light);border-color:var(--rose)}
+.places-collection-name{display:inline-flex;gap:5px;align-items:center;font-size:11px;font-weight:700;color:var(--green)}
+.places-visited-label{display:flex;align-items:center;gap:5px;color:var(--green)!important;font-size:11px!important;font-weight:700}
+.places-row-actions{flex-wrap:wrap;margin-top:auto;gap:9px}
+.places-row-actions .icon-btn,.places-row-actions .delete-confirm button{min-height:42px;min-width:42px}
+@media(max-width:760px){
+  html{scroll-padding-top:calc(74px + env(safe-area-inset-top))}
+  body{overflow-x:hidden}
+  .main-wrap,main,.panel,.entry,.entry-copy{min-width:0}
+  .topbar{position:sticky;top:0;z-index:28;background:var(--paper);box-shadow:0 1px 0 var(--line)}
+  main{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+  #new-entry,.entry-form,.place-card,.purchase-quick-form{scroll-margin-top:calc(84px + env(safe-area-inset-top))}
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+  select,textarea{font-size:16px;max-width:100%}
+  .entry-form .primary,.places-form-actions button,.purchase-quick-actions button{min-height:46px}
+  .row-actions .icon-btn,.places-heart,.places-row-actions a,.places-saved-link,
+  .purchase-quick-heading .icon-btn{min-height:44px;min-width:44px}
+  .purchases-header{gap:8px}
+  .purchases-header h1{font-size:33px}
+  .purchases-stats{gap:6px}
+  .purchases-stats>span{font-size:11px;padding:8px 9px}
+  .purchases-tabs{margin:13px 0}
+  .purchases-tabs button{min-height:48px;line-height:1.25;text-align:center}
+  .purchases-inner-heading h2{font-size:23px}
+  .purchase-quick-fields{grid-template-columns:1fr}
+  .purchase-quick-form{padding:12px}
+  .purchase-quick-actions{flex-direction:column;align-items:stretch}
+  .purchase-quick-actions button{width:100%}
+  .places-intro-compact{padding:12px;gap:10px}
+  .places-intro-compact h2{font-size:18px}
+  .places-intro-compact p{font-size:11px}
+  .places-status-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .places-status-row button{min-height:43px;font-size:11px;white-space:normal;line-height:1.3;padding:7px}
+  .places-status-row .places-favorite-filter{margin-left:0}
+  .places-collection-list button{min-height:43px}
+  .places-grid{grid-template-columns:1fr;gap:13px}
+  .place-card{gap:10px}
+  .places-row-actions{gap:7px}
+  .bottom-nav{padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+  .bottom-nav a{min-height:50px}
+  .event-quick-panel{scroll-padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+}
+@media(max-width:390px){
+ .places-row-actions .text-link{font-size:11px}
+ .purchases-tabs button{font-size:11px}
+ .places-status-row button{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ .places-collection-list{scroll-behavior:auto}
+}
