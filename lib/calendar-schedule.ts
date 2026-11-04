@@ -158,7 +158,7 @@ export function withOccurrenceOverride(
 export function splitFutureSeries(
   source: Entry,
   occurrence: Entry,
-  next: { title:string; detail:string; assignee:string; due:string; data:Entry["data"] },
+  next: { title:string; detail:string; assignee:string; due:string; data?:Entry["data"] },
 ): { original: Entry; future: {title:string;detail:string;assignee:string;due:string;done:boolean;kind:Entry["kind"];data:Entry["data"]} } {
   const boundary = occurrence.data?.eventOccurrenceDate || occurrence.due;
   const exceptions = source.data?.eventOverrides || {};
