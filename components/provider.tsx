@@ -44,7 +44,7 @@ type Context = {
   add: (d: Draft) => Promise<boolean>;
   update: (e: Entry, d: Draft) => Promise<boolean>;
   toggle: (e: Entry) => Promise<void>;
-  remove: (e: Entry) => Promise<void>;
+  remove: (e: Entry) => Promise<boolean>;
   savePreferences: (p: Preferences) => Promise<boolean>;
   saveCalendarTopics: (topics: CalendarTopic[]) => Promise<boolean>;
   refresh: () => void;
@@ -383,7 +383,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
     });
   }
   async function remove(e: Entry) {
-    await action(async () => {
+    return action(async () => {
       if (demoMode)
         writeLocal(
           readEntries(localStorage.getItem(STORAGE_KEY)).filter(
@@ -479,7 +479,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
           .eq("id", space)
           .select("id")
           .single();
-        if (r.error) throw new Error("Não foi possível salvar os tópicos do calendário.");
+        if (r.error) throw new Error("Não foi possível salvar os categorias do calendário.");
         setPreferences(next);
       }
     });

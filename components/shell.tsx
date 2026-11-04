@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Heart,
   House,
-  ShoppingBag,
+  Wallet,
   ListChecks,
   Settings,
   ArrowUpRight,
@@ -17,19 +17,19 @@ import {
 import { useDengo } from "./provider";
 const links = [
   { href: "/", label: "Nosso dia", icon: House },
-  { href: "/compromissos", label: "Compromissos", icon: ListChecks },
-  { href: "/compras", label: "Compras", icon: ShoppingBag },
+  { href: "/compromissos", label: "Responsabilidades", icon: ListChecks },
+  { href: "/compras", label: "Financeiro", icon: Wallet },
   { href: "/lugares", label: "Nossos lugares", icon: MapPin },
   { href: "/filmes", label: "Filmes e séries", icon: Clapperboard },
 ];
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const { demo, error, refresh, signOut, preferences, openLobby } = useDengo();
+  const { demo, error, refresh, signOut, preferences } = useDengo();
   const mobileLinks = links.map((link) => ({
     ...link,
     label: link.href === "/lugares" ? "Lugares" :
       link.href === "/filmes" ? "Filmes" :
-      link.href === "/compromissos" ? "Tarefas" : link.label,
+      link.href === "/compromissos" ? "Responsa\u00adbilidades" : link.label,
   }));
   const mobileActive = (href: string) =>
     href === "/" ? path === "/" || path === "/calendario" : path === href;
@@ -69,9 +69,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
             )}
           </div>
           <div>
-            <button className="couple-name" onClick={openLobby}>
-              {preferences.title}
-            </button>
+            <Link className="couple-name" href="/configuracoes#casal">
+              Configurações do casal
+            </Link>
             <small>{demo ? "Prévia local" : "Espaço privado"}</small>
           </div>
           {!demo ? (
@@ -85,13 +85,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </aside>
       <div className="main-wrap">
         <header className="topbar">
-          <span className="desktop-only clean-desktop-caption">Nosso espaço</span>
+
           <Link href="/" className="brand-link mobile-brand-link" aria-label="Dengo — Nosso dia"><Brand compact /></Link>
+          <Link href="/configuracoes#casal" className="lobby-title" title={preferences.title}>
+            {preferences.title}
+          </Link>
           <div className="topbar-right">
-            <span className="status-dot" />
-            <button className="lobby-shortcut" onClick={openLobby}>
-              {demo ? "Demonstração" : "Nosso casal"}
-            </button>
             <button
               className="icon-btn topbar-refresh"
               onClick={refresh}
@@ -103,9 +102,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Link
               href="/configuracoes"
               className={"icon-btn settings-shortcut" + (path === "/configuracoes" ? " active" : "")}
-              aria-label="Nosso espaço e configurações"
+              aria-label="Configurações do casal"
               aria-current={path === "/configuracoes" ? "page" : undefined}
-              title="Nosso espaço"
+              title="Configurações"
             >
               <Settings size={20} />
             </Link>
@@ -136,6 +135,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             key={href}
             className={mobileActive(href) ? "active" : ""}
             aria-current={mobileActive(href) ? "page" : undefined}
+            aria-label={href === "/compromissos" ? "Responsabilidades" : label}
           >
             <Icon size={22} />
             <span>{label}</span>

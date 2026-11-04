@@ -56,8 +56,8 @@ export function eventRangeLabel(event: Entry, day?: string): string {
 function applyOccurrence(source: Entry, scheduled: string, change?: EventOccurrenceChanges): Entry {
   const baseDuration = calendarDayDifference(source.due, eventFinish(source));
   const due = change?.due || scheduled;
-  const endDate = change?.endDate || (baseDuration ? addCalendarDays(due, baseDuration) : "");
-  const { canceled, title, detail, assignee, due: moved, ...dataOverride } = change || {};
+  const endDate = change?.endDate ?? (baseDuration ? addCalendarDays(due, baseDuration) : "");
+  const { canceled, done, title, detail, assignee, due: moved, ...dataOverride } = change || {};
   const data = {
     ...source.data,
     ...dataOverride,
@@ -70,7 +70,7 @@ function applyOccurrence(source: Entry, scheduled: string, change?: EventOccurre
     ...source,
     id: scheduled === source.due && !change ? source.id : source.id + "::" + scheduled,
     due,
-    done: false,
+    done: done ?? false,
     title: title ?? source.title,
     detail: detail ?? source.detail,
     assignee: assignee ?? source.assignee,
@@ -91,7 +91,7 @@ export function projectCalendarEntries(
   const output: Entry[] = duePlanCalendarEntries(entries,from,to);
   for (const source of dated) {
     const frequency = source.kind === "event" ? source.data?.eventRepeat : undefined;
-    if (frequency !== "monthly" && frequency !== "yearly") {
+    if (frequency !== "weekly" && frequency !== "monthly" && frequency !== "yearly") {
       if (source.due <= to && eventFinish(source) >= from) output.push(source);
       continue;
     }
@@ -103,7 +103,11 @@ export function projectCalendarEntries(
     const first = fromYear * 12 + fromMonth - 1;
     const last = toYear * 12 + toMonth - 1;
     const dates = new Set<string>();
-    for (let monthIndex = first; monthIndex <= last; monthIndex++) {
+    if (frequency === "weekly") {
+      const weeks = Math.max(0, Math.floor(calendarDayDifference(source.due, lowerDate) / 7));
+      for (let day = addCalendarDays(source.due, weeks * 7); day <= upperDate; day = addCalendarDays(day, 7))
+        dates.add(day);
+    } else for (let monthIndex = first; monthIndex <= last; monthIndex++) {
       const year = Math.floor(monthIndex / 12);
       const month = monthIndex % 12 + 1;
       if (frequency === "yearly" && baseMonth !== month) continue;
@@ -149,7 +153,7 @@ export function withOccurrenceOverride(
       ...series.data,
       eventOverrides: {
         ...series.data?.eventOverrides,
-        [date]: changes,
+        [date]: { ...series.data?.eventOverrides?.[date], ...changes },
       },
     },
   };

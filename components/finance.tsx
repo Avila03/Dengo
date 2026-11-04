@@ -9,6 +9,8 @@ import {
   Check,
   Repeat2,
 } from "lucide-react";
+import { RepeatFields } from "./repeat-fields";
+import { EntryDetails } from "./entry-details";
 import { Shell } from "./shell";
 import { CleanSheet } from "./clean-sheet";
 import { EntryAudit } from "./entry-audit";
@@ -41,7 +43,10 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
     ),
     [editing, setEditing] = useState<Entry | null>(null),
     [month, setMonth] = useState(localToday().slice(0, 7)),
-    [localError, setLocalError] = useState("");
+    [localError, setLocalError] = useState(""),
+    [recurrence, setRecurrence] = useState<"none" | "daily" | "weekly" | "monthly">("none"),
+    [paid, setPaid] = useState(true),
+    [preview, setPreview] = useState<Entry | null>(() => entries.find((e) => e.id === query.get("registro") && ["expense", "transfer"].includes(e.kind)) || null);
   const totalBalance = balance(entries);
   const summary = monthlySummary(entries, month);
   const list = entries
@@ -50,6 +55,10 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
         ["expense", "transfer"].includes(e.kind) && !isPlan(e) && e.due.startsWith(month),
     )
     .sort((a, b) => b.due.localeCompare(a.due));
+  function editEntry(entry: Entry) {
+    setEditing(entry); setPaid(entry.done); setRecurrence(entry.data?.recurrence || "none");
+    setPreview(null); setLocalError(""); setForm(entry.kind === "transfer" ? "transfer" : "expense");
+  }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLocalError("");
@@ -94,7 +103,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
         setEditing(null);
         setForm(null);
         if (query.has("compra")) router.replace("/compras?aba=gastos", { scroll: false });
-      }
+      } else setLocalError("Não foi possível salvar. Confira os dados e tente novamente.");
     } catch (e) {
       setLocalError((e as Error).message);
     }
@@ -110,7 +119,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
           className="primary"
           onClick={() => {
             setForm(form ? null : "expense");
-            setEditing(null);
+            setEditing(null); setPaid(true); setRecurrence("none"); setLocalError("");
           }}
         >
           <Plus size={18} />
@@ -230,14 +239,6 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
               </select>
             </label>
             <label>
-              Forma de pagamento
-              <select name="method" defaultValue={editing?.data?.paymentMethod || "pix"}>
-                {PAYMENT_METHODS.map((method)=>(
-                  <option key={method.value} value={method.value}>{method.label}</option>
-                ))}
-              </select>
-            </label>
-            <label>
               {form === "transfer"
                 ? "Data do acerto"
                 : "Data do gasto ou vencimento"}
@@ -248,71 +249,49 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
                 defaultValue={editing?.due || localToday()}
               />
             </label>
-            {form === "expense" ? (
-              <>
-                <label>
-                  Categoria
-                  <select
-                    name="category"
-                    defaultValue={editing?.data?.category || "Mercado"}
-                  >
-                    {CATEGORIES.map((c) => (
-                      <option key={c}>{c}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Parte de {names[0]} (%)
-                  <input
-                    name="share"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    required
-                    defaultValue={(editing?.data?.shareFirst ?? 5000) / 100}
-                  />
-                  <small>
-                    O restante fica para {names[1]}. Use 50 para dividir
-                    igualmente.
-                  </small>
-                </label>
-                <label>
-                  Repetição
-                  <select
-                    name="recurrence"
-                    defaultValue={editing?.data?.recurrence || "none"}
-                  >
-                    <option value="none">Não repetir</option>
-                    <option value="monthly">Mensal</option>
-                  </select>
-                  <small>
-                    Ao marcar como paga, criamos a próxima conta pendente.
-                  </small>
-                </label>
-                <label>
-                  Data em que pagou
-                  <input type="date" name="paymentDate"
-                    defaultValue={editing?.data?.paymentPaidAt || localToday()}/>
-                </label>
-                <label className="checkbox-label full">
-                  <input
-                    name="paid"
-                    type="checkbox"
-                    defaultChecked={editing ? editing.done : true}
-                  />
-                  Esta despesa já foi paga
-                </label>
-              </>
-            ) : null}
+            {form === "expense" ? <>
+              <label className="checkbox-label full">
+                <input name="paid" type="checkbox" checked={paid} onChange={(e) => setPaid(e.target.checked)} />
+                Esta despesa já foi paga
+              </label>
+              {paid ? <label>Data em que pagou
+                <input type="date" name="paymentDate" defaultValue={editing?.data?.paymentPaidAt || localToday()} />
+              </label> : null}
+              <RepeatFields value={recurrence} onChange={setRecurrence} />
+            </> : null}
+            <details className="form-details full" open={editing ? true : undefined}>
+              <summary>Divisão, pagamento e observação</summary>
+              <div className="form-grid">
+            <label>
+              Forma de pagamento
+              <select name="method" defaultValue={editing?.data?.paymentMethod || "pix"}>
+                {PAYMENT_METHODS.map((method)=>(
+                  <option key={method.value} value={method.value}>{method.label}</option>
+                ))}
+              </select>
+            </label>
+                {form === "expense" ? <>
+                  <label>Categoria
+                    <select name="category" defaultValue={editing?.data?.category || "Mercado"}>
+                      {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                    </select>
+                  </label>
+                  <label>Parte de {names[0]} (%)
+                    <input name="share" type="number" min="0" max="100" step="0.01" required
+                      defaultValue={(editing?.data?.shareFirst ?? 5000) / 100} />
+                    <small>O restante fica para {names[1]}. Use 50 para dividir igualmente.</small>
+                  </label>
+                </> : null}
             <label className="full">
-              Observação opcional
+              Observação
               <input
                 name="detail"
                 maxLength={240}
                 defaultValue={editing?.detail}
               />
             </label>
+              </div>
+            </details>
           </div>
           {localError ? (
             <p role="alert" className="error">
@@ -347,7 +326,8 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
                   )}
                 </span>
                 <div className="entry-copy">
-                  <strong>{e.title}</strong>
+                  <button type="button" className="entry-title-button" onClick={() => setPreview(e)}
+                    aria-label={"Ver detalhes de " + e.title}>{e.title}</button>
                   <p>
                     {dayLabel(e.due)} ·{" "}
                     {e.kind === "transfer"
@@ -390,11 +370,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
                   <button
                     className="icon-btn"
                     aria-label={`Editar ${e.title}`}
-                    onClick={() => {
-                      setEditing(e);
-                      setForm(e.kind === "transfer" ? "transfer" : "expense");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
+                    onClick={() => editEntry(e)}
                   >
                     <Pencil size={17} />
                   </button>
@@ -418,7 +394,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
       <section className="panel setup-note">
         <h2>Orçamento por categoria</h2>
         <p>
-          Defina os limites mensais em Nosso espaço. Aqui aparecem os gastos
+          Defina os limites mensais nas configurações do casal. Aqui aparecem os gastos
           pagos do mês selecionado.
         </p>
         <div className="budget-grid">
@@ -453,6 +429,8 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
           })}
         </div>
       </section>
+      {preview ? <EntryDetails entry={entries.find((e) => e.id === preview.id) || preview}
+        onClose={() => setPreview(null)} onEdit={editEntry} /> : null}
     </>
   );
   return embedded ? content : <Shell>{content}</Shell>;

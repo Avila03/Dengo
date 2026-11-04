@@ -7,12 +7,13 @@ import {
   ShoppingBag,
   ListChecks,
   Search,
-  SlidersHorizontal,
   X,
   Pencil,
   Repeat2,
   Wallet,
 } from "lucide-react";
+import { RepeatFields } from "./repeat-fields";
+import { EntryDetails } from "./entry-details";
 import { Shell } from "./shell";
 import { CleanSheet } from "./clean-sheet";
 import { money, parseMoney, CATEGORIES } from "@/lib/finance";
@@ -38,7 +39,9 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
     [showSearch, setShowSearch] = useState(false),
     [responsible, setResponsible] = useState<ResponsibleFilter>("all"),
     [quickPurchaseId, setQuickPurchaseId] = useState<string | null>(null),
-    [localError, setLocalError] = useState("");
+    [localError, setLocalError] = useState(""),
+    [recurrence, setRecurrence] = useState<"none" | "daily" | "weekly" | "monthly">("none"),
+    [preview, setPreview] = useState<Entry | null>(null);
   const isTask = kind === "task";
   const all = entries.filter((e) => e.kind === kind),
     pending = all.filter((e) => !e.done).length;
@@ -52,6 +55,10 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
   );
   const items = isTask ? sortTaskEntries(filtered, today) : filtered;
   const Icon = isTask ? ListChecks : ShoppingBag;
+  function editEntry(entry: Entry) {
+    setEditing(entry); setRecurrence(entry.data?.recurrence || "none");
+    setPreview(null); setLocalError(""); setFormOpen(true);
+  }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLocalError("");
@@ -116,12 +123,12 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
       <section className={embedded ? "clean-embedded-collection-head" : "page-heading clean-task-heading"}>
         {!embedded ? (
           <div>
-            <h1>{isTask ? "Compromissos" : "Lista de compras"}<span className="rose">.</span></h1>
+            <h1>{isTask ? "Responsabilidades" : "Lista de compras"}<span className="rose">.</span></h1>
             <p>{all.length === 0
               ? "Um lugar simples para organizar o que precisa ser feito."
               : pending + (isTask ? " pendentes" : " para comprar") +
-                " · " + (all.length - pending) + (isTask ? " concluídos" : " comprados") +
-                (isTask && overdue ? " · " + overdue + " atrasados" : "")}</p>
+                " · " + (all.length - pending) + (isTask ? " concluídas" : " comprados") +
+                (isTask && overdue ? " · " + overdue + " atrasadas" : "")}</p>
           </div>
         ) : (
           all.length > 0 ? (
@@ -132,13 +139,13 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
         )}
         <button type="button" className="primary clean-create-button"
           aria-expanded={formOpen} aria-controls="new-entry"
-          onClick={() => {setFormOpen(!formOpen);setEditing(null);setLocalError("");}}>
+          onClick={() => {setFormOpen(!formOpen);setEditing(null);setRecurrence("none");setLocalError("");}}>
           {formOpen ? <X size={17}/> : <Plus size={17}/>}
-          {formOpen ? "Fechar" : isTask ? "Nova tarefa" : "Adicionar item"}
+          {formOpen ? "Fechar" : isTask ? "Nova responsabilidade" : "Adicionar item"}
         </button>
       </section>
       {formOpen ? (
-        <CleanSheet title={editing ? "Editar " + editing.title : isTask ? "Nova tarefa" : "Adicionar item"}
+        <CleanSheet title={editing ? "Editar " + editing.title : isTask ? "Nova responsabilidade" : "Adicionar item"}
           onClose={() => {setFormOpen(false);setEditing(null);}}>
         <form
           key={editing?.id || "new"}
@@ -155,7 +162,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
           </h2>
           <div className="form-grid">
             <label className="full">
-              {isTask ? "Nome da tarefa" : "Nome do item"}
+              {isTask ? "Nome da responsabilidade" : "Nome do item"}
               <input
                 name="title"
                 autoFocus
@@ -184,44 +191,21 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                   Data inicial ou prazo
                   <input type="date" name="due" defaultValue={editing?.due} />
                 </label>
-                <label>
-                  Repetição
-                  <select
-                    name="recurrence"
-                    defaultValue={editing?.data?.recurrence || "none"}
-                  >
-                    <option value="none">Não repetir</option>
-                    <option value="daily">Diária</option>
-                    <option value="weekly">Semanal</option>
-                    <option value="monthly">Mensal</option>
-                  </select>
-                </label>
-                <label className="checkbox-label">
-                  <input
-                    name="alternate"
-                    type="checkbox"
-                    defaultChecked={editing?.data?.alternate}
-                  />
-                  Alternar responsável a cada repetição
-                </label>
-                <p className="helper full">
-                  Concluir uma tarefa repetida cria a próxima ocorrência. Para
-                  alternar, escolha uma das duas pessoas como responsável. Ao
-                  editar, a alteração vale para esta ocorrência; as já criadas
-                  ficam preservadas.
-                </p>
+                <RepeatFields value={recurrence} onChange={setRecurrence} task alternate={editing?.data?.alternate} />
               </>
             ) : null}
             {!isTask ? (
               <label>
-                Valor previsto (R$) · opcional
+                Valor previsto (R$)
                 <input name="budget" inputMode="decimal" placeholder="Ex.: 49,90"
                   defaultValue={editing?.data?.budget
                     ? String(editing.data.budget / 100).replace(".", ",") : ""} />
               </label>
             ) : null}
+            <details className="form-details full" open={editing?.detail ? true : undefined}>
+              <summary>{isTask ? "Observação" : "Quantidade ou observação"}</summary>
             <label className="full">
-              {isTask ? "Observação opcional" : "Quantidade ou observação"}
+              {isTask ? "Observação" : "Quantidade ou observação"}
               <input
                 name="detail"
                 maxLength={240}
@@ -231,6 +215,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                 }
               />
             </label>
+            </details>
           </div>
           {localError && !quickPurchaseId ? <p className="error" role="alert">{localError}</p> : null}
           <button className="primary" disabled={busy}>
@@ -246,7 +231,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
             <div className="filters clean-list-filters" role="group" aria-label="Filtrar lista">
               {[
                 ["pending", isTask ? "Pendentes" : "Faltando"],
-                ["done", isTask ? "Concluídos" : "Comprados"],
+                ["done", isTask ? "Concluídas" : "Comprados"],
                 ["all", "Todos"],
               ].map(([key, label]) => (
                 <button type="button" key={key} aria-pressed={filter === key}
@@ -257,24 +242,6 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
               ))}
             </div>
             <div className="clean-list-tools">
-              {isTask ? (
-                <details className="clean-filter-details">
-                  <summary>
-                    <SlidersHorizontal size={16}/>
-                    {responsible === "all" ? "Responsável" : "Filtrado"}
-                  </summary>
-                  <label className="task-responsible">
-                    <span>Mostrar tarefas de</span>
-                    <select value={responsible}
-                      onChange={(event) => setResponsible(event.target.value as ResponsibleFilter)}>
-                      <option value="all">Todos</option>
-                      <option value="mine">Comigo · {names[memberSlot]}</option>
-                      <option value="partner">Com {names[1 - memberSlot]}</option>
-                      <option value="together">Nós dois</option>
-                    </select>
-                  </label>
-                </details>
-              ) : null}
               <button type="button" className="clean-search-toggle"
                 aria-label={showSearch || query ? "Ocultar busca" : "Buscar na lista"}
                 aria-expanded={showSearch || Boolean(query)}
@@ -291,12 +258,18 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                 <Search size={16}/>
                 <input type="search" aria-label="Buscar na lista"
                   value={query} onChange={event => setQuery(event.target.value)}
-                  placeholder={isTask ? "Nome da tarefa" : "Nome do item"}
+                  placeholder={isTask ? "Nome da responsabilidade" : "Nome do item"}
                   autoFocus />
               </label>
             ) : null}
           </div>
         ) : null}
+        {isTask && all.length > 0 ? <div className="responsibility-filters" role="group" aria-label="Filtrar por responsável">
+          {([["all", "Todas"], ["mine", "Minhas"], ["partner", "Da outra pessoa"], ["together", "Dos dois"]] as const).map(([key, label]) => (
+            <button type="button" key={key} aria-pressed={responsible === key}
+              className={responsible === key ? "selected" : ""} onClick={() => setResponsible(key)}>{label}</button>
+          ))}
+        </div> : null}
 {items.length ? (
           <ul className="entry-list">
             {items.map((e, index) => {
@@ -322,7 +295,8 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                     <Check size={16} />
                   </button>
                   <div className="entry-copy">
-                    <strong>{e.title}</strong>
+                    <button type="button" className="entry-title-button" aria-label={"Ver detalhes de " + e.title}
+                      onClick={() => setPreview(e)}>{e.title}</button>
                     {e.detail ? <p>{e.detail}</p> : null}
                     <div className="entry-meta">
                       <span className="tag">{e.assignee}</span>
@@ -334,7 +308,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                       ) : null}
                       {isTask ? (
                         <span className={isOverdue(e, today) ? "overdue" : ""}>
-                          {isOverdue(e, today) ? "Atrasado · " : ""}
+                          {isOverdue(e, today) ? "Atrasada · " : ""}
                           {dayLabel(e.due)}
                         </span>
                       ) : null}
@@ -365,7 +339,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                     {!isTask ? (
                       linkedExpense ? (
                         <Link className="clean-entry-payment" aria-label={"Ver gasto de " + e.title}
-                          href="/compras?aba=gastos"><Wallet size={16} /> Ver gasto</Link>
+                          href={"/compras?aba=gastos&registro=" + linkedExpense.id}><Wallet size={16} /> Ver gasto</Link>
                       ) : (
                         <button type="button" className="clean-entry-payment"
                           aria-label={"Registrar valor de " + e.title}
@@ -383,11 +357,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                       <div className="row-actions">
                         <button type="button" className="secondary"
                           aria-label={`Editar ${e.title}`}
-                          onClick={() => {
-                            setEditing(e);
-                            setFormOpen(true);
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }}>
+                          onClick={() => editEntry(e)}>
                           <Pencil size={16} /> Editar
                         </button>
                         <DeleteButton label={e.title} disabled={busy}
@@ -414,6 +384,9 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                             {names.map((name, index) => <option key={name} value={index}>{name}</option>)}
                           </select>
                         </label>
+                        <details className="form-details full">
+                          <summary>Divisão e pagamento</summary>
+                          <div className="form-grid">
                         <label>Como dividir?
                           <select name="share" defaultValue="5000">
                             <option value="5000">50% para cada</option>
@@ -433,6 +406,8 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                             ))}
                           </select>
                         </label>
+                          </div>
+                        </details>
                         <label>Data
                           <input name="date" type="date" defaultValue={localToday()} required />
                         </label>
@@ -460,13 +435,13 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
             <Icon size={21} strokeWidth={1.7}/>
             <div>
               <strong>{!all.length
-                ? isTask ? "Nenhuma tarefa por enquanto" : "Nenhum item na lista"
+                ? isTask ? "Nenhuma responsabilidade por enquanto" : "Nenhum item na lista"
                 : query ? "Nenhum resultado para essa busca"
-                : filter === "done" ? isTask ? "Nenhuma tarefa concluída" : "Nenhum item comprado"
-                : filter === "pending" ? isTask ? "Sem tarefas pendentes" : "Nada faltando por enquanto"
+                : filter === "done" ? isTask ? "Nenhuma responsabilidade concluída" : "Nenhum item comprado"
+                : filter === "pending" ? isTask ? "Sem responsabilidades pendentes" : "Nada faltando por enquanto"
                 : "Nada nesta seleção"}</strong>
               <p>{!all.length
-                ? isTask ? "Use “Nova tarefa” para começar." : "Use “Adicionar item” para começar."
+                ? isTask ? "Use “Nova responsabilidade” para começar." : "Use “Adicionar item” para começar."
                 : query ? "Tente outro nome."
                 : "Se quiser, veja os outros itens da lista."}</p>
               {all.length > 0 && (filter !== "all" || query || responsible !== "all") ? (
@@ -479,6 +454,8 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
           </div>
         )}
       </section>
+      {preview ? <EntryDetails entry={entries.find((e) => e.id === preview.id) || preview}
+        onClose={() => setPreview(null)} onEdit={editEntry} /> : null}
     </>
   );
   return embedded ? content : <Shell>{content}</Shell>;

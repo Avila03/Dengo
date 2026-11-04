@@ -4,11 +4,11 @@ export type TaskSection = "overdue" | "today" | "upcoming" | "undated" | "done";
 export type ResponsibleFilter = "all" | "mine" | "partner" | "together";
 
 export const TASK_SECTION_LABELS: Record<TaskSection, string> = {
-  overdue: "Atrasados",
+  overdue: "Atrasadas",
   today: "Para hoje",
-  upcoming: "Próximos compromissos",
+  upcoming: "Próximas responsabilidades",
   undated: "Sem data definida",
-  done: "Concluídos",
+  done: "Concluídas",
 };
 
 export function taskSection(entry: Entry, today: string): TaskSection {

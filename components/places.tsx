@@ -58,6 +58,7 @@ export function Places() {
   const [collection, setCollection] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [error, setError] = useState("");
+  const [visited, setVisited] = useState(false);
   const [mapOpen, setMapOpen] = useState<string | null>(null);
   const embedKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY || "";
   const all = entries.filter((entry) => entry.kind === "place");
@@ -66,12 +67,14 @@ export function Places() {
   const favoriteCount = all.filter((entry) => entry.data?.favorite).length;
 
   function startNew() {
+    setVisited(false);
     setEditing(null);
     setError("");
     setOpen((current) => editing !== null ? true : !current);
   }
 
   function editPlace(entry: Entry) {
+    setVisited(entry.done);
     setEditing(entry);
     setError("");
     setOpen(true);
@@ -207,14 +210,17 @@ export function Places() {
               </datalist>
               <small>Escolha uma coleção ou digite uma nova. Ela será compartilhada com o casal.</small>
             </label>
+            <details className="form-details full" open={editing ? true : undefined}>
+              <summary>Link, orçamento e observação</summary>
+              <div className="form-grid">
             <label>
               Orçamento previsto do casal (R$)
-              <input name="budget" inputMode="decimal" placeholder="Opcional"
+              <input name="budget" inputMode="decimal" placeholder="Ex.: 150,00"
                 defaultValue={editing?.data?.budget
                   ? String(editing.data.budget / 100).replace(".", ",") : ""} />
             </label>
             <label className="full">
-              Link do local (opcional)
+              Link do local
               <input name="url" type="url" inputMode="url" maxLength={3000}
                 defaultValue={editing?.data?.url || ""}
                 placeholder="https://maps.app.goo.gl/... ou https://www.tiktok.com/..." />
@@ -224,22 +230,28 @@ export function Places() {
               Por que queremos ir?
               <input name="detail" maxLength={240} defaultValue={editing?.detail || ""} />
             </label>
+              </div>
+            </details>
             <label className="checkbox-label full">
               <input name="favorite" type="checkbox" defaultChecked={editing?.data?.favorite || false} />
               Adicionar aos favoritos
             </label>
             <label className="checkbox-label full">
-              <input name="visited" type="checkbox" defaultChecked={editing?.done || false} />
+              <input name="visited" type="checkbox" checked={visited} onChange={(event) => setVisited(event.target.checked)} />
               Já conhecemos
             </label>
+            <div className="full" hidden={!visited}>
+            <div className="form-grid">
             <label>
-              Data da visita (se já conhecemos)
+              Data da visita
               <input type="date" name="visitedAt" defaultValue={editing?.data?.visitedAt || ""} />
             </label>
             <label className="full">
               Nossa lembrança ou avaliação
               <input name="review" maxLength={240} defaultValue={editing?.data?.review || ""} />
             </label>
+            </div>
+            </div>
           </div>
           {error ? <p className="error" role="alert">{error}</p> : null}
           <div className="places-form-actions">

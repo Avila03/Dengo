@@ -23,7 +23,7 @@ const dayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const weekdays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const labelByKind: Record<string, string> = {
   event: "Evento",
-  task: "Tarefa",
+  task: "Responsabilidade",
   expense: "Conta",
 };
 function detailLink(entry: Entry): string {
@@ -154,12 +154,12 @@ export function Home() {
           </Link>
         </div>
         <details className="clean-inline-options">
-          <summary><Filter size={15} /> {selectedTopic === "all" ? "Tópicos e filtros" :
+          <summary><Filter size={15} /> {selectedTopic === "all" ? "Categorias e filtros" :
             "Filtrando: " + (topics.find(t => t.id === selectedTopic)?.name || "Outros")}
           </summary>
           <div className="home-calendar-filter-toggle">
-            <Link href="/calendario?topicos=1" className="text-link">
-              <Palette size={15} /> Editar tópicos e cores
+            <Link href="/calendario?topicos=1#calendar-categories" className="text-link">
+              <Palette size={15} /> Editar categorias e cores
             </Link>
             {selectedTopic !== "all" ? <button type="button" className="text-link"
               onClick={() => setSelectedTopic("all")}>Limpar filtro</button> : null}
@@ -233,7 +233,7 @@ export function Home() {
                   <small>{entry.kind === "event" ? eventTopicLabel(entry, topics) : labelByKind[entry.kind]}
                     {entry.kind === "event" && entry.data?.eventRepeat &&
                       entry.data.eventRepeat !== "none" ? (
-                        <span className="day-repeat-mark"><Repeat2 size={12} /> {entry.data.eventRepeat === "monthly" ? "Mensal" : "Anual"}</span>
+                        <span className="day-repeat-mark"><Repeat2 size={12} /> {entry.data.eventRepeat === "weekly" ? "Semanal" : entry.data.eventRepeat === "monthly" ? "Mensal" : "Anual"}</span>
                       ) : null}
                     {" · " + entry.assignee}
                     {entry.data?.location ? " · " + entry.data.location : ""}

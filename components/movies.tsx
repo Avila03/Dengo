@@ -340,7 +340,7 @@ export function Movies() {
               </>
             ) : null}
             {watchState !== "not_started" ? (
-              <label className="full">Nosso feedback (opcional)
+              <label className="full">Nosso feedback
                 <textarea name="feedback" maxLength={800} rows={3}
                   defaultValue={editing?.data?.mediaFeedback ?? editing?.detail ?? ""}
                   placeholder="O que achamos? Momentos favoritos, críticas ou lembranças..." />

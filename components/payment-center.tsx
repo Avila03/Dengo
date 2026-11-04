@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useDengo } from "./provider";
 import { CleanSheet } from "./clean-sheet";
+import { CoupleBalance } from "./couple-balance";
 import { DeleteButton } from "./ui";
 import { type Draft, type Entry, localToday } from "@/lib/model";
 import { addMonths } from "@/lib/model";
@@ -188,6 +189,7 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
               </div>
             </details>
           </div>
+          <CoupleBalance />
         </>
       ) : (
         <header className="payment-detail-heading">
@@ -418,7 +420,7 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
               } defaultValue={selectedPlan?.title||""}/>
             </label>
             <label>Valor {formType==="installment"?"total da compra":
-              formType==="bill"?"estimado (opcional)":"da assinatura"} (R$)
+              formType==="bill"?"estimado":"da assinatura"} (R$)
               <input name="amount" inputMode="decimal" placeholder="Ex.: 89,90"
                 required={formType!=="bill"} defaultValue={asInputMoney(selectedPlan?.data?.amount)}/>
             </label>
@@ -440,6 +442,9 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
                 {names.map((name,index)=><option key={index} value={index}>{name}</option>)}
               </select>
             </label>
+            <details className="form-details full" open={selectedPlan ? true : undefined}>
+              <summary>Divisão, lembrete e observação</summary>
+              <div className="payment-form-grid">
             <label>Divisão: parte de {names[0]} (%)
               <input required type="number" name="share" min={0} max={100} step={0.01}
                 defaultValue={(selectedPlan?.data?.shareFirst??5000)/100}/>
@@ -463,10 +468,12 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
                 <option value={7}>7 dias antes</option>
               </select>
             </label>
-            <label className="full">Observação (opcional)
+            <label className="full">Observação
               <input name="detail" maxLength={240} defaultValue={selectedPlan?.detail||""}
                 placeholder="Detalhes para lembrar depois"/>
             </label>
+              </div>
+            </details>
           </div>
           {selectedPlan && registeredCount(selectedPlan)>0 ? (
             <p className="payment-small-note">A data inicial fica bloqueada após registrar pagamentos, para manter o histórico das parcelas.</p>

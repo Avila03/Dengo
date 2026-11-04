@@ -29,15 +29,15 @@ export function calendarTopics(value: unknown): CalendarTopic[] {
 }
 export function validateCalendarTopics(value: CalendarTopic[]) {
   if (!Array.isArray(value) || !value.length)
-    throw new Error("Mantenha pelo menos um tópico.");
+    throw new Error("Mantenha pelo menos uma categoria.");
   if (JSON.stringify(value).length > 20000)
-    throw new Error("A lista de tópicos está grande demais para salvar.");
+    throw new Error("A lista de categorias está grande demais para salvar.");
   const names = new Set<string>();
   const ids = new Set<string>();
   for (const topic of value) {
-    if (!validCalendarTopic(topic)) throw new Error("Confira os nomes (até 30 caracteres) e as cores dos tópicos.");
+    if (!validCalendarTopic(topic)) throw new Error("Confira os nomes (até 30 caracteres) e as cores das categorias.");
     const name = topic.name.trim().toLocaleLowerCase("pt-BR");
-    if (names.has(name) || ids.has(topic.id)) throw new Error("Cada tópico deve ter um nome diferente.");
+    if (names.has(name) || ids.has(topic.id)) throw new Error("Cada categoria deve ter um nome diferente.");
     names.add(name); ids.add(topic.id);
   }
 }
@@ -53,5 +53,5 @@ export function calendarEntryColor(entry: Entry, topics: CalendarTopic[]) {
 }
 export function eventTopicLabel(entry: Entry, topics: CalendarTopic[]) {
   return entry.kind === "event" ? calendarEntryTopic(entry, topics)?.name || "Evento" :
-    entry.kind === "task" ? "Tarefa" : entry.kind === "expense" ? "Conta" : "Registro";
+    entry.kind === "task" ? "Responsabilidade" : entry.kind === "expense" ? "Conta" : "Registro";
 }

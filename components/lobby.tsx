@@ -6,7 +6,6 @@ import {
   Plus,
   Link2,
   ArrowRight,
-  Copy,
   LogOut,
   Users,
   RefreshCw,
@@ -26,7 +25,6 @@ export function Lobby({
     user,
     spaceId,
     memberCount,
-    memberSlot,
     preferences,
     demo,
     error,
@@ -36,12 +34,8 @@ export function Lobby({
   const router = useRouter();
   const [mode, setMode] = useState<"create" | "join" | null>(null),
     [code, setCode] = useState(""),
-    [invite, setInvite] = useState<{ code: string; expires_at: string } | null>(
-      null,
-    ),
     [busy, setBusy] = useState(false),
-    [localError, setLocalError] = useState(""),
-    [copied, setCopied] = useState(false);
+    [localError, setLocalError] = useState("");
   const lock = useRef(false);
   useEffect(() => {
     const c = new URLSearchParams(window.location.search).get("convite");
@@ -89,30 +83,6 @@ export function Lobby({
       router.replace("/");
       refresh();
     });
-  }
-  async function generate() {
-    await run(async () => {
-      const { data, error } = await supabase!.rpc("create_couple_invite");
-      if (error)
-        throw new Error(error.message || "Não foi possível gerar o convite.");
-      setInvite(data);
-      setCopied(false);
-    });
-  }
-  const inviteUrl =
-    invite && typeof window !== "undefined"
-      ? `${window.location.origin}/?convite=${invite.code}`
-      : "";
-  async function copy() {
-    if (!inviteUrl) return;
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
-      setCopied(true);
-    } catch {
-      setLocalError(
-        "Não foi possível copiar automaticamente. Selecione o link abaixo e copie.",
-      );
-    }
   }
   return (
     <main className="lobby">
@@ -192,51 +162,9 @@ export function Lobby({
             Compras, finanças, tarefas, calendário, filmes e lugares ficam
             compartilhados entre vocês.
           </p>
-          {memberCount < 2 && memberSlot === 0 ? (
-            <div className="invite-section">
-              <h3>Convide seu par</h3>
-              <p>
-                Quem aceitar terá acesso aos registros deste espaço. O link pode
-                ser usado uma vez e expira em sete dias.
-              </p>
-              <button
-                className="secondary"
-                disabled={busy}
-                onClick={() => void generate()}
-              >
-                <Link2 size={16} />
-                {busy
-                  ? "Gerando…"
-                  : invite
-                    ? "Gerar novo convite"
-                    : "Gerar convite"}
-              </button>
-              {invite ? (
-                <div className="invite-link">
-                  <label>
-                    Link para compartilhar
-                    <input
-                      readOnly
-                      value={inviteUrl}
-                      onFocus={(e) => e.currentTarget.select()}
-                    />
-                  </label>
-                  <button className="primary" onClick={() => void copy()}>
-                    <Copy size={16} />
-                    {copied ? "Copiado" : "Copiar link"}
-                  </button>
-                  <small>
-                    Válido até{" "}
-                    {new Intl.DateTimeFormat("pt-BR", {
-                      dateStyle: "short",
-                      timeStyle: "short",
-                    }).format(new Date(invite.expires_at))}
-                    . Um novo convite invalida o anterior.
-                  </small>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+          <button type="button" className="secondary" onClick={() => {
+            onEnter(); router.push("/configuracoes#casal");
+          }}><Users size={16} /> Participantes e convite</button>
         </section>
       ) : (
         <>

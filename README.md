@@ -1,3 +1,20 @@
+## Dengo 2.4 — formulários e rotina mais claros
+
+- Navegação: **Responsabilidades** e **Financeiro**, com os endereços existentes preservados.
+- Todos os rótulos e placeholders deixam de exibir a palavra “opcional”; as regras de obrigatoriedade permanecem iguais.
+- O cabeçalho mostra o **nome do lobby uma única vez**. Nome, participantes e convite ficam em **Configurações do casal**; o lobby de entrada dá acesso a essa área.
+- Criação e edição de eventos compartilham os mesmos campos. Título, data, horário e categoria aparecem primeiro; repetição revela a frequência, duração revela a data de término, e participantes/local/observação ficam em um bloco expansível.
+- Frequências do calendário: não repetir, toda semana, todo mês e todo ano. Contagens antigas continuam disponíveis em uma opção recolhida; os nomes de aniversários deixam de fazer parte das frequências.
+- Removidos o horário final e o seletor combinado de lugar/filme/série do formulário. **Local** seleciona lugares já salvos; vínculos históricos de filmes continuam preservados nos registros.
+- Categorias do calendário podem ser criadas e gerenciadas no final da aba.
+- Toque no título de uma responsabilidade, compra ou movimentação para abrir detalhes, editar, concluir/pagar ou excluir. Eventos usam a mesma folha acessível, com conclusão independente por ocorrência.
+- Responsabilidades: filtros visíveis **Todas, Minhas, Da outra pessoa e Dos dois**, organização por prazo e destaque de atrasadas.
+- Financeiro mantém lista de compras e pagamentos separados e exibe saldo entre os dois junto ao resumo mensal e próximos vencimentos. Apenas despesas pagas e acertos entram no saldo.
+- Formulários de responsabilidades, despesas, planos, compras e locais revelam detalhes progressivamente. Datas, horários e botões usam o mesmo padrão, uma coluna no celular e as cores do tema individual.
+- Convites reutilizam a RPC existente, de uso único e sete dias. Não há migração nem alteração dos dados existentes para esta versão.
+- Validação: testes automatizados cobrem projeção semanal, datas remarcadas, conclusão e reabertura por ocorrência, duração, divisão de série e seleção de lugar com preservação do vínculo histórico. TypeScript e compilação são conferidos antes da publicação.
+- Limite de verificação: a prévia gerenciada acrescenta flags de Vite incompatíveis com Next.js; a inspeção visual interativa desta versão não foi concluída nesse ambiente.
+
 ## Dengo 2.3.1 — identidade aprovada
 
 - Logo escolhida por Bruno: **variação 2 do monograma D com coração/faixa em curvas**, em azul-escuro e coral/rosa.

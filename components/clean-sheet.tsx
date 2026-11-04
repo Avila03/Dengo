@@ -36,9 +36,9 @@ export function CleanSheet({
         closeRef.current();
       }
       if (event.key !== "Tab") return;
-      const buttons = panelRef.current?.querySelectorAll<HTMLElement>(
-        'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
-      );
+      const buttons = Array.from(panelRef.current?.querySelectorAll<HTMLElement>(
+        'a[href],button:not([disabled]),summary,input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+      ) || []).filter((element) => element.getClientRects().length > 0 && element.tabIndex >= 0);
       if (!buttons?.length) {
         event.preventDefault();
         panelRef.current?.focus();
@@ -56,7 +56,7 @@ export function CleanSheet({
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
-      previous?.focus();
+      if (previous?.isConnected) previous.focus();
     };
   }, [mounted]);
 

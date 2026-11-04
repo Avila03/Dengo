@@ -3,54 +3,28 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   Check, ChevronRight, Clock3, ExternalLink, MapPin, Pencil, Plus,
-  Repeat2, ShoppingBag, ListChecks, Trash2, X,
+  Repeat2, Trash2,
 } from "lucide-react";
 import type { Draft, Entry, EventOccurrenceChanges } from "@/lib/model";
+import { CleanSheet } from "./clean-sheet";
+import { EventFields } from "./event-fields";
+import { eventFormValues, eventDataFromForm } from "@/lib/event-form";
 import { localToday } from "@/lib/model";
 import { useDengo } from "./provider";
 import { eventDurationLabel } from "@/lib/calendar-anniversaries";
 import { calendarTopics, calendarEntryColor, eventTopicLabel } from "@/lib/calendar-topics";
 import {
-  addCalendarDays, calendarDayDifference, eventFinish, eventRangeLabel,
+  calendarDayDifference, eventRangeLabel,
   recurrenceSeries, recurringInstanceKey, splitFutureSeries, withOccurrenceOverride,
 } from "@/lib/calendar-schedule";
 
 type Scope = "once" | "future" | "all";
-type FormValues = {
-  title: string;
-  due: string;
-  endDate: string;
-  time: string;
-  endTime: string;
-  location: string;
-  detail: string;
-  topicId: string;
-  assignee: string;
-  sourceId: string;
-};
-
 function draftFrom(entry: Entry): Draft {
   return {
     kind: entry.kind, title: entry.title, detail: entry.detail,
     assignee: entry.assignee, due: entry.due, done: entry.done, data: entry.data,
   };
 }
-function initialForm(entry: Entry): FormValues {
-  return {
-    title: entry.title,
-    due: entry.due,
-    endDate: entry.data?.endDate || "",
-    time: entry.data?.time || "",
-    endTime: entry.data?.endTime || "",
-    location: entry.data?.location || "",
-    detail: entry.detail,
-    topicId: entry.data?.topicId || "outros",
-    assignee: entry.assignee,
-    sourceId: entry.data?.sourceKind && ["movie", "place"].includes(entry.data.sourceKind)
-      ? entry.data.sourceId || "" : "",
-  };
-}
-
 /** Compact details and inline operations shared by Nosso dia and the full calendar. */
 export function EventQuickView({
   occurrence, onClose,
@@ -62,7 +36,7 @@ export function EventQuickView({
   const topics = calendarTopics(preferences.calendarTopics);
   const source = recurrenceSeries(entries, occurrence);
   const recurring = source.kind === "event" &&
-    ["monthly", "yearly"].includes(source.data?.eventRepeat || "");
+    ["weekly", "monthly", "yearly"].includes(source.data?.eventRepeat || "");
   const scheduled = occurrence.data?.eventOccurrenceDate || occurrence.due;
   const instanceKey = recurringInstanceKey(occurrence);
   const prep = entries.filter((e) =>
@@ -70,10 +44,10 @@ export function EventQuickView({
   const linked = entries.find((e) =>
     (e.kind === "movie" || e.kind === "place") &&
     e.id === occurrence.data?.sourceId);
-  const availableLinks = entries.filter((e) => e.kind === "movie" || e.kind === "place");
+
   const [editing, setEditing] = useState(false);
   const [scope, setScope] = useState<Scope>("once");
-  const [form, setForm] = useState<FormValues>(() => initialForm(occurrence));
+  const [form, setForm] = useState(() => eventFormValues(occurrence));
   const [deleting, setDeleting] = useState(false);
   const [deleteScope, setDeleteScope] = useState<Scope>("once");
   const [prepOpen, setPrepOpen] = useState(false);
@@ -84,33 +58,16 @@ export function EventQuickView({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  function setField<K extends keyof FormValues>(key: K, value: FormValues[K]) {
-    setForm((prior) => ({ ...prior, [key]: value }));
-  }
   function changeScope(next: Scope) {
     setScope(next);
-    setForm(initialForm(next === "all" ? source : occurrence));
+    setForm(eventFormValues(next === "all" ? source : occurrence));
     setError("");
   }
   function makeDraft(): Draft {
-    const linkedEntry = availableLinks.find((e) => e.id === form.sourceId);
     return {
-      kind: "event",
-      title: form.title.trim(),
-      detail: form.detail.trim(),
-      assignee: form.assignee,
-      due: form.due,
-      done: false,
-      data: {
-        ...source.data,
-        time: form.time,
-        endTime: form.endTime,
-        endDate: form.endDate,
-        location: form.location.trim(),
-        topicId: form.topicId,
-        sourceId: linkedEntry?.id || "",
-        sourceKind: linkedEntry?.kind,
-      },
+      kind: "event", title: form.title.trim(), detail: form.detail.trim(),
+      assignee: form.assignee, due: form.due, done: occurrence.done,
+      data: eventDataFromForm(form, entries, scope === "all" ? source.data : occurrence.data),
     };
   }
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -135,19 +92,10 @@ export function EventQuickView({
     }
     let ok = false;
     if (!recurring || scope === "all") {
-      const originalDate = source.due;
-      const keepEnd = scope === "all" && source.due !== occurrence.due;
       const revised = {
         ...draft,
-        due: keepEnd ? originalDate : draft.due,
         data: {
           ...draft.data,
-          endDate: keepEnd && draft.data?.endDate
-            ? addCalendarDays(originalDate,
-                calendarDayDifference(draft.due, draft.data.endDate))
-            : draft.data?.endDate,
-          eventRepeat: source.data?.eventRepeat,
-          eventCounter: source.data?.eventCounter,
           eventAnchorDate: source.data?.eventAnchorDate,
           eventRepeatUntil: source.data?.eventRepeatUntil,
           eventOverrides: source.data?.eventOverrides,
@@ -159,7 +107,7 @@ export function EventQuickView({
         title: draft.title, detail: draft.detail, assignee: draft.assignee,
         due: draft.due, endDate: draft.data?.endDate,
         time: draft.data?.time, endTime: draft.data?.endTime,
-        location: draft.data?.location, topicId: draft.data?.topicId,
+        location: draft.data?.location, placeId: draft.data?.placeId, topicId: draft.data?.topicId,
         sourceId: draft.data?.sourceId, sourceKind: draft.data?.sourceKind,
       };
       const patched = withOccurrenceOverride(source, occurrence, changes);
@@ -171,16 +119,17 @@ export function EventQuickView({
       if (created) ok = await update(source, draftFrom(pair.original));
       if (!ok && created) {
         setError("A nova série foi criada, mas não foi possível encerrar a anterior. Abra a agenda para revisar as duplicações.");
+        return;
       }
     }
     if (ok) onClose();
-    else if (!error) setError("Não foi possível salvar. Confira os dados e tente novamente.");
+    else setError("Não foi possível salvar. Confira os dados e tente novamente.");
   }
   async function deleteEvent() {
     setError("");
     if (!recurring || deleteScope === "all") {
-      await remove(source);
-      onClose();
+      if (await remove(source)) onClose();
+      else setError("Não foi possível excluir o evento. Tente novamente.");
       return;
     }
     if (deleteScope === "once") {
@@ -219,21 +168,24 @@ export function EventQuickView({
       setPrepOpen(false);
     } else setError("Não foi possível adicionar o preparativo.");
   }
+  async function complete() {
+    setError("");
+    const changed = recurring
+      ? withOccurrenceOverride(source, occurrence, { done: !occurrence.done })
+      : { ...source, done: !source.done };
+    if (await update(source, draftFrom(changed))) onClose();
+    else setError("Não foi possível atualizar este compromisso.");
+  }
+  const place = entries.find((e) => e.kind === "place" && e.id === occurrence.data?.placeId);
   const linkToItem = linked?.kind === "place" ? "/lugares" : "/filmes";
   return (
-    <div className="event-quick-backdrop" onClick={onClose} role="presentation">
-      <section role="dialog" aria-modal="true" aria-label={"Detalhes de " + occurrence.title}
-        className="event-quick-panel" onClick={(e) => e.stopPropagation()}>
-        <div className="event-quick-head">
-          <div className="event-quick-head-title">
-            <i className="topic-legend-dot" style={{ backgroundColor: calendarEntryColor(occurrence, topics) }} />
-            <span>{eventTopicLabel(occurrence, topics)}</span>
-            {recurring ? <span className="event-quick-repeat"><Repeat2 size={13} />
-              {source.data?.eventRepeat === "monthly" ? "Mensal" : "Anual"}</span> : null}
-          </div>
-          <button type="button" className="icon-btn" onClick={onClose} aria-label="Fechar detalhes">
-            <X size={20} />
-          </button>
+    <CleanSheet title={occurrence.title} onClose={onClose}>
+      <div className="event-details-content">
+        <div className="event-quick-head-title">
+          <i className="topic-legend-dot" style={{ backgroundColor: calendarEntryColor(occurrence, topics) }} />
+          <span>{eventTopicLabel(occurrence, topics)}</span>
+          {recurring ? <span className="event-quick-repeat"><Repeat2 size={13} />
+            {source.data?.eventRepeat === "weekly" ? "Semanal" : source.data?.eventRepeat === "monthly" ? "Mensal" : "Anual"}</span> : null}
         </div>
         <h2>{occurrence.title}</h2>
         <div className="event-quick-info">
@@ -245,10 +197,16 @@ export function EventQuickView({
           ) : null}
           <p>Com {occurrence.assignee.toLowerCase()}</p>
         </div>
-        {linked ? <Link className="secondary event-quick-link" href={linkToItem}>
+        {place ? <Link className="secondary event-quick-link" href="/lugares">
+          <MapPin size={15} /> {place.title}
+        </Link> : null}
+        {linked && linked.id !== place?.id ? <Link className="secondary event-quick-link" href={linkToItem}>
           <ExternalLink size={15} /> {linked.kind === "place" ? "Lugar salvo" : "Filme ou série"}: {linked.title}
         </Link> : null}
         <div className="event-quick-actions">
+          <button type="button" className="secondary" disabled={busy} onClick={() => void complete()}>
+            <Check size={16} /> {occurrence.done ? "Reabrir" : "Concluir"}
+          </button>
           <button type="button" className="secondary" onClick={() => {
             setEditing(!editing); setDeleting(false); setError("");
           }}><Pencil size={16} /> {editing ? "Fechar edição" : "Editar"}</button>
@@ -257,7 +215,7 @@ export function EventQuickView({
           }}><Trash2 size={16} /> {deleting ? "Cancelar" : "Excluir"}</button>
         </div>
         {editing ? (
-          <form className="event-quick-edit" onSubmit={(e) => void save(e)}>
+          <form className="event-quick-edit entry-form" onSubmit={(e) => void save(e)}>
             {recurring ? <label>
               Aplicar alteração
               <select value={scope} onChange={(e) => changeScope(e.target.value as Scope)}>
@@ -266,61 +224,15 @@ export function EventQuickView({
                 <option value="all">Toda a série</option>
               </select>
             </label> : null}
-            <label>Nome
-              <input required maxLength={120} value={form.title}
-                onChange={(e) => setField("title", e.target.value)} />
-            </label>
-            <div className="event-quick-pair">
-              <label>Início
-                <input type="date" required value={form.due} onChange={(e) => setField("due", e.target.value)} />
-              </label>
-              <label>Fim (opcional)
-                <input type="date" value={form.endDate} min={form.due}
-                  onChange={(e) => setField("endDate", e.target.value)} />
-              </label>
-            </div>
-            <div className="event-quick-pair">
-              <label>Hora inicial
-                <input type="time" value={form.time} onChange={(e) => setField("time", e.target.value)} />
-              </label>
-              <label>Hora final
-                <input type="time" value={form.endTime} onChange={(e) => setField("endTime", e.target.value)} />
-              </label>
-            </div>
-            <label>Tópico
-              <select value={form.topicId} onChange={(e) => setField("topicId", e.target.value)}>
-                {topics.map((topic) => <option key={topic.id} value={topic.id}>{topic.name}</option>)}
-              </select>
-            </label>
-            <label>Participantes
-              <select value={form.assignee} onChange={(e) => setField("assignee", e.target.value)}>
-                {["Nós dois", ...names].map((name,i) => <option key={i} value={name}>{name}</option>)}
-              </select>
-            </label>
-            <label>Vincular lugar, filme ou série
-              <select value={form.sourceId} onChange={(e) => {
-                setField("sourceId", e.target.value);
-                const place = availableLinks.find((x) => x.id === e.target.value && x.kind === "place");
-                if (place?.data?.address) setField("location", place.data.address);
-              }}>
-                <option value="">Sem vínculo</option>
-                {availableLinks.map((entry) => <option key={entry.id} value={entry.id}>
-                  {entry.kind === "place" ? "📍 " : "🎬 "}{entry.title}
-                </option>)}
-              </select>
-            </label>
-            <label>Local
-              <input maxLength={240} value={form.location} onChange={(e) => setField("location", e.target.value)} />
-            </label>
-            <label>Observação
-              <textarea rows={2} maxLength={240} value={form.detail} onChange={(e) => setField("detail", e.target.value)} />
-            </label>
+            <EventFields key={scope} values={form} onChange={setForm} topics={topics}
+              entries={entries} names={names} allowRepeat={!recurring || scope === "all"} />
             {error ? <p className="error" role="alert">{error}</p> : null}
             <button type="submit" className="primary" disabled={busy}>
               {busy ? "Salvando…" : "Salvar alterações"}
             </button>
           </form>
         ) : null}
+        {error && !editing && !deleting && !prepOpen ? <p className="error" role="alert">{error}</p> : null}
         {deleting ? <div className="event-quick-confirm">
           {recurring ? <label>
             Excluir
@@ -344,7 +256,7 @@ export function EventQuickView({
           <div className="event-prep-head">
             <div>
               <h3>Preparativos</h3>
-              <p>Compras e tarefas vinculadas a esta data.</p>
+              <p>Compras e responsabilidades para esta data.</p>
             </div>
             <button type="button" className="secondary" onClick={() => setPrepOpen(!prepOpen)}>
               <Plus size={16} /> Preparar
@@ -368,7 +280,7 @@ export function EventQuickView({
             <div className="event-quick-pair">
               <label>Tipo
                 <select value={prepKind} onChange={(e) => setPrepKind(e.target.value as "task" | "shopping")}>
-                  <option value="task">Tarefa</option>
+                  <option value="task">Responsabilidade</option>
                   <option value="shopping">Compra</option>
                 </select>
               </label>
@@ -386,7 +298,7 @@ export function EventQuickView({
           </form> : null}
           {notice ? <p className="notice" role="status">{notice}</p> : null}
         </div>
-      </section>
-    </div>
+      </div>
+    </CleanSheet>
   );
 }

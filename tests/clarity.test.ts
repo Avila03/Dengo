@@ -14,20 +14,20 @@ test("empty shopping and task lists show one create action, no redundant empty C
   assert.match(source, /className="clean-collection-empty"/);
   assert.match(source, /all\.length > 0 \? \(\s*<div className="clean-list-controls">/);
 });
-test("search and assignee filters appear only on demand", () => {
+test("search is progressive and responsibility filters stay visible", () => {
   const source=read("components/collection.tsx");
   assert.match(source, /const \[formOpen, setFormOpen\] = useState\(false\)/);
   assert.match(source, /\[showSearch, setShowSearch\] = useState\(false\)/);
-  assert.match(source, /className="clean-filter-details"/);
+  assert.match(source, /className="responsibility-filters"/);
   assert.match(source, /showSearch \|\| query \? \(/);
-  assert.match(source, /placeholder=\{isTask \? "Nome da tarefa" : "Nome do item"\}/);
+  assert.match(source, /placeholder=\{isTask \? "Nome da responsabilidade" : "Nome do item"\}/);
 });
 test("shopping header is not duplicated by an embedded list heading", () => {
   const source=read("components/collection.tsx");
   assert.match(source, /className=\{embedded \? "clean-embedded-collection-head"/);
   assert.doesNotMatch(source, /className="shopping-inline-title"/);
   const hub=read("components/shopping-hub.tsx");
-  assert.match(hub, /<h1>Compras/);
+  assert.match(hub, /<h1>Financeiro/);
   assert.match(hub, /className="purchases-tabs purchases-main-choice"/);
   assert.doesNotMatch(hub, /className="payment-section-nav"/);
 });
@@ -35,7 +35,7 @@ test("mobile navigation avoids long wrap and refresh is available in settings", 
   const shell=read("components/shell.tsx");
   const settings=read("components/settings.tsx");
   const style=read("app/clarity.css");
-  assert.match(shell, /link\.href === "\/compromissos" \? "Tarefas"/);
+  assert.match(shell, /label: "Responsabilidades"/);
   assert.match(style, /\.bottom-nav a span\{white-space:nowrap/);
   assert.match(style, /\.topbar-refresh\{display:none!important\}/);
   assert.match(settings, /Atualizar registros/);

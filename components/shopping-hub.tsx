@@ -27,11 +27,11 @@ export function ShoppingHub() {
     <Shell>
       <header className="purchases-header purchases-simple-head">
         <div>
-          <h1>Compras<span className="rose">.</span></h1>
+          <h1>Financeiro<span className="rose">.</span></h1>
           <p>As compras e os pagamentos de vocês, em ordem.</p>
         </div>
       </header>
-      <nav role="group" aria-label="Escolher área de compras" className="purchases-tabs purchases-main-choice">
+      <nav role="group" aria-label="Escolher área financeira" className="purchases-tabs purchases-main-choice">
         <button type="button" aria-pressed={tab === "lista"}
           className={tab === "lista" ? "selected" : ""}
           onClick={() => changeTab("lista")}>

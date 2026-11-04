@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   CalendarDays,
@@ -10,12 +10,13 @@ import {
   ExternalLink,
   Pencil,
   Filter,
-  Palette,
   Repeat2,
 } from "lucide-react";
 import { Shell } from "./shell";
 import { CleanSheet } from "./clean-sheet";
-import { eventDurationLabel, type EventCounter } from "@/lib/calendar-anniversaries";
+import { eventDurationLabel } from "@/lib/calendar-anniversaries";
+import { EventFields } from "./event-fields";
+import { eventDataFromForm, type EventFormValues } from "@/lib/event-form";
 import { EntryAudit } from "./entry-audit";
 import { TopicManager } from "./topic-manager";
 import { EventQuickView } from "./event-quick-view";
@@ -23,7 +24,7 @@ import { TopicDots } from "./topic-dots";
 import { calendarTopics, calendarEntryColor, eventTopicLabel, EXPENSE_CALENDAR_COLOR, TASK_CALENDAR_COLOR } from "@/lib/calendar-topics";
 import { PageHeading } from "./ui";
 import { useDengo } from "./provider";
-import { type Entry, type Draft, localToday, dayLabel, isDate, addMonths } from "@/lib/model";
+import { type Entry, type Draft, localToday, dayLabel, isDate, addMonths, validateDraft } from "@/lib/model";
 import {
   calendarEntries,
   eventICS,
@@ -33,12 +34,12 @@ import {
   eventRangeLabel,
 } from "@/lib/calendar";
 const labels = {
-  task: "Tarefa",
+  task: "Responsabilidade",
   expense: "Conta",
   event: "Compromisso",
 };
 export function Calendar() {
-  const { entries, names, busy, add, update, preferences, saveCalendarTopics } = useDengo();
+  const { entries, names, busy, add, preferences, saveCalendarTopics } = useDengo();
   const search = useSearchParams();
   const router = useRouter();
   const source = entries.find((e) => e.id === search.get("origem"));
@@ -49,13 +50,9 @@ export function Calendar() {
   const [month, setMonth] = useState(initialDate.slice(0, 7)),
     [selected, setSelected] = useState(initialDate),
     [open, setOpen] = useState(!!source || search.get("novo") === "1"),
-    [editing, setEditing] = useState<Entry | null>(null),
     [manageTopics, setManageTopics] = useState(search.get("topicos") === "1"),
-    [topicId, setTopicId] = useState(source?.kind === "movie" ? "filmes" :
-      source?.kind === "place" ? "passeio" : "janta"),
-    [eventRepeat, setEventRepeat] = useState<"none" | "monthly" | "yearly">("none"),
-    [eventCounter, setEventCounter] = useState<EventCounter>("elapsed"),
-    [linkedSourceId, setLinkedSourceId] = useState(source?.id || ""),
+    [formError, setFormError] = useState(""),
+    [form, setForm] = useState<EventFormValues>(() => newForm(initialDate)),
     [topicFilter, setTopicFilter] = useState("all"),
     [showFilters, setShowFilters] = useState(false),
     [preview, setPreview] = useState<Entry | null>(null);
@@ -79,12 +76,18 @@ export function Calendar() {
     .filter((entry) => !entry.done)
     .sort((a, b) => a.due.localeCompare(b.due))
     .slice(0, 5);
-  useEffect(() => {
-    if (!source) return;
-    setLinkedSourceId(source.id);
-    setOpen(true);
-    setTopicId(source.kind === "movie" ? "filmes" : "passeio");
-  }, [source?.id]);
+  function newForm(date: string): EventFormValues {
+    return {
+      title: source?.kind === "movie" ? `Assistir: ${source.title}` : source?.title || "",
+      due: date, endDate: "", time: "", detail: "", assignee: "Nós dois",
+      placeId: source?.kind === "place" ? source.id : "", location: "",
+      topicId: source?.kind === "movie" ? "filmes" : source?.kind === "place" ? "passeio" : topics[0].id,
+      repeat: "none", counter: "off",
+    };
+  }
+  function openNew() {
+    setForm(newForm(selected)); setFormError(""); setOpen(true);
+  }
   function shift(n: number) {
     const d = new Date(y, m - 1 + n, 1);
     const next = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -93,37 +96,24 @@ export function Calendar() {
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const f = new FormData(event.currentTarget);
-    const chosen = entries.find((entry) =>
-      (entry.kind === "place" || entry.kind === "movie") && entry.id === linkedSourceId);
+    setFormError("");
     const draft: Draft = {
-      kind: "event",
-      title: String(f.get("title") || "").trim(),
-      detail: String(f.get("detail") || ""),
-      assignee: String(f.get("assignee") || "Nós dois"),
-      due: String(f.get("due")),
-      done: editing?.done ?? false,
-      data: {
-        time: String(f.get("time") || ""),
-        endTime: String(f.get("endTime") || ""),
-        endDate: String(f.get("endDate") || ""),
-        location: String(f.get("location") || "") || (chosen?.kind === "place" ? chosen.data?.address || "" : ""),
-        topicId: topics.some((topic) => topic.id === topicId) ? topicId : topics[0].id,
-        eventRepeat,
-        eventCounter: eventRepeat === "none" ? "off" : eventCounter,
-        sourceId: chosen?.id || "",
-        sourceKind: chosen?.kind,
-      },
+      kind: "event", title: form.title.trim(), detail: form.detail.trim(),
+      due: form.due, assignee: form.assignee, done: false,
+      data: eventDataFromForm(form, entries, {
+        sourceId: source?.id || "", sourceKind: source?.kind,
+      }),
     };
-    if (await (editing ? update(editing, draft) : add(draft))) {
+    try { validateDraft(draft); }
+    catch (cause) { setFormError(cause instanceof Error ? cause.message : "Confira os dados."); return; }
+    if (await add(draft)) {
       setOpen(false);
       if (search.has("origem") || search.has("novo"))
         router.replace("/calendario?data=" + draft.due, { scroll: false });
-      setEditing(null);
-      setSelected(draft.due);
-      setMonth(draft.due.slice(0, 7));
-    }
+      setSelected(draft.due); setMonth(draft.due.slice(0, 7));
+    } else setFormError("Não foi possível salvar. Confira as datas e tente novamente.");
   }
+
   return (
     <Shell>
       <PageHeading
@@ -131,192 +121,30 @@ export function Calendar() {
         title="Nosso calendário"
         description="Encontros, compromissos com data e contas marcadas no calendário."
       >
-        <button type="button" className="secondary" aria-expanded={manageTopics}
-          onClick={() => setManageTopics((value) => !value)}>
-          <Palette size={17} /> {manageTopics ? "Fechar tópicos" : "Tópicos e cores"}
-        </button>
-        <button
-          className="primary"
-          onClick={() => {
-            setOpen(!open);
-            setEditing(null);
-            setTopicId("janta");
-            setEventRepeat("none");
-            setEventCounter("elapsed");
-            setLinkedSourceId("");
-          }}
-        >
-          <Plus size={18} />
-          {open ? "Fechar" : "Novo compromisso"}
+        <button className="primary" onClick={openNew}>
+          <Plus size={18} /> Novo compromisso
         </button>
       </PageHeading>
-      {manageTopics ? (
-        <TopicManager key={topics.map((topic) => topic.id + topic.name + topic.color).join("|")}
-          topics={topics} busy={busy} onSave={saveCalendarTopics} />
-      ) : null}
       {open ? (
-        <CleanSheet title={editing ? "Editar compromisso" : "Novo compromisso"}
-          onClose={() => {setOpen(false);setEditing(null);}}>
-        <form
-          className="panel entry-form"
-          key={editing?.id || source?.id || "new"}
-          onSubmit={submit}
-        >
-          <h2>
-            {editing
-              ? "Editar compromisso"
-              : source
-                ? `Planejar: ${source.title}`
-                : "Um tempo reservado para nós"}
-          </h2>
-          {editing?.data?.eventRepeat && editing.data.eventRepeat !== "none" ? (
-            <p className="helper calendar-repeat-series">Você está editando uma série recorrente. As mudanças valem para todas as datas dessa série.</p>
-          ) : null}
-          <div className="form-grid">
-            <label className="full">
-              Título
-              <input
-                name="title"
-                required
-                maxLength={120}
-                defaultValue={
-                  editing?.title ||
-                  (source?.kind === "movie"
-                    ? `Assistir: ${source.title}`
-                    : source?.title) ||
-                  ""
-                }
-              />
-            </label>
-            <label>
-              Data
-              <input
-                name="due"
-                type="date"
-                required
-                defaultValue={editing?.due || selected}
-              />
-            </label>
-            <label>
-              Data de término (opcional)
-              <input name="endDate" type="date" defaultValue={editing?.data?.endDate || ""} />
-            </label>
-            <label>
-              Tópico
-              <span className="topic-select">
-                <span className="topic-legend-dot" style={{
-                  backgroundColor: topics.find((topic) => topic.id === topicId)?.color || topics[0].color,
-                }} />
-                <select name="topicId" value={topics.some((topic) => topic.id === topicId) ? topicId : topics[0].id}
-                  onChange={(event) => setTopicId(event.target.value)}>
-                  {topics.map((topic) => <option key={topic.id} value={topic.id}>{topic.name}</option>)}
-                </select>
-              </span>
-            </label>
-            <label>
-              Repetir esta data
-              <span className="calendar-repeat-select">
-                <Repeat2 size={17} />
-                <select name="eventRepeat" value={eventRepeat}
-                  onChange={(e) => {
-                    const repeat = e.target.value as "none" | "monthly" | "yearly";
-                    setEventRepeat(repeat);
-                    if (!editing) setEventCounter(repeat === "monthly" ? "together" : repeat === "yearly" ? "age" : "elapsed");
-                  }}>
-                  <option value="none">Não repetir</option>
-                  <option value="monthly">Todo mês · mêsversário de namoro</option>
-                  <option value="yearly">Todo ano · aniversários</option>
-                </select>
-              </span>
-            </label>
-            {eventRepeat !== "none" ? (
-              <label className="full">
-                Como mostrar o tempo desde a data inicial?
-                <select name="eventCounter" value={eventCounter}
-                  onChange={(e) => setEventCounter(e.target.value as EventCounter)}>
-                  <option value="together">Tempo juntos — 2 anos e 3 meses juntos</option>
-                  <option value="elapsed">Tempo decorrido — Há 2 anos e 3 meses</option>
-                  <option value="age">Idade — 25 anos de idade</option>
-                  <option value="off">Não mostrar contagem</option>
-                </select>
-              </label>
-            ) : null}
-            {eventRepeat !== "none" ? (
-              <p className="helper full calendar-repeat-hint">
-                {eventRepeat === "monthly"
-                  ? "O Dengo marca essa data todos os meses. Informe a data REAL em que o relacionamento começou para contar os anos e meses juntos. Se o dia não existir no mês, usa o último dia (ex.: 31/01 → 28/02)."
-                  : "O Dengo marca essa data todos os anos. Para mostrar a idade, informe a data de nascimento com o ano original. Para 29 de fevereiro, usa 28/02 nos anos não bissextos."}
-              </p>
-            ) : null}
-            <label>
-              Horário opcional (Brasília)
-              <input
-                name="time"
-                type="time"
-                defaultValue={editing?.data?.time}
-              />
-            </label>
-            <label>
-              Horário de término (opcional)
-              <input name="endTime" type="time" defaultValue={editing?.data?.endTime || ""} />
-            </label>
-            <label>
-              Participantes
-              <select
-                name="assignee"
-                defaultValue={editing?.assignee || "Nós dois"}
-              >
-                {["Nós dois", ...names].map((n, i) => (
-                  <option key={i}>{n}</option>
-                ))}
-              </select>
-            </label>
-            <label className="full">
-              Vincular a um lugar, filme ou série do Dengo
-              <select value={linkedSourceId} onChange={(event) => setLinkedSourceId(event.target.value)}>
-                <option value="">Sem vínculo</option>
-                {entries.filter((entry) => entry.kind === "place" || entry.kind === "movie")
-                  .map((entry) => <option value={entry.id} key={entry.id}>
-                    {entry.kind === "place" ? "Lugar · " : "Filme/série · "}{entry.title}
-                  </option>)}
-              </select>
-            </label>
-            <label>
-              Local opcional
-              <input
-                name="location"
-                maxLength={240}
-                defaultValue={
-                  editing?.data?.location || entries.find((entry) => entry.id === linkedSourceId)?.data?.address || ""
-                }
-              />
-            </label>
-            <label className="full">
-              Observação opcional
-              <input
-                name="detail"
-                maxLength={240}
-                defaultValue={editing?.detail}
-              />
-            </label>
-          </div>
-          <button className="primary" disabled={busy}>
-            {busy ? "Salvando…" : "Salvar compromisso"}
-          </button>
-        </form>
+        <CleanSheet title="Novo compromisso" onClose={() => setOpen(false)}>
+          <form className="panel entry-form" onSubmit={submit}>
+            <EventFields values={form} onChange={setForm} topics={topics} entries={entries} names={names} />
+            {formError ? <p className="error" role="alert">{formError}</p> : null}
+            <button className="primary" disabled={busy}>{busy ? "Salvando…" : "Salvar compromisso"}</button>
+          </form>
         </CleanSheet>
       ) : null}
       <div className="calendar-filter-bar">
         <button type="button" className="secondary" aria-expanded={showFilters}
           onClick={() => setShowFilters((value) => !value)}>
-          <Filter size={16} /> {topicFilter === "all" ? "Filtrar por tópico" : "Filtro: " + (topics.find(t => t.id === topicFilter)?.name || "Outros")}
+          <Filter size={16} /> {topicFilter === "all" ? "Filtrar por categoria" : "Filtro: " + (topics.find(t => t.id === topicFilter)?.name || "Outros")}
         </button>
         {topicFilter !== "all" ? (
           <button type="button" className="text-link" onClick={() => setTopicFilter("all")}>Limpar</button>
         ) : null}
       </div>
       {showFilters ? (
-        <div className="calendar-topic-filters" role="group" aria-label="Filtrar por tópico">
+        <div className="calendar-topic-filters" role="group" aria-label="Filtrar por categoria">
           <button type="button" className={topicFilter === "all" ? "selected" : ""}
             onClick={() => setTopicFilter("all")}>Todos</button>
           {topics.map((topic) => (
@@ -389,7 +217,7 @@ export function Calendar() {
                 <i className="topic-legend-dot" style={{ backgroundColor: topic.color }} /> {topic.name}
               </span>
             ))}
-            <span><i className="topic-legend-dot" style={{ backgroundColor: TASK_CALENDAR_COLOR }} /> Tarefas</span>
+            <span><i className="topic-legend-dot" style={{ backgroundColor: TASK_CALENDAR_COLOR }} /> Responsabilidades</span>
             <span><i className="topic-legend-dot" style={{ backgroundColor: EXPENSE_CALENDAR_COLOR }} /> Contas</span>
             </div>
           </details>
@@ -400,14 +228,7 @@ export function Calendar() {
             <button
               className="icon-btn"
               aria-label="Adicionar compromisso nesta data"
-              onClick={() => {
-                setOpen(true);
-                setEditing(null);
-                setTopicId("janta");
-                setEventRepeat("none");
-                setEventCounter("elapsed");
-                setLinkedSourceId("");
-              }}
+              onClick={openNew}
             >
               <Plus />
             </button>
@@ -424,7 +245,7 @@ export function Calendar() {
                   {e.kind === "event" ? eventTopicLabel(e, topics) : labels[e.kind as keyof typeof labels]}
                   {e.done ? " · Concluído" : ""}
                   {e.kind === "event" && e.data?.eventRepeat && e.data.eventRepeat !== "none" ? (
-                    <span className="calendar-repeat-tag"><Repeat2 size={12} /> {e.data.eventRepeat === "monthly" ? "Mensal" : "Anual"}</span>
+                    <span className="calendar-repeat-tag"><Repeat2 size={12} /> {e.data.eventRepeat === "weekly" ? "Semanal" : e.data.eventRepeat === "monthly" ? "Mensal" : "Anual"}</span>
                   ) : null}
                 </span>
                 {e.kind === "event" ? (
@@ -509,6 +330,16 @@ export function Calendar() {
         </details>
         </div>
       </details>
+      <section className="calendar-categories" id="calendar-categories">
+        <button type="button" className="secondary" aria-expanded={manageTopics}
+          aria-controls="calendar-category-editor" onClick={() => setManageTopics((value) => !value)}>
+          <Plus size={17} /> {manageTopics ? "Fechar categorias" : "Adicionar categoria"}
+        </button>
+        {manageTopics ? <div id="calendar-category-editor">
+          <TopicManager key={topics.map((topic) => topic.id + topic.name + topic.color).join("|")}
+            topics={topics} busy={busy} onSave={saveCalendarTopics} />
+        </div> : null}
+      </section>
       {preview ? <EventQuickView key={preview.id} occurrence={preview}
         onClose={() => setPreview(null)} /> : null}
     </Shell>

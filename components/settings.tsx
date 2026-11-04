@@ -10,6 +10,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { CoupleInvite } from "./couple-invite";
 import { AppearanceStudio } from "./appearance-studio";
 import { useDengo } from "./provider";
 import { CATEGORIES, parseMoney } from "@/lib/finance";
@@ -21,7 +22,7 @@ export function Settings() {
     busy,
     savePreferences,
     signOut,
-    openLobby,
+    memberCount,
     refresh,
   } = useDengo();
   const [photo, setPhoto] = useState(preferences.photo),
@@ -89,24 +90,22 @@ export function Settings() {
         <div>
           <span className="eyebrow">FEITO PARA VOCÊS</span>
           <h1>
-            Nosso espaço<span className="rose">.</span>
+            Configurações<span className="rose">.</span>
           </h1>
           <p>O cotidiano com a cara de vocês.</p>
         </div>
 
       </section>
-      <AppearanceStudio />
       <form
         key={preferences.names.join("-") + preferences.since}
-        className="panel entry-form"
+        id="casal"
+        className="panel entry-form couple-settings"
         onSubmit={submit}
       >
-        <h2>Nossa identidade</h2>
-        <button type="button" className="secondary" onClick={openLobby}>
-          Abrir lobby do casal
-        </button>
+        <h2>Configurações do casal</h2>
+        <p className="helper">Nome do lobby, participantes e convite em um só lugar.</p>
         <label className="spaced">
-          Nome do espaço
+          Nome do lobby
           <input
             name="title"
             required
@@ -142,6 +141,8 @@ export function Settings() {
             ) : null}
           </div>
         </div>
+        <h3>Participantes <span className="tag">{demo ? "Prévia" : `${memberCount}/2`}</span></h3>
+        {!demo && memberCount < 2 ? <p className="helper">Seu par ainda não entrou. O segundo nome é provisório até aceitar o convite.</p> : null}
         <div className="form-grid">
           <label>
             Primeira pessoa
@@ -202,14 +203,16 @@ export function Settings() {
         ) : null}
         {saved ? (
           <p role="status" className="notice">
-            Nosso espaço foi atualizado.
+            Configurações do casal atualizadas.
           </p>
         ) : null}
         <button className="primary" disabled={busy}>
           <Save size={17} />
-          {busy ? "Salvando…" : "Salvar nosso espaço"}
+          {busy ? "Salvando…" : "Salvar alterações"}
         </button>
       </form>
+      <CoupleInvite key={memberCount} />
+      <AppearanceStudio />
       <section className="panel settings-account-panel">
         <div className="stat-icon sage">
           <ShieldCheck />

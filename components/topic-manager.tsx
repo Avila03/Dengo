@@ -33,7 +33,7 @@ export function TopicManager({
       setName("");
       setError("");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Não foi possível criar o tópico.");
+      setError(cause instanceof Error ? cause.message : "Não foi possível criar a categoria.");
     }
   }
   async function save() {
@@ -42,7 +42,7 @@ export function TopicManager({
       const next = draft.map((t) => ({ ...t, name: t.name.trim() }));
       validateCalendarTopics(next);
       setError("");
-      if (await onSave(next)) setNotice("Tópicos salvos para os dois.");
+      if (await onSave(next)) setNotice("Categorias salvas para os dois.");
       else setError("Não foi possível salvar. Tente novamente.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Não foi possível salvar.");
@@ -50,11 +50,11 @@ export function TopicManager({
   }
 
   return (
-    <section className="panel topic-editor" aria-label="Editar tópicos do calendário">
+    <section className="panel topic-editor" aria-label="Editar categorias do calendário">
       <div className="section-title">
         <div>
           <span className="eyebrow">PERSONALIZAR A AGENDA</span>
-          <h2>Nossos tópicos</h2>
+          <h2>Nossas categorias</h2>
           <p>Escolham os nomes e cores. Os dois veem as mesmas alterações.</p>
         </div>
       </div>
@@ -65,14 +65,14 @@ export function TopicManager({
               onChange={(event) => change(i, { color: event.target.value })}
               aria-label={"Cor de " + topic.name} title={"Cor de " + topic.name} />
             <input type="text" value={topic.name} maxLength={30}
-              aria-label={"Nome do tópico " + (i + 1)}
+              aria-label={"Nome da categoria " + (i + 1)}
               onChange={(event) => change(i, { name: event.target.value })} />
             <button type="button" className="icon-btn" disabled={busy || draft.length === 1}
               onClick={() => {
                 setDraft((current) => current.filter((t) => t.id !== topic.id));
                 setNotice("");
               }}
-              aria-label={"Remover tópico " + topic.name}>
+              aria-label={"Remover categoria " + topic.name}>
               <Trash2 size={17} />
             </button>
           </div>
@@ -80,7 +80,7 @@ export function TopicManager({
       </div>
       <form className="topic-new-form" onSubmit={addTopic}>
         <label>
-          Novo tópico
+          Nova categoria
           <input type="text" value={name} maxLength={30}
             onChange={(event) => setName(event.target.value)}
             placeholder="Ex.: Aniversário" required />
@@ -88,7 +88,7 @@ export function TopicManager({
         <label className="topic-new-color">
           Cor
           <input type="color" value={newColor} onChange={(event) => setNewColor(event.target.value)}
-            aria-label="Cor do novo tópico" />
+            aria-label="Cor da nova categoria" />
         </label>
         <button type="submit" className="secondary" disabled={!name.trim()}>
           <Plus size={17} /> Criar
@@ -97,9 +97,9 @@ export function TopicManager({
       {error ? <p className="error" role="alert">{error}</p> : null}
       {notice ? <p className="notice" role="status">{notice}</p> : null}
       <button type="button" className="primary" disabled={busy} onClick={() => void save()}>
-        <Save size={17} /> {busy ? "Salvando…" : "Salvar tópicos"}
+        <Save size={17} /> {busy ? "Salvando…" : "Salvar categorias"}
       </button>
-      <p className="helper">Ao excluir um tópico, os eventos já registrados continuam salvos; eles passam a usar a cor de Outros.</p>
+      <p className="helper">Ao excluir uma categoria, os eventos já registrados continuam salvos; eles passam a usar a cor de Outros.</p>
     </section>
   );
 }

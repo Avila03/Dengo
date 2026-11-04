@@ -3,6 +3,7 @@ export type Kind =
   "shopping" | "task" | "expense" | "transfer" | "event" | "movie" | "place";
 export type EventOccurrenceChanges = {
   canceled?: boolean;
+  done?: boolean;
   title?: string;
   detail?: string;
   assignee?: string;
@@ -11,6 +12,7 @@ export type EventOccurrenceChanges = {
   time?: string;
   endTime?: string;
   location?: string;
+  placeId?: string;
   topicId?: string;
   sourceId?: string;
   sourceKind?: Kind;
@@ -39,6 +41,7 @@ export type Details = {
   endTime?: string;
   endDate?: string;
   location?: string;
+  placeId?: string;
   eventRepeatUntil?: string;
   eventOccurrenceDate?: string;
   eventOverrides?: Record<string, EventOccurrenceChanges>;
@@ -46,7 +49,7 @@ export type Details = {
   eventInstanceKey?: string;
   topicId?: string;
   /** Datas especiais: independentes de tarefas recorrentes. */
-  eventRepeat?: "none" | "monthly" | "yearly";
+  eventRepeat?: "none" | "weekly" | "monthly" | "yearly";
   /** Forma de mostrar o tempo transcorrido entre a data inicial e cada ocorrência. */
   eventCounter?: "elapsed" | "together" | "age" | "off";
   /** Data verdadeira da primeira ocorrência; preenchida nas projeções virtuais. */
@@ -224,7 +227,7 @@ export function validateDraft(d: Draft) {
     throw new Error("A observação deve ter até 240 caracteres.");
   if (d.due && !isDate(d.due)) throw new Error("Informe uma data válida.");
   if (d.kind === "event" && d.data?.eventRepeat &&
-      !["none", "monthly", "yearly"].includes(d.data.eventRepeat))
+      !["none", "weekly", "monthly", "yearly"].includes(d.data.eventRepeat))
     throw new Error("Selecione uma repetição válida para o calendário.");
   if (d.kind === "event") {
     const details = d.data;
