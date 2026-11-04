@@ -86,7 +86,8 @@ export function AppearanceProvider({children,user,demo}:{children:ReactNode;user
     const snapshot=JSON.stringify(appearance);
     try {window.localStorage.setItem(appearanceStorageKey(userId),snapshot);}
     catch {/* A blocked localStorage must not prevent theme updates. */}
-    if(demo || !user || !supabase) {
+    const client=supabase;
+    if(demo || !user || !client) {
       setStatus("saved");
       return;
     }
@@ -96,7 +97,7 @@ export function AppearanceProvider({children,user,demo}:{children:ReactNode;user
     let alive=true;
     const job=window.setTimeout(async()=>{
       try {
-        const {error}=await supabase.auth.updateUser({data:{dengo_appearance:appearance}});
+        const {error}=await client.auth.updateUser({data:{dengo_appearance:appearance}});
         if(!alive)return;
         if(error){setStatus("error");return;}
         lastRemote.current=snapshot;
