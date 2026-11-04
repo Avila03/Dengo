@@ -68,3 +68,5 @@
   .notification-save-bar .primary {width:100%;}
 }
 @media(prefers-reduced-motion:reduce) {.notification-settings input.notification-switch,.notification-settings input.notification-switch::before {transition:none;}}
+
+.push-device-actions {display:flex;flex-wrap:wrap;gap:9px;margin-top:13px}.push-device-actions button {display:inline-flex;align-items:center;gap:7px;min-height:44px}.push-device>div {min-width:0;flex:1}.push-device .error,.push-device .notice {margin-top:12px;padding:12px}

@@ -1,3 +1,18 @@
+## Dengo 2.6 — Web Push funcional
+
+- A tela do sininho permite **Ativar neste aparelho**, **Enviar teste** e **Desativar neste aparelho**. No iPhone, instrui a instalação pela tela inicial; a permissão é solicitada diretamente após o toque do usuário.
+- Service worker recebe notificações com o Dengo fechado e abre a tela correspondente ao toque. O worker não guarda páginas nem sessões em cache.
+- Os oito tipos aprovados estão ligados a `lib/push-planner.ts`: eventos próximos e alterados/cancelados; novas responsabilidades; vencimentos; atrasos; conclusões pelo par; novos filmes/séries/lugares; resumo diário.
+- Agendamento via Supabase Cron a cada minuto, com função Edge `dengo-push`. Avisos por ação chegam na próxima verificação; não são alarmes de precisão garantida. Eventos sem horário usam 9h de Brasília para o lembrete.
+- Respeita destinatários, preferências individuais, horário de silêncio, privacidade, pagamentos concluídos e ocorrências recorrentes. O resumo não é enviado em dias sem itens. Lembretes são recalculados com os dados atuais, sem armazenar cópias futuras desatualizadas.
+- Inscrições por aparelho e conta, até oito aparelhos por login. Sair da conta remove a inscrição deste aparelho; uma troca de identidade também encerra a inscrição anterior. Endpoints expirados são removidos após resposta 404/410.
+- Assinatura e criptografia Web Push com VAPID; chaves privadas e autenticação do agendador ficam no Supabase Vault. Nenhum segredo no frontend ou no repositório.
+- Função Edge verifica a identidade dos usuários para inscrição, teste e exclusão. O caminho do agendador exige assinatura HMAC com validade de cinco minutos e nonce de uso único; valida destinos de push, origem, tamanho e conteúdo da inscrição. Tabelas operacionais têm RLS e acesso de servidor, sem expor registros de outros usuários.
+- Entregas usam chave única por aparelho/aviso, reserva atômica e até cinco tentativas em caso de falha. A tag estável também permite ao sistema agrupar reenvios. Histórico operacional limitado a 35 dias e alterações a três dias.
+- Banco: `supabase/push.sql`, `supabase/push-lockdown.sql` e `supabase/push-signed-dispatch.sql`. A fila do agendador contém somente assinaturas de curta duração; não armazena o segredo reutilizável. A configuração privada é provisionada fora do Git. O agendamento está em `supabase/push-schedule.sql`; não executar novamente os scripts de criação em um banco já configurado.
+- Testes cobrem fuso, silêncio, destinatários, privacidade, pagamentos/parcelas, recorrências e conclusões, os quatro avisos por ação, vencimentos e resumo diário.
+- Recebimento físico no iPhone depende da permissão concedida pelo próprio usuário. A verificação do sistema não substitui o teste no aparelho após ativação.
+
 ## Dengo 2.5 — preferências individuais de notificações
 
 - Sininho ao lado da engrenagem no cabeçalho, no computador e no celular, abre a tela própria **Notificações** em `/notificacoes`.

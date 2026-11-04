@@ -1,4 +1,5 @@
 "use client";
+import { currentPushSubscription, disconnectPush, PUSH_OWNER_KEY } from "@/lib/push-client";
 import { Brand } from "./brand";
 import {
   createContext,
@@ -69,6 +70,15 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
     [memberCount, setMemberCount] = useState(0),
     [memberSlot, setMemberSlot] = useState(0),
     [lobbyOpen, setLobbyOpen] = useState(true);
+  useEffect(() => {
+    if (!ready || demoMode) return;
+    let owner: string | null = null;
+    try { owner = localStorage.getItem(PUSH_OWNER_KEY); } catch {}
+    if (owner && owner !== user?.id) {
+      void currentPushSubscription().then((subscription) => subscription?.unsubscribe()).catch(() => {});
+      try { localStorage.removeItem(PUSH_OWNER_KEY); } catch {}
+    }
+  }, [ready, user?.id]);
   const lock = useRef(false),
     identity = useRef<string | null>(null),
     sequence = useRef(0);
@@ -523,9 +533,11 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         saveCalendarTopics,
         refresh: () => void refresh(),
         signOut: () => {
-          void supabase?.auth.signOut().then(({ error }) => {
-            if (error) setError("Não foi possível sair.");
-          });
+          void (async () => {
+            try { await disconnectPush(); } catch { /* An expired device is removed on the next delivery. */ }
+            const result = await supabase?.auth.signOut();
+            if (result?.error) setError("Não foi possível sair.");
+          })();
         },
       }}
     >

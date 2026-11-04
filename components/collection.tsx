@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useState, type FormEvent } from "react";
+import { Fragment, useState, useEffect, useRef, type FormEvent } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -42,6 +42,13 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
     [localError, setLocalError] = useState(""),
     [recurrence, setRecurrence] = useState<"none" | "daily" | "weekly" | "monthly">("none"),
     [preview, setPreview] = useState<Entry | null>(null);
+  const notificationOpened = useRef(false);
+  useEffect(() => {
+    if (notificationOpened.current) return;
+    const recordId = new URLSearchParams(window.location.search).get("registro");
+    const entry = entries.find((item) => item.id === recordId && item.kind === kind);
+    if (entry) { notificationOpened.current = true; setPreview(entry); }
+  }, [entries, kind]);
   const isTask = kind === "task";
   const all = entries.filter((e) => e.kind === kind),
     pending = all.filter((e) => !e.done).length;

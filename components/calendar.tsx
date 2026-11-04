@@ -1,5 +1,5 @@
 "use client";
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   CalendarDays,
@@ -76,6 +76,14 @@ export function Calendar() {
     .filter((entry) => !entry.done)
     .sort((a, b) => a.due.localeCompare(b.due))
     .slice(0, 5);
+  const notificationOpened = useRef(false);
+  const notificationEvent = search.get("evento");
+  useEffect(() => {
+    if (notificationOpened.current || !notificationEvent) return;
+    const entry = calendarEntries(entries, { from: initialDate, to: initialDate })
+      .find((item) => item.id === notificationEvent && item.kind === "event");
+    if (entry) { notificationOpened.current = true; setPreview(entry); }
+  }, [entries, notificationEvent, initialDate]);
   function newForm(date: string): EventFormValues {
     return {
       title: source?.kind === "movie" ? `Assistir: ${source.title}` : source?.title || "",

@@ -6,6 +6,7 @@ import {
   ArrowLeft, Bell, CalendarClock, CalendarDays, CheckCircle2, Clock3,
   CreditCard, ListChecks, MapPin, Save, SlidersHorizontal, Smartphone, Sunrise,
 } from "lucide-react";
+import { PushDevice } from "./push-device";
 import { Shell } from "./shell";
 import { useDengo } from "./provider";
 import { supabase } from "@/lib/supabase";
@@ -114,11 +115,7 @@ function NotificationEditor({ userId, remote, demo }: { userId: string; remote: 
         <p>Escolha os avisos que fazem sentido para você. Suas preferências são individuais.</p></div>
       <span className="notification-heading-mark" aria-hidden="true"><Bell size={23} /></span>
     </header>
-    <section className="notification-device-state" aria-label="Status do envio no celular">
-      <Smartphone size={20} aria-hidden="true" />
-      <div><strong>Envio no celular ainda não ativado</strong>
-        <p>Você já pode salvar suas escolhas. As notificações push ainda não são enviadas para este aparelho.</p></div>
-    </section>
+    <PushDevice />
     <form onSubmit={(event) => void save(event)}>
       <fieldset disabled={!ready || saving} className="notification-fieldset">
         <legend className="notification-list-heading">Avisos que quero receber
@@ -187,7 +184,7 @@ function NotificationEditor({ userId, remote, demo }: { userId: string; remote: 
               <label>Voltar a receber<input type="time" required value={preferences.quietHours.end}
                 onChange={(event) => change({ quietHours: { ...preferences.quietHours, end: event.target.value } })} /></label>
             </div> : null}
-            <p>Os avisos desse período ficam para depois do silêncio. Todos os horários seguem Brasília.</p>
+            <p>Os avisos ainda relevantes chegam depois do silêncio. Todos os horários seguem Brasília.</p>
             <label className="notification-check"><input type="checkbox" checked={preferences.hidePreview}
               onChange={(event) => change({ hidePreview: event.target.checked })} />
               Ocultar títulos e valores na tela bloqueada
