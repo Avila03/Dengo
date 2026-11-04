@@ -2306,3 +2306,11 @@ progress {
  .calendar-repeat-select select{font-size:12px}
  .calendar-repeat-tag{font-size:10px}
 }
+
+/* Dengo 1.3.1 — tempo de relacionamento e idade em eventos recorrentes. */
+.event-duration{display:inline-flex;align-items:center;gap:6px;color:var(--rose);font-size:12px;font-weight:700;margin:0 0 7px;line-height:1.4}
+.event-duration svg{flex-shrink:0}
+.event-duration-preview{font-size:11px;font-weight:600;color:var(--muted)}
+.day-anniversary-duration{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--rose);margin-top:4px;line-height:1.45}
+.day-anniversary-duration svg{flex-shrink:0}
+@media(max-width:580px){.event-duration{font-size:11px}.day-anniversary-duration{font-size:10px}}

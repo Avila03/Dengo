@@ -13,6 +13,7 @@ import {
   Repeat2,
 } from "lucide-react";
 import { Shell } from "./shell";
+import { eventDurationLabel, type EventCounter } from "@/lib/calendar-anniversaries";
 import { EntryAudit } from "./entry-audit";
 import { TopicManager } from "./topic-manager";
 import { TopicDots } from "./topic-dots";
@@ -47,7 +48,8 @@ export function Calendar() {
     [manageTopics, setManageTopics] = useState(search.get("topicos") === "1"),
     [topicId, setTopicId] = useState(source?.kind === "movie" ? "filmes" :
       source?.kind === "place" ? "passeio" : "janta"),
-    [eventRepeat, setEventRepeat] = useState<"none" | "monthly" | "yearly">("none");
+    [eventRepeat, setEventRepeat] = useState<"none" | "monthly" | "yearly">("none"),
+    [eventCounter, setEventCounter] = useState<EventCounter>("elapsed");
   const items = calendarEntries(entries, { from: month + "-01", to: month + "-31" });
   const byDay = new Map<string, Entry[]>();
   for (const entry of items) {
@@ -86,6 +88,7 @@ export function Calendar() {
         location: String(f.get("location") || ""),
         topicId: topics.some((topic) => topic.id === topicId) ? topicId : topics[0].id,
         eventRepeat,
+        eventCounter: eventRepeat === "none" ? "off" : eventCounter,
         ...(source
           ? { sourceId: source.id, sourceKind: source.kind }
           : editing?.data?.sourceId
@@ -123,6 +126,7 @@ export function Calendar() {
             setEditing(null);
             setTopicId("janta");
             setEventRepeat("none");
+            setEventCounter("elapsed");
           }}
         >
           <Plus size={18} />
@@ -191,7 +195,11 @@ export function Calendar() {
               <span className="calendar-repeat-select">
                 <Repeat2 size={17} />
                 <select name="eventRepeat" value={eventRepeat}
-                  onChange={(e) => setEventRepeat(e.target.value as "none" | "monthly" | "yearly")}>
+                  onChange={(e) => {
+                    const repeat = e.target.value as "none" | "monthly" | "yearly";
+                    setEventRepeat(repeat);
+                    if (!editing) setEventCounter(repeat === "monthly" ? "together" : repeat === "yearly" ? "age" : "elapsed");
+                  }}>
                   <option value="none">Não repetir</option>
                   <option value="monthly">Todo mês · mêsversário de namoro</option>
                   <option value="yearly">Todo ano · aniversários</option>
@@ -199,10 +207,22 @@ export function Calendar() {
               </span>
             </label>
             {eventRepeat !== "none" ? (
+              <label className="full">
+                Como mostrar o tempo desde a data inicial?
+                <select name="eventCounter" value={eventCounter}
+                  onChange={(e) => setEventCounter(e.target.value as EventCounter)}>
+                  <option value="together">Tempo juntos — 2 anos e 3 meses juntos</option>
+                  <option value="elapsed">Tempo decorrido — Há 2 anos e 3 meses</option>
+                  <option value="age">Idade — 25 anos de idade</option>
+                  <option value="off">Não mostrar contagem</option>
+                </select>
+              </label>
+            ) : null}
+            {eventRepeat !== "none" ? (
               <p className="helper full calendar-repeat-hint">
                 {eventRepeat === "monthly"
-                  ? "O Dengo marca essa data todos os meses. Se o dia não existir no mês, usa o último dia (ex.: 31/01 → 28/02)."
-                  : "O Dengo marca essa data todos os anos. Para 29 de fevereiro, usa 28/02 nos anos não bissextos."}
+                  ? "O Dengo marca essa data todos os meses. Informe a data REAL em que o relacionamento começou para contar os anos e meses juntos. Se o dia não existir no mês, usa o último dia (ex.: 31/01 → 28/02)."
+                  : "O Dengo marca essa data todos os anos. Para mostrar a idade, informe a data de nascimento com o ano original. Para 29 de fevereiro, usa 28/02 nos anos não bissextos."}
               </p>
             ) : null}
             <label>
@@ -322,6 +342,7 @@ export function Calendar() {
                 setEditing(null);
                 setTopicId("janta");
                 setEventRepeat("none");
+                setEventCounter("elapsed");
               }}
             >
               <Plus />
@@ -343,6 +364,9 @@ export function Calendar() {
                   ) : null}
                 </span>
                 <h3>{e.title}</h3>
+                {eventDurationLabel(e) ? (
+                  <p className="event-duration"><Repeat2 size={15} /> {eventDurationLabel(e)}</p>
+                ) : null}
                 <p>
                   {e.data?.time || "Dia inteiro"} · {e.assignee}
                 </p>
@@ -375,6 +399,7 @@ export function Calendar() {
                           setEditing(series);
                           setTopicId(series.data?.topicId || "outros");
                           setEventRepeat(series.data?.eventRepeat || "none");
+                          setEventCounter(series.data?.eventCounter || "elapsed");
                           setOpen(true);
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }}
@@ -414,7 +439,7 @@ export function Calendar() {
               }}
             >
               <span>{dayLabel(e.due)}</span>
-              <strong>{e.title}</strong>
+              <strong>{e.title}{eventDurationLabel(e) ? <small className="event-duration-preview"> · {eventDurationLabel(e)}</small> : null}</strong>
               <span>{e.assignee}</span>
             </button>
           ))

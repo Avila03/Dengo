@@ -2,6 +2,14 @@
 
 Um lugar para cuidar da vida a dois. Next.js App Router, React, TypeScript e Supabase.
 
+## Ajuste 1.3.1 — quanto tempo estamos juntos?
+
+- Eventos mensais e anuais agora podem mostrar automaticamente a duração desde a data real de início, sem refazer a contagem manualmente.
+- Ao criar um evento com repetição, aparece **Como mostrar o tempo desde a data inicial?** com: **Tempo juntos**, **Tempo decorrido**, **Idade** ou **Não mostrar contagem**.
+- Para o mêsversário, usar a data real de início do namoro; por padrão, a opção mensal sugere *Tempo juntos* (ex.: **2 anos e 3 meses juntos**). A escolha anual sugere *Idade* para aniversários, desde que a data cadastrada inclua o ano de nascimento verdadeiro.
+- As ocorrências projetadas guardam a data-base apenas na memória, para calcular a contagem corretamente em eventos futuros, incluindo fevereiro. No calendário e na visão Nosso dia, a contagem aparece junto ao evento, sem alterar as bolinhas de cada dia.
+- O contador continua vinculado à série original; edições e exclusões de eventos recorrentes mantêm o funcionamento anterior.
+
 ## Entrega 1.3 — datas especiais que se repetem
 
 - Em **Agenda completa → Novo compromisso**, o campo **Repetir esta data** oferece Não repetir, Todo mês (mêsversário de namoro) e Todo ano (aniversários).

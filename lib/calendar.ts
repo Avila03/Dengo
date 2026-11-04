@@ -47,7 +47,7 @@ export function calendarEntries(
         id: entry.id + "::" + due,
         due,
         done: false,
-        data: { ...entry.data, eventSourceId: entry.id },
+        data: { ...entry.data, eventSourceId: entry.id, eventAnchorDate: entry.due },
       });
     }
   }

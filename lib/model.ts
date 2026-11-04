@@ -14,6 +14,10 @@ export type Details = {
   topicId?: string;
   /** Datas especiais: independentes de tarefas recorrentes. */
   eventRepeat?: "none" | "monthly" | "yearly";
+  /** Forma de mostrar o tempo transcorrido entre a data inicial e cada ocorrência. */
+  eventCounter?: "elapsed" | "together" | "age" | "off";
+  /** Data verdadeira da primeira ocorrência; preenchida nas projeções virtuais. */
+  eventAnchorDate?: string;
   /** Identificador da série original de um evento projetado. */
   eventSourceId?: string;
   sourceId?: string;
@@ -182,6 +186,9 @@ export function validateDraft(d: Draft) {
   if (d.kind === "event" && d.data?.eventRepeat &&
       !["none", "monthly", "yearly"].includes(d.data.eventRepeat))
     throw new Error("Selecione uma repetição válida para o calendário.");
+  if (d.kind === "event" && d.data?.eventCounter &&
+      !["elapsed", "together", "age", "off"].includes(d.data.eventCounter))
+    throw new Error("Selecione uma contagem válida para a data especial.");
   if (d.kind === "event" && d.data?.eventRepeat &&
       d.data.eventRepeat !== "none" && !d.due)
     throw new Error("Um evento recorrente precisa de uma data inicial.");

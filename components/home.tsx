@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Shell } from "./shell";
 import { TopicDots } from "./topic-dots";
+import { eventDurationLabel } from "@/lib/calendar-anniversaries";
 import { calendarTopics, calendarEntryColor, eventTopicLabel } from "@/lib/calendar-topics";
 import { useDengo } from "./provider";
 import { dayLabel, localToday } from "@/lib/model";
@@ -177,6 +178,9 @@ export function Home() {
                     {entry.data?.location ? " · " + entry.data.location : ""}
                     {entry.kind === "expense" && entry.data?.amount ? " · " + money(entry.data.amount) : ""}
                   </small>
+                  {eventDurationLabel(entry) ? (
+                    <span className="day-anniversary-duration"><Repeat2 size={12} /> {eventDurationLabel(entry)}</span>
+                  ) : null}
                 </div>
                 {entry.done ? <Check className="day-row-check" size={19} aria-label="Concluído" /> :
                   entry.kind === "task" || entry.kind === "expense" ? (

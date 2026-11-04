@@ -18,6 +18,7 @@ import { normalizeMovies } from "../lib/movies.ts";
 import { todayEntries, weekDates, calendarMonthDays, shiftMonth, addDaysISO } from "../lib/today.ts";
 import { DEFAULT_CALENDAR_TOPICS, calendarTopics, calendarEntryColor, eventTopicLabel, validateCalendarTopics } from "../lib/calendar-topics.ts";
 import { filterResponsible, sortTaskEntries, taskSection } from "../lib/task-filters.ts";
+import { elapsedCalendarMonths, formatYearsAndMonths, eventDurationLabel } from "../lib/calendar-anniversaries.ts";
 import { normalizeGooglePlaces, googlePlaceMapsUrl, googleMapsEmbedUrl, normalizePhotonPlaces, openStreetMapEmbedUrl, photonCategoryFilter, overpassSearchQuery, normalizeOverpassPlaces, normalizePlaceLink, safePlaceLink } from "../lib/places.ts";
 const task: Entry = {
   id: "abc",
@@ -324,4 +325,56 @@ test("event repetition validates and stays separate from task repetition", () =>
     ...event, data: { eventRepeat: "never" as "yearly" },
   }), /repetição válida/);
   assert.equal(nextDate(task.due, "weekly"), "2026-11-10");
+});
+
+test("monthly monthiversary shows years and months from the original date", () => {
+  const start: Entry = {
+    ...task, id: "our-date", kind: "event", due: "2024-08-15",
+    title: "Mêsversário de namoro",
+    data: { eventRepeat: "monthly", eventCounter: "together", topicId: "janta" },
+  };
+  const projected = calendarEntries([start], { from: "2026-11-01", to: "2026-11-30" });
+  assert.equal(projected.length, 1);
+  assert.equal(projected[0].due, "2026-11-15");
+  assert.equal(projected[0].data?.eventAnchorDate, "2024-08-15");
+  assert.equal(eventDurationLabel(projected[0]), "2 anos e 3 meses juntos");
+  assert.equal(eventDurationLabel(start), "Começo da nossa história");
+  assert.equal(formatYearsAndMonths(27), "2 anos e 3 meses");
+  assert.equal(elapsedCalendarMonths("2024-08-15", "2026-11-15"), 27);
+  const elapsed = { ...projected[0], data: { ...projected[0].data, eventCounter: "elapsed" as const } };
+  assert.equal(eventDurationLabel(elapsed), "Há 2 anos e 3 meses");
+  assert.equal(eventDurationLabel({ ...projected[0], data: { ...projected[0].data, eventCounter: "off" } }), "");
+});
+test("birthday age uses real birth year and leap-day occurrence", () => {
+  const birthday: Entry = {
+    ...task, id: "birthday", kind: "event", due: "2000-02-29",
+    title: "Aniversário", data: { eventRepeat: "yearly", eventCounter: "age" },
+  };
+  const [occurrence] = calendarEntries([birthday], { from: "2026-02-01", to: "2026-02-28" });
+  assert.equal(occurrence.due, "2026-02-28");
+  assert.equal(eventDurationLabel(occurrence), "26 anos de idade");
+  const [leap] = calendarEntries([birthday], { from: "2028-02-01", to: "2028-02-29" });
+  assert.equal(leap.due, "2028-02-29");
+  assert.equal(eventDurationLabel(leap), "28 anos de idade");
+  assert.equal(eventDurationLabel({ ...task, kind: "task", data: { eventRepeat: "monthly", eventCounter: "age" } }), "");
+});
+test("monthly counter honors a short February without resetting the age", () => {
+  const start: Entry = {
+    ...task, id: "months", kind: "event", due: "2024-01-31",
+    data: { eventRepeat: "monthly", eventCounter: "elapsed" },
+  };
+  const february = calendarEntries([start], { from: "2026-02-01", to: "2026-02-28" })[0];
+  assert.equal(february.due, "2026-02-28");
+  assert.equal(eventDurationLabel(february), "Há 2 anos e 1 mês");
+  const march = calendarEntries([start], { from: "2026-03-01", to: "2026-03-31" })[0];
+  assert.equal(eventDurationLabel(march), "Há 2 anos e 2 meses");
+});
+test("calendar event counter accepts expected values and rejects invalid values", () => {
+  const sample: Entry = {
+    ...task, kind: "event", data: { eventRepeat: "monthly", eventCounter: "age" },
+  };
+  assert.doesNotThrow(() => validateDraft(sample));
+  assert.throws(() => validateDraft({
+    ...sample, data: { eventRepeat: "monthly", eventCounter: "bad" as "age" },
+  }), /contagem válida/);
 });
