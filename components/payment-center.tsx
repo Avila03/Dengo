@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useDengo } from "./provider";
 import { CleanSheet } from "./clean-sheet";
-import { ExpenseSplit } from "./expense-split";
+import { ExpenseSplit, SplitPreview } from "./expense-split";
 import { CoupleBalance } from "./couple-balance";
 import { DeleteButton } from "./ui";
 import { type Draft, type Entry, localToday } from "@/lib/model";
@@ -60,6 +60,7 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
   const [planAmount,setPlanAmount]=useState("");
   const [paymentTarget,setPaymentTarget]=useState<PlanCharge|null>(null);
   const [paymentError,setPaymentError]=useState("");
+  const [paymentAmount,setPaymentAmount]=useState("");
   const [statusNotice,setStatusNotice]=useState("");
   const projection=monthForecast(entries,month);
   const due=paymentAlerts(entries,today,45);
@@ -152,6 +153,7 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
     }catch(error){setPaymentError(error instanceof Error?error.message:"Verifique os dados.");}
   }
   function openCharge(charge:PlanCharge) {
+    setPaymentAmount(asInputMoney(charge.payment?.data?.amount ?? charge.amount));
     setPaymentTarget(charge);setPaymentError("");setFormType(null);
     window.requestAnimationFrame(()=>document.getElementById("plan-payment-form")?.scrollIntoView({behavior:"smooth",block:"start"}));
   }
@@ -508,7 +510,7 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
         <div className="payment-form-grid">
           <label>Valor efetivo (R$)
             <input required name="amount" inputMode="decimal" placeholder="Ex.: 120,00"
-              defaultValue={asInputMoney(paymentTarget.payment?.data?.amount??paymentTarget.amount)}/>
+              value={paymentAmount} onChange={event=>setPaymentAmount(event.target.value)}/>
           </label>
           <label>Forma de pagamento
             <select name="method" defaultValue={paymentTarget.payment?.data?.paymentMethod ||
@@ -525,6 +527,12 @@ export function PaymentCenter({section}: {section:PaymentSection}) {
             Pagamento já realizado
           </label>
         </div>
+        <section className="expense-split full" aria-label="Prévia da divisão do pagamento">
+          <strong>Divisão deste pagamento</strong>
+          <SplitPreview amount={paymentAmount} names={names}
+            shareFirst={entries.find(e=>e.id===paymentTarget.plan.id)?.data?.shareFirst ?? paymentTarget.plan.data?.shareFirst ?? 5000}/>
+          <p className="helper">Segue a proporção definida no cadastro do pagamento.</p>
+        </section>
         {paymentError?<p className="error" role="alert">{paymentError}</p>:null}
         <div className="payment-form-actions">
           <button className="primary" type="submit" disabled={busy}>
