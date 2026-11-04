@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Repeat2,
-  Clock3, Heart, Palette, Plus, Filter,
+  Clock3, Heart, Palette, Plus, Filter, Bell,
 } from "lucide-react";
 import { Shell } from "./shell";
 import { TopicDots } from "./topic-dots";
@@ -16,6 +16,7 @@ import { calendarEntries, calendarDayMap, eventDaysUntil } from "@/lib/calendar"
 import { addCalendarDays, eventStartTimeLabel } from "@/lib/calendar-schedule";
 import { todayEntries, addDaysISO, weekDates, calendarMonthDays, shiftMonth } from "@/lib/today";
 import { money } from "@/lib/finance";
+import { activeReminders } from "@/lib/payment-plans";
 import type { Entry } from "@/lib/model";
 
 const dayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
@@ -27,12 +28,13 @@ const labelByKind: Record<string, string> = {
 };
 function detailLink(entry: Entry): string {
   if (entry.kind === "event") return "/calendario?data=" + entry.due;
-  return entry.kind === "expense" ? "/compras?aba=gastos" : "/compromissos";
+  return entry.kind === "expense" ? (entry.data?.paymentPlanVirtual ? "/compras?aba=pagamentos&sec=vencimentos" : "/compras?aba=gastos") : "/compromissos";
 }
 
 export function Home() {
   const { entries, busy, toggle, preferences } = useDengo();
   const today = localToday();
+  const paymentReminders=activeReminders(entries,today);
   const topics = calendarTopics(preferences.calendarTopics);
   const [selected, setSelected] = useState(today);
   const [monthOpen, setMonthOpen] = useState(false);
@@ -99,6 +101,14 @@ export function Home() {
         <span><Clock3 size={15} /> {todayPending} {todayPending === 1 ? "pendente" : "pendentes"}</span>
       </section>
 
+      {paymentReminders.length>0 ? (
+        <Link href="/compras?aba=pagamentos&sec=vencimentos" className="day-payment-alert">
+          <Bell size={18}/>
+          <span><strong>{paymentReminders.length} {paymentReminders.length===1?"pagamento":"pagamentos"}</strong>
+            {" "}para conferir no Dengo</span>
+          <ArrowRight size={17}/>
+        </Link>
+      ):null}
       {nextSpecial ? (
         <section className="day-countdown" aria-label="Próxima data especial">
           <Heart size={17} />
@@ -243,6 +253,10 @@ export function Home() {
                   ) : null}
                 </div>
                 {entry.done ? <Check className="day-row-check" size={19} aria-label="Concluído" /> :
+                  entry.data?.paymentPlanVirtual ? (
+                    <Link href="/compras?aba=pagamentos&sec=vencimentos" className="icon-btn day-row-check"
+                      aria-label={"Registrar pagamento de "+entry.title}><ArrowRight size={18}/></Link>
+                  ) :
                   entry.kind === "task" || entry.kind === "expense" ? (
                     <button type="button" className="icon-btn day-row-check"
                       disabled={busy} aria-label={entry.kind === "expense" ? "Marcar pagamento de " + entry.title : "Concluir " + entry.title}

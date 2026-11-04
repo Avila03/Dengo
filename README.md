@@ -1,3 +1,16 @@
+## Entrega 1.8 — pagamentos do casal, assinaturas e parcelamentos
+
+- **Compras** agora tem dois destinos principais: **Lista de compras** e **Pagamentos**. Em Pagamentos, atalhos internos compactos para Vencimentos, Assinaturas, Parcelas, Contas fixas e Extrato e acertos. O caminho antigo \`/compras?aba=gastos\` continua abrindo o extrato.
+- **Assinaturas**: registrar nome, valor, data do primeiro vencimento, ciclo mensal ou anual, quem paga, divisão, forma de pagamento, categoria e aviso de 0, 1, 3 ou 7 dias. Pausar, cancelar e reativar afetam cobranças futuras sem apagar pagamentos já contabilizados.
+- **Parcelamentos**: cadastrar o valor total (não apenas a parcela), de 2 a 240 parcelas mensais, início e responsável. Valores são divididos em centavos com eventual diferença distribuída entre parcelas, de forma que somem exatamente o total. Progresso mostra quantas parcelas foram pagas e quantas faltam.
+- **Contas fixas**: renovação mensal, inclusive com valor previsto opcional/variável. No pagamento de cada mês, informar o valor efetivo antes de registrar. Gastos pagos e pendentes ficam claramente separados.
+- **Próximos vencimentos** e **avisos internos**: Painel Vencimentos exibe contas atrasadas dos últimos 60 dias e até 45 dias à frente, com prazo e ação para registrar ou marcar como pago. Avisos configuráveis aparecem no Dengo e em Nosso dia, sem prometer notificações push.
+- **Previsão mensal**: valores previstos, pagos e ainda pendentes, com mês selecionável. As projeções de assinaturas, parcelas e contas fixas não contam como despesas pagas e não duplicam parcelas já registradas. Contas avulsas entram na previsão, e o saldo do casal só considera valores efetivamente pagos.
+- **Formas de pagamento**: Pix, cartão de crédito/débito, boleto, dinheiro, transferência e outros, tanto nos planos quanto em despesas avulsas e compras da lista.
+- **Calendário integrado**: vencimentos projetados aparecem em Nosso dia e na Agenda, com botão de registro que leva ao painel de Pagamentos; marcar um vencimento como pago cria/atualiza uma despesa real e retira a previsão daquele dia sem duplicá-la.
+- **Dados**: os modelos são armazenados como entradas financeiras não pagas (\`kind=expense\`, \`data.paymentPlanType\`) no JSONB já existente do Supabase. As parcelas e os ciclos são projetados em memória; somente cobranças efetivamente registradas geram uma despesa. Não exige migração nem serviços pagos adicionais.
+- **Limites atuais**: os avisos aparecem quando o aplicativo é aberto (não são push automáticos); a divisão é entre as duas pessoas e cada parcela possui um pagamento registrado, sem pagamentos parciais. Pausar/cancelar interrompe novos vencimentos projetados e mantém os anteriores já registrados.
+
 ## Ajuste 1.7.1 — configurações mais objetivas
 
 - Removidas de **Nosso espaço** as seções **Uma cópia da nossa história / Exportar meus dados** e **Conexões externas**, que não são necessárias no cotidiano. A importação de backups ainda não existe.

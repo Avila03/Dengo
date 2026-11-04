@@ -14,6 +14,7 @@ import { EntryAudit } from "./entry-audit";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
 import { type Entry, type Draft, localToday, dayLabel } from "@/lib/model";
+import { PAYMENT_METHODS, paymentMethodLabel, isPlan, type PayMethod } from "@/lib/payment-plans";
 import {
   balance,
   monthlySummary,
@@ -45,7 +46,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
   const list = entries
     .filter(
       (e) =>
-        ["expense", "transfer"].includes(e.kind) && e.due.startsWith(month),
+        ["expense", "transfer"].includes(e.kind) && !isPlan(e) && e.due.startsWith(month),
     )
     .sort((a, b) => b.due.localeCompare(a.due));
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -65,6 +66,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
         due: String(f.get("due") || localToday()),
         done: kind === "transfer" || f.get("paid") === "on",
         data: {
+          ...editing?.data,
           amount: parseMoney(String(f.get("amount"))),
           payer: Number(f.get("payer")) as 0 | 1,
           shareFirst:
@@ -72,6 +74,9 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
               ? 5000
               : Math.round(Number(f.get("share")) * 100),
           category: String(f.get("category") || "Outros"),
+          paymentMethod: String(f.get("method") || editing?.data?.paymentMethod || "pix") as PayMethod,
+          paymentPaidAt: kind==="expense" && f.get("paid")==="on"
+            ? String(f.get("paymentDate") || localToday()) : undefined,
           recurrence:
             kind === "expense"
               ? (String(f.get("recurrence") || "none") as "none" | "monthly")
@@ -97,7 +102,7 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
     <>
       <PageHeading
         eyebrow="CONTAS CLARAS, VIDA MAIS LEVE"
-        title={embedded ? "Gastos e acertos" : "Nossas finanças"}
+        title={embedded ? "Extrato e acertos" : "Nossas finanças"}
         description="Despesas, pagamentos, divisões e acertos associados às compras e aos planos de vocês."
       >
         <button
@@ -222,6 +227,14 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
               </select>
             </label>
             <label>
+              Forma de pagamento
+              <select name="method" defaultValue={editing?.data?.paymentMethod || "pix"}>
+                {PAYMENT_METHODS.map((method)=>(
+                  <option key={method.value} value={method.value}>{method.label}</option>
+                ))}
+              </select>
+            </label>
+            <label>
               {form === "transfer"
                 ? "Data do acerto"
                 : "Data do gasto ou vencimento"}
@@ -273,6 +286,11 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
                   <small>
                     Ao marcar como paga, criamos a próxima conta pendente.
                   </small>
+                </label>
+                <label>
+                  Data em que pagou
+                  <input type="date" name="paymentDate"
+                    defaultValue={editing?.data?.paymentPaidAt || localToday()}/>
                 </label>
                 <label className="checkbox-label full">
                   <input
@@ -340,6 +358,10 @@ export function Finance({ embedded = false }: { embedded?: boolean }) {
                           ? "Pago"
                           : "Pendente"}
                     </span>
+                    {e.data?.paymentMethod ? (
+                      <span className="tag">{paymentMethodLabel(e.data.paymentMethod)}</span>
+                    ):null}
+                    {e.data?.paymentPlanId ? <span className="tag">Programado</span>:null}
                     {e.data?.recurrence === "monthly" ? (
                       <span className="tag">
                         <Repeat2 size={12} />

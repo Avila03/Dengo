@@ -1,5 +1,6 @@
 import type { Draft, Entry } from "./model.ts";
 import { parseMoney } from "./finance.ts";
+import type { PayMethod } from "./payment-plans.ts";
 import { isDate } from "./model.ts";
 
 export type ShoppingStatus = "planned" | "bought" | "payment-pending" | "paid";
@@ -28,6 +29,7 @@ export function makePurchaseExpense(
     paid: boolean;
     date: string;
     category: string;
+    method?: PayMethod;
     names: [string, string];
   },
 ): Draft {
@@ -47,6 +49,7 @@ export function makePurchaseExpense(
       payer: details.payer,
       shareFirst: details.shareFirst,
       category: details.category || "Mercado",
+      paymentMethod: details.method || "pix",
       recurrence: "none",
       sourceId: item.id,
     },

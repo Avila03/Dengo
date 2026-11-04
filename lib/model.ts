@@ -17,6 +17,18 @@ export type EventOccurrenceChanges = {
 };
 export type Details = {
   amount?: number;
+  /** Modelos de pagamentos recorrentes/parcelados; não contam como gasto pago. */
+  paymentPlanType?: "subscription" | "installment" | "bill";
+  planStatus?: "active" | "paused" | "canceled";
+  planFrequency?: "monthly" | "yearly";
+  planCount?: number;
+  planReminderDays?: 0 | 1 | 3 | 7;
+  /** Despesa gerada para um vencimento específico do plano. */
+  paymentPlanId?: string;
+  paymentCycle?: number;
+  paymentPlanVirtual?: boolean;
+  paymentMethod?: "pix" | "credit" | "debit" | "boleto" | "cash" | "transfer" | "other";
+  paymentPaidAt?: string;
   payer?: 0 | 1;
   shareFirst?: number;
   category?: string;
@@ -271,9 +283,40 @@ export function validateDraft(d: Draft) {
       throw new Error("Acompanhamento por temporada e episódio é exclusivo de séries.");
   }
   if (["expense", "transfer"].includes(d.kind)) {
+    if (d.data?.paymentPlanType) {
+      const plan = d.data;
+      if (d.kind !== "expense" ||
+          !["subscription", "installment", "bill"].includes(plan.paymentPlanType))
+        throw new Error("Tipo de pagamento recorrente inválido.");
+      if (!d.due) throw new Error("Defina a data do primeiro vencimento.");
+      if (!["active", "paused", "canceled"].includes(plan.planStatus || "active"))
+        throw new Error("Situação do pagamento inválida.");
+      if (!["monthly", "yearly"].includes(plan.planFrequency || "monthly"))
+        throw new Error("Frequência inválida.");
+      if (plan.paymentPlanType !== "subscription" && plan.planFrequency === "yearly")
+        throw new Error("Contas fixas e parcelas são mensais.");
+      if (plan.paymentPlanType === "installment" &&
+          (!Number.isInteger(plan.planCount) || plan.planCount! < 2 || plan.planCount! > 240))
+        throw new Error("Parcelamentos devem ter entre 2 e 240 parcelas.");
+      if (plan.planReminderDays !== undefined &&
+          ![0, 1, 3, 7].includes(plan.planReminderDays))
+        throw new Error("Prazo do lembrete inválido.");
+      if (d.done || plan.paymentPlanId)
+        throw new Error("O cadastro da cobrança não é um pagamento.");
+    }
+    if (d.data?.paymentPlanId) {
+      if (d.kind !== "expense" || !Number.isInteger(d.data.paymentCycle) ||
+          d.data.paymentCycle! < 0)
+        throw new Error("Referência inválida ao vencimento.");
+    }
+    if (d.data?.paymentMethod && !["pix","credit","debit","boleto","cash","transfer","other"].includes(d.data.paymentMethod))
+      throw new Error("Forma de pagamento inválida.");
+    if (d.data?.paymentPaidAt && !isDate(d.data.paymentPaidAt))
+      throw new Error("Data de pagamento inválida.");
+
     if (
       !Number.isSafeInteger(d.data?.amount) ||
-      d.data!.amount! <= 0 ||
+      (d.data!.amount! <= 0 && d.data?.paymentPlanType !== "bill") ||
       d.data!.amount! > 100000000
     )
       throw new Error("Informe um valor entre R$ 0,01 e R$ 1.000.000,00.");

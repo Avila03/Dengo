@@ -2643,3 +2643,126 @@ progress {
   .topbar-right .lobby-shortcut { max-width: 62px; }
   .bottom-nav a { font-size: 8px; }
 }
+
+/* Dengo 1.8 — Pagamentos: assinaturas, parcelas, contas fixas e lembretes internos. */
+.shopping-reminder-shortcut,.day-payment-alert{
+  display:flex;align-items:center;gap:10px;width:100%;margin:0 0 13px;
+  background:var(--rose-light);color:var(--rose);border:1px solid var(--rose);
+  border-radius:13px;padding:12px 14px;font-size:12px;text-decoration:none;text-align:left;
+}
+.shopping-reminder-shortcut svg,.day-payment-alert svg{flex-shrink:0}
+.shopping-reminder-shortcut span,.day-payment-alert span{flex:1;min-width:0}
+.shopping-reminder-shortcut strong{font-size:11px;flex-shrink:0}
+.day-payment-alert strong{font-size:12px}
+.payment-section-nav{display:flex;gap:7px;align-items:center;overflow-x:auto;overscroll-behavior-x:contain;
+  scroll-snap-type:x proximity;padding:2px 2px 11px;margin:3px 0 18px;scrollbar-width:thin}
+.payment-section-nav button{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;
+  flex-shrink:0;scroll-snap-align:start;min-height:43px;border-radius:999px;border:1px solid var(--line);
+  background:var(--paper);color:var(--ink);font-size:12px;font-weight:700;padding:8px 15px}
+.payment-section-nav button.selected{background:var(--rose-light);color:var(--rose);border-color:var(--rose)}
+.payment-center{display:flex;flex-direction:column;gap:15px;min-width:0}
+.payment-month-head{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.payment-month-head h2{font:30px/1.13 Georgia,serif;margin:4px 0}
+.payment-month-head p{font-size:12px;color:var(--muted);margin:5px 0 0;max-width:460px}
+.payment-month-head label{font-size:11px;font-weight:700;display:flex;flex-direction:column;gap:5px}
+.payment-month-head input[type=month]{min-width:155px}
+.payment-forecast{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.payment-forecast>div{display:flex;flex-direction:column;gap:7px;min-width:0;border-radius:14px;
+  border:1px solid var(--line);background:var(--paper);padding:14px}
+.payment-forecast span{font-size:11px;color:var(--muted)}
+.payment-forecast strong{font:700 19px/1.15 Georgia,serif;overflow-wrap:anywhere}
+.payment-forecast>div:last-child{border-color:var(--rose);background:var(--rose-light)}
+.payment-forecast-note,.payment-small-note{font-size:11px;line-height:1.5;color:var(--muted);margin:0}
+.payment-reminder-strip{display:flex;align-items:flex-start;gap:11px;border:1px solid var(--line);
+  border-radius:14px;padding:13px 14px;background:var(--paper)}
+.payment-reminder-strip>svg{flex-shrink:0;color:var(--rose);margin-top:2px}
+.payment-reminder-strip strong{font-size:13px}
+.payment-reminder-strip p{font-size:11px;color:var(--muted);margin:4px 0 0}
+.payment-quick-create{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.payment-quick-create button{display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:44px;flex:1;font-size:12px;padding:9px 10px}
+.payment-panel-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 9px}
+.payment-panel-title h3{font-size:22px;margin:4px 0}
+.payment-panel-title svg{color:var(--rose)}
+.payment-due-panel{padding:18px}
+.payment-overdue-label{font-size:12px;color:#b65c51;display:flex;gap:7px;align-items:center;margin:13px 0 7px}
+.payment-due-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;
+  border-top:1px solid var(--line);min-width:0;padding:12px 0}
+.payment-due-row.is-overdue{border-left:3px solid #d87976;padding-left:9px}
+.payment-due-info{display:flex;flex-direction:column;gap:4px;min-width:0}
+.payment-due-info strong{font-size:13px;overflow-wrap:anywhere}
+.payment-due-info small{font-size:11px;color:var(--muted)}
+.payment-due-row>strong{font-size:13px;white-space:nowrap}
+.payment-due-row>.secondary{display:flex;justify-content:center;align-items:center;gap:6px;min-height:39px;font-size:11px}
+.payment-due-panel>.payment-small-note{margin-top:15px}
+.payment-section-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.payment-section-toolbar>span{color:var(--muted);font-size:12px}
+.payment-section-toolbar .primary{min-height:44px;display:inline-flex;align-items:center;gap:7px;font-size:12px}
+.payment-plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.payment-plan-card{display:flex;flex-direction:column;gap:14px;padding:18px;min-width:0}
+.payment-plan-top{display:flex;align-items:start;justify-content:space-between;gap:10px}
+.payment-plan-top h3{font-size:20px;margin:5px 0 0;overflow-wrap:anywhere}
+.payment-plan-status{font-size:10px;flex-shrink:0}
+.payment-plan-status.active{background:var(--sage);color:var(--green)}
+.payment-plan-status.completed{background:var(--rose-light);color:var(--rose)}
+.payment-plan-status.paused,.payment-plan-status.canceled{background:var(--bg);color:var(--muted)}
+.payment-plan-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.payment-plan-facts>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.payment-plan-facts small{font-size:10px;color:var(--muted)}
+.payment-plan-facts strong{font-size:17px;overflow-wrap:anywhere}
+.payment-plan-card progress{width:100%;height:9px;accent-color:var(--rose)}
+.payment-plan-card>small{font-size:11px;line-height:1.4;color:var(--muted)}
+.payment-plan-meta{display:flex;flex-direction:column;gap:7px;font-size:11px;color:var(--muted)}
+.payment-plan-meta span{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.payment-plan-meta svg{color:var(--rose);flex-shrink:0}
+.payment-plan-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:auto}
+.payment-plan-actions button{display:inline-flex;align-items:center;justify-content:center;
+  gap:5px;min-height:39px;font-size:11px;padding:8px 12px}
+.payment-plan-actions .delete-confirm button{min-width:39px}
+.payment-plan-form{padding:19px;scroll-margin-top:calc(90px + env(safe-area-inset-top))}
+.payment-form-header{display:flex;justify-content:space-between;align-items:start;gap:12px;margin-bottom:15px}
+.payment-form-header h3{font:24px/1.2 Georgia,serif;margin:4px 0 0}
+.payment-form-header p{font-size:11px;color:var(--muted);margin:5px 0}
+.payment-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.payment-form-grid label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;min-width:0}
+.payment-form-grid label.full{grid-column:1/-1}
+.payment-form-grid label input,.payment-form-grid label select{width:100%;min-width:0}
+.payment-form-grid label small{font-size:10px;color:var(--muted);font-weight:400}
+.payment-form-grid .payment-form-paid{display:flex;flex-direction:row;align-items:center;gap:9px;align-self:end;min-height:44px}
+.payment-form-paid input{width:auto!important;min-width:0!important}
+.payment-form-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:16px 0 0}
+.payment-form-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:45px}
+.payment-plan-form>small{font-size:11px;color:var(--muted);display:block;margin-top:9px}
+@media(max-width:900px){.payment-plan-grid{grid-template-columns:1fr}}
+@media(max-width:760px){
+ .payment-center{gap:12px}
+ .payment-month-head h2{font-size:25px}
+ .payment-month-head label{width:100%}
+ .payment-month-head input[type=month]{width:100%}
+ .payment-forecast{gap:6px}
+ .payment-forecast>div{padding:11px 7px;gap:5px}
+ .payment-forecast span{font-size:10px}
+ .payment-forecast strong{font-size:15px}
+ .payment-quick-create{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .payment-quick-create button{font-size:11px;padding:8px}
+ .payment-quick-create button:last-child{grid-column:1/-1}
+ .payment-due-panel{padding:13px}
+ .payment-due-row{grid-template-columns:minmax(0,1fr) auto;gap:8px}
+ .payment-due-row>strong{font-size:12px}
+ .payment-due-row>.secondary{grid-column:1/-1;justify-self:stretch;min-height:43px}
+ .payment-plan-card{padding:13px;gap:12px}
+ .payment-plan-top h3{font-size:19px}
+ .payment-plan-facts strong{font-size:15px}
+ .payment-form-grid{grid-template-columns:1fr;gap:10px}
+ .payment-plan-form{padding:14px}
+ .payment-form-actions{flex-direction:column;align-items:stretch}
+ .payment-form-actions button{width:100%}
+ .shopping-reminder-shortcut{font-size:11px;gap:7px;padding:10px}
+ .shopping-reminder-shortcut strong{font-size:10px}
+}
+@media(max-width:370px){
+ .payment-forecast strong{font-size:13px}
+ .payment-section-nav button{font-size:11px;padding:7px 11px}
+ .payment-quick-create{grid-template-columns:1fr}
+ .payment-quick-create button:last-child{grid-column:auto}
+}

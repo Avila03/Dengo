@@ -15,6 +15,7 @@ import {
 import { Shell } from "./shell";
 import { money, parseMoney, CATEGORIES } from "@/lib/finance";
 import { makePurchaseExpense, plannedShoppingTotal, relatedShoppingExpense, shoppingStatus } from "@/lib/shopping";
+import { PAYMENT_METHODS, type PayMethod } from "@/lib/payment-plans";
 import { EntryAudit } from "./entry-audit";
 import { DeleteButton } from "./ui";
 import { useDengo } from "./provider";
@@ -98,6 +99,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
         paid: form.get("paid") === "on",
         date: String(form.get("date") || localToday()),
         category: String(form.get("category") || "Mercado"),
+        method: String(form.get("method") || "pix") as PayMethod,
         names: names as [string, string],
       });
       if (await add(draft)) setQuickPurchaseId(null);
@@ -419,6 +421,13 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                         <label>Categoria
                           <select name="category" defaultValue="Mercado">
                             {CATEGORIES.map((category) => <option key={category}>{category}</option>)}
+                          </select>
+                        </label>
+                        <label>Forma de pagamento
+                          <select name="method" defaultValue="pix">
+                            {PAYMENT_METHODS.map(m => (
+                              <option key={m.value} value={m.value}>{m.label}</option>
+                            ))}
                           </select>
                         </label>
                         <label>Data

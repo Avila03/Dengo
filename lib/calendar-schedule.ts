@@ -1,4 +1,5 @@
 import type { Entry, EventOccurrenceChanges } from "./model.ts";
+import { isPlan, duePlanCalendarEntries } from "./payment-plans.ts";
 
 const DAY_MS = 86400000;
 export function addCalendarDays(date: string, count: number): string {
@@ -83,11 +84,11 @@ export function projectCalendarEntries(
   interval?: { from: string; to: string },
 ): Entry[] {
   const dated = entries.filter((e) =>
-    e.due && ["event", "task", "expense"].includes(e.kind));
+    e.due && ["event", "task", "expense"].includes(e.kind) && !isPlan(e));
   if (!interval) return dated;
   const { from, to } = interval;
   if (from > to) return [];
-  const output: Entry[] = [];
+  const output: Entry[] = duePlanCalendarEntries(entries,from,to);
   for (const source of dated) {
     const frequency = source.kind === "event" ? source.data?.eventRepeat : undefined;
     if (frequency !== "monthly" && frequency !== "yearly") {
