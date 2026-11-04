@@ -45,7 +45,7 @@ test("media still has status, episode and feedback; discovery remains accessible
     "currentSeason","currentEpisode","mediaFeedback","WATCH_STATUS_LABELS"]) {
     assert.ok(media.includes(token),token);
   }
-  assert.match(media,/discover\.open = true/);
+  assert.match(media,/open=\{!all\.length\}/);
   assert.match(media,/<CleanSheet/);
 });
 test("calendars and payment plan advanced controls are not removed", () => {
