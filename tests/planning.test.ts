@@ -411,7 +411,7 @@ test("event ranges reject reversed dates, invalid hours and long spans", () => {
   assert.throws(()=>validateDraft(sample), /término/);
   assert.throws(()=>validateDraft({...sample,data:{time:"24:80"}}), /inválido/);
   assert.throws(()=>validateDraft({...sample,data:{endTime:"21:00"}}), /inicial/);
-  assert.throws(()=>validateDraft({...sample,data:{time:"21:00",endTime:"20:30"}}), /posterior/);
+  assert.throws(()=>validateDraft({...sample,data:{time:"21:00",endTime:"20:30"}}), /depois/);
   assert.throws(()=>validateDraft({...sample,data:{endDate:"2027-02-10"}}), /61 dias/);
   assert.doesNotThrow(()=>validateDraft({
     ...sample, data:{time:"21:00",endTime:"01:00",endDate:"2026-11-04"},
