@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {planPushMessages,brazilClock,inQuietHours,type PushChange} from "../lib/push-planner.ts";
+import {planPushMessages,pushPresentation,brazilClock,inQuietHours,type PushChange} from "../lib/push-planner.ts";
 import {parseNotificationPreferences} from "../lib/notification-preferences.ts";
 import type {Entry} from "../lib/model.ts";
 
@@ -63,7 +63,7 @@ test("deleted events notify affected participants, and completion-only edits do 
 });
 test("privacy removes record titles and all disabled types remain silent",()=>{
  const messages=planPushMessages({...input,preferences:{...preferences,hidePreview:true}});
- assert.ok(messages.length);assert.ok(messages.every(m=>m.title==="Dengo" && !m.body.includes("Jantar")));
+ assert.ok(messages.length);assert.ok(messages.every(m=>m.title!=="Dengo" && !m.body.includes("Jantar")));
  const off={...preferences,enabled:Object.fromEntries(Object.keys(preferences.enabled).map(k=>[k,false]))};
  assert.equal(planPushMessages({...input,preferences:off}).length,0);
 });
@@ -71,4 +71,24 @@ test("daily digest respects chosen time, counts only own/shared pending records 
  const result=type("dailyDigest");assert.equal(result.length,1);assert.equal(result[0].key,"digest:2026-11-04");
  assert.equal(type("dailyDigest",planPushMessages({...input,preferences:{...preferences,dailyTime:"10:00"}})).length,0);
  assert.equal(type("dailyDigest",planPushMessages({...input,entries:[]})).length,0);
+});
+
+test("new plan notifications name the action and distinguish movies, series and places",()=>{
+ for(const [kind,mediaType,title] of [["movie","movie","Filme adicionado à lista"],["movie","tv","Série adicionada à lista"],["place",undefined,"Lugar adicionado à lista"]] as const) {
+  const entry:Entry={...base,id:"new-plan",kind,title:"Nome privado",data:{mediaType}};
+  const change:PushChange={id:42,entry,previous:null,actor_id:"partner",action:"INSERT",created_at:"2026-11-04T11:59:00Z"};
+  for(const hidePreview of [true,false]) {
+   const notice=type("newPlan",planPushMessages({...input,entries:[entry],changes:[change],preferences:{...preferences,hidePreview}}))[0];
+   assert.equal(notice.title,title);
+   assert.equal(notice.body.includes(entry.title),!hidePreview);
+   assert.equal(notice.url,kind==="movie"?"/filmes":"/lugares");
+   assert.equal(pushPresentation(notice,hidePreview).title,title);
+  }
+ }
+});
+test("delivery privacy keeps action and routing but removes personal content",()=>{
+ const message={title:"Pagamento registrado",body:"Consulta particular R$ 500",url:"/compras",key:"stable"};
+ assert.deepEqual(pushPresentation(message,false),message);
+ assert.deepEqual(pushPresentation(message,true),{...message,body:"Toque para ver os detalhes no Dengo."});
+ assert.equal(message.body,"Consulta particular R$ 500");
 });

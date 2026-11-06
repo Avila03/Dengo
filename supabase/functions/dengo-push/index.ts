@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.118.0";
 import webpush from "npm:web-push@3.6.7";
 import { loadAllEntries } from "../../../lib/records.ts";
 import {parseNotificationPreferences} from "../../../lib/notification-preferences.ts";
-import { planPushMessages } from "../../../lib/push-planner.ts";
+import { planPushMessages, pushPresentation } from "../../../lib/push-planner.ts";
 
 const db=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,{auth:{persistSession:false,autoRefreshToken:false}});
 const origins=new Set(["https://dengo-steel.vercel.app","https://dengo-mesamarcada.vercel.app","https://dengo-git-main-mesamarcada.vercel.app"]);
@@ -77,7 +77,7 @@ async function dispatch(config:any) {
     return !actionDate || actionDate>=device.created_at;
    });
    for(const candidate of pending.slice(0,30)) {
-    const payload=prefs.hidePreview?{...candidate,title:"Dengo",body:"Você tem um novo aviso no Dengo."}:candidate;
+    const payload=pushPresentation(candidate,prefs.hidePreview);
     const result=await send(device,payload,config);if(result==="sent")sent++;if(result==="failed")failed++;
    }
   }

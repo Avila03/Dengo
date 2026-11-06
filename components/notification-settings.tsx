@@ -204,8 +204,9 @@ function NotificationEditor({ userId, remote, demo }: { userId: string; remote: 
             <p>Os avisos ainda relevantes chegam depois do silêncio. Todos os horários seguem Brasília.</p>
             <label className="notification-check"><input type="checkbox" checked={preferences.hidePreview}
               onChange={(event) => change({ hidePreview: event.target.checked })} />
-              Ocultar títulos e valores na tela bloqueada
+              Ocultar nomes dos registros e valores na tela bloqueada
             </label>
+            <p>A ação continua visível, como “Filme adicionado à lista”. Desative para mostrar também o nome do registro.</p>
           </div>
         </details>
       </fieldset>

@@ -6,6 +6,10 @@ import { parseNotificationPreferences, type NotificationType } from "./notificat
 
 export type PushChange = { id: number; actor_id: string | null; action: string; entry: Entry; previous: Entry | null; created_at: string };
 export type PushMessage = { key: string; type: NotificationType; title: string; body: string; url: string };
+/** Preserve the action while keeping private record details off the lock screen. */
+export function pushPresentation<T extends {title:string;body:string}>(message:T,hidePreview:boolean):T {
+  return hidePreview ? {...message,body:"Toque para ver os detalhes no Dengo."} : message;
+}
 export function brazilClock(now: Date) {
   const parts = new Intl.DateTimeFormat("en-CA", {timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(now);
   const get=(key:string)=>parts.find(p=>p.type===key)!.value;
@@ -28,8 +32,7 @@ export function planPushMessages(input:{ now:Date; userId:string; slot:number; n
   const myPayment=(entry:Entry)=>prefs.paymentAudience==="couple" || (entry.data?.payer??0)===slot;
   function add(type:NotificationType,key:string,title:string,body:string,url:string,due:number,expires:number) {
     if(!prefs.enabled[type] || due>ms || expires<=ms || ms-due>48*3600000) return;
-    result.push({type,key,title:prefs.hidePreview?"Dengo":title,
-      body:prefs.hidePreview?"Você tem um novo aviso no Dengo.":body,url});
+    result.push(pushPresentation({type,key,title,body,url},prefs.hidePreview));
   }
   const end=at(addCalendarDays(clock.day,1),"00:00");
   const agenda=calendarEntries(entries,{from:clock.day,to:addCalendarDays(clock.day,2)});
@@ -59,11 +62,11 @@ export function planPushMessages(input:{ now:Date; userId:string; slot:number; n
     if(e.kind==="event" && mine(e) && before && (change.action==="DELETE" || (current && current.updated_at===e.updated_at && eventSignature(before)!==eventSignature(e))))
       emit("eventChanges",change.action==="DELETE"?"Compromisso cancelado":"Compromisso alterado",`/calendario?data=${e.due}`);
     if(e.kind==="task" && current && !current.done && mine(current) && (change.action==="INSERT" || before?.assignee!==e.assignee))
-      emit("newResponsibility","Nova responsabilidade",`/compromissos?registro=${e.id}`);
+      emit("newResponsibility","Responsabilidade atribuída a você",`/compromissos?registro=${e.id}`);
     if(current?.done && e.done && !before?.done && ((e.kind==="task" && e.assignee==="Nós dois") || (e.kind==="expense" && !isPlan(e))))
-      emit("partnerCompletion",e.kind==="task"?"Seu par concluiu uma responsabilidade":"Seu par registrou um pagamento",e.kind==="task"?"/compromissos":"/compras?aba=gastos");
+      emit("partnerCompletion",e.kind==="task"?"Responsabilidade concluída":"Pagamento registrado",e.kind==="task"?"/compromissos":"/compras?aba=gastos");
     if(current && change.action==="INSERT" && (e.kind==="movie" || e.kind==="place"))
-      emit("newPlan","Novo plano salvo",e.kind==="movie"?"/filmes":"/lugares");
+      emit("newPlan",e.kind==="place"?"Lugar adicionado à lista":e.data?.mediaType==="tv"?"Série adicionada à lista":"Filme adicionado à lista",e.kind==="movie"?"/filmes":"/lugares");
   }
   const eventCount=agenda.filter(e=>e.due===clock.day && e.kind==="event" && !e.done && mine(e)).length;
   const taskCount=entries.filter(e=>e.kind==="task" && !e.done && e.due===clock.day && mine(e)).length;

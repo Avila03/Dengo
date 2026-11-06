@@ -6,7 +6,7 @@ self.addEventListener("push",event=>{
   let data={};try{data=event.data?.json()||{};}catch{}
   const url=typeof data.url==="string" && data.url.startsWith("/") && !data.url.startsWith("//")?data.url:"/";
   await self.registration.showNotification(data.title||"Dengo",{
-   body:data.body||"Você tem um novo aviso no Dengo.",icon:"/brand/dengo-icon-192-v2.png",
+   body:data.body||"Abra o Dengo para consultar os detalhes.",icon:"/brand/dengo-icon-192-v2.png",
    badge:"/brand/dengo-icon-192-v2.png",tag:data.tag||"dengo",data:{url,userId:data.userId},
   });
  })());
