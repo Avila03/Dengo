@@ -1,0 +1,41 @@
+name: Testes no iPhone (demonstração)
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PLAYWRIGHT_VERSION: 1.63.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Instalado sem alterar o package-lock: o Playwright só é usado aqui.
+      - run: npm install --no-save --no-audit --no-fund @playwright/test@${{ env.PLAYWRIGHT_VERSION }}
+      - run: npx playwright install --with-deps webkit chromium
+      # Build sem Supabase: o Dengo abre no modo demonstração, com dados locais de teste.
+      - run: npm run e2e:build
+      - name: Fluxos, navegação e layout
+        run: npx playwright test --grep-invert "capturas do tema"
+      - name: Capturas dos 13 temas
+        if: always()
+        run: npm run e2e:capturas
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: capturas-iphone
+          path: capturas/
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: relatorio-playwright
+          path: playwright-report/
+          retention-days: 14
