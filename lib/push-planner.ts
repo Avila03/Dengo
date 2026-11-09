@@ -1,4 +1,4 @@
-import type { Entry } from "./model.ts";
+import { TOGETHER, type Entry } from "./model.ts";
 import { calendarEntries } from "./calendar.ts";
 import { addCalendarDays } from "./calendar-schedule.ts";
 import { paymentAlerts, isPlan } from "./payment-plans.ts";
@@ -28,7 +28,7 @@ export function planPushMessages(input:{ now:Date; userId:string; slot:number; n
   const prefs=parseNotificationPreferences(input.preferences), clock=brazilClock(now), ms=now.getTime();
   if(prefs.quietHours.enabled && inQuietHours(clock.time,prefs.quietHours.start,prefs.quietHours.end)) return [];
   const result:PushMessage[]=[];
-  const mine=(entry:Entry)=>entry.assignee==="Nós dois" || entry.assignee===names[slot];
+  const mine=(entry:Entry)=>entry.assignee===TOGETHER || entry.assignee===names[slot];
   const myPayment=(entry:Entry)=>prefs.paymentAudience==="couple" || (entry.data?.payer??0)===slot;
   function add(type:NotificationType,key:string,title:string,body:string,url:string,due:number,expires:number) {
     if(!prefs.enabled[type] || due>ms || expires<=ms || ms-due>48*3600000) return;
@@ -63,7 +63,7 @@ export function planPushMessages(input:{ now:Date; userId:string; slot:number; n
       emit("eventChanges",change.action==="DELETE"?"Compromisso cancelado":"Compromisso alterado",`/calendario?data=${e.due}`);
     if(e.kind==="task" && current && !current.done && mine(current) && (change.action==="INSERT" || before?.assignee!==e.assignee))
       emit("newResponsibility","Responsabilidade atribuída a você",`/compromissos?registro=${e.id}`);
-    if(current?.done && e.done && !before?.done && ((e.kind==="task" && e.assignee==="Nós dois") || (e.kind==="expense" && !isPlan(e))))
+    if(current?.done && e.done && !before?.done && ((e.kind==="task" && e.assignee===TOGETHER) || (e.kind==="expense" && !isPlan(e))))
       emit("partnerCompletion",e.kind==="task"?"Responsabilidade concluída":"Pagamento registrado",e.kind==="task"?"/compromissos":"/compras?aba=gastos");
     if(current && change.action==="INSERT" && (e.kind==="movie" || e.kind==="place"))
       emit("newPlan",e.kind==="place"?"Lugar adicionado à lista":e.data?.mediaType==="tv"?"Série adicionada à lista":"Filme adicionado à lista",e.kind==="movie"?"/filmes":"/lugares");

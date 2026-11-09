@@ -24,7 +24,7 @@ import { TopicDots } from "./topic-dots";
 import { calendarTopics, calendarEntryColor, eventTopicLabel, EXPENSE_CALENDAR_COLOR, TASK_CALENDAR_COLOR } from "@/lib/calendar-topics";
 import { PageHeading } from "./ui";
 import { useDengo } from "./provider";
-import { type Entry, type Draft, localToday, dayLabel, isDate, addMonths, validateDraft } from "@/lib/model";
+import { type Entry, type Draft, TOGETHER, localToday, dayLabel, isDate, addMonths, validateDraft } from "@/lib/model";
 import {
   calendarEntries,
   eventICS,
@@ -87,7 +87,7 @@ export function Calendar() {
   function newForm(date: string): EventFormValues {
     return {
       title: source?.kind === "movie" ? `Assistir: ${source.title}` : source?.title || "",
-      due: date, endDate: "", time: "", detail: "", assignee: "Nós dois",
+      due: date, endDate: "", time: "", detail: "", assignee: TOGETHER,
       placeId: source?.kind === "place" ? source.id : "", location: "",
       topicId: source?.kind === "movie" ? "filmes" : source?.kind === "place" ? "passeio" : topics[0].id,
       repeat: "none", counter: "off",

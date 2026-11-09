@@ -136,6 +136,34 @@ export const DEFAULT_PREFS: Preferences = {
   budgets: {},
   calendarTopics: DEFAULT_CALENDAR_TOPICS,
 };
+/**
+ * Responsável compartilhado. Os registros guardam o nome de quem cuida; o
+ * gatilho `rename_assignees` do banco atualiza esses nomes quando o casal os
+ * altera. Por isso nenhuma pessoa pode se chamar exatamente como este valor.
+ */
+export const TOGETHER: string = "Nós dois";
+const comparableName = (name: string) =>
+  name.trim().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").toLowerCase();
+export function isReservedName(name: string) {
+  return comparableName(name) === comparableName(TOGETHER);
+}
+/** Valida o nome de uma pessoa do casal; devolve a mensagem de erro ou "". */
+export function personNameError(name: string) {
+  const value = name.trim();
+  if (!value || value.length > 60) return "Informe um nome com até 60 caracteres.";
+  if (isReservedName(value))
+    return `“${value}” é usado para tarefas dos dois. Escolha outro nome ou apelido.`;
+  return "";
+}
+/** Valida os dois nomes do casal; devolve a mensagem de erro ou "". */
+export function coupleNamesError(names: readonly string[]) {
+  if (names.length !== 2) return "Informe os dois nomes.";
+  const own = personNameError(names[0]) || personNameError(names[1]);
+  if (own) return own;
+  if (comparableName(names[0]) === comparableName(names[1]))
+    return "Informe dois nomes diferentes, com até 60 caracteres.";
+  return "";
+}
 export const STORAGE_KEY = "dengo.demo.v1";
 export const PREFS_KEY = "dengo.preferences.v1";
 const kinds: Kind[] = [

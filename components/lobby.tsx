@@ -13,6 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { invitationCode } from "@/lib/lobby";
+import { personNameError } from "@/lib/model";
 import { useDengo } from "./provider";
 export function Lobby({
   loading,
@@ -62,6 +63,8 @@ export function Lobby({
     event.preventDefault();
     const f = new FormData(event.currentTarget);
     await run(async () => {
+      const nameError = personNameError(String(f.get("name") || ""));
+      if (nameError) throw new Error(nameError);
       const rpc = mode === "create" ? "create_couple" : "join_couple";
       const params =
         mode === "create"

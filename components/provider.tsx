@@ -30,6 +30,7 @@ import {
   readEntries,
   validateDraft,
   successor,
+  coupleNamesError,
 } from "@/lib/model";
 type Context = {
   entries: Entry[];
@@ -403,13 +404,8 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
   async function savePreferences(p: Preferences) {
     const nextPrefs: Preferences = { ...preferences, ...p, calendarTopics: preferences.calendarTopics };
     return action(async () => {
-      if (
-        p.names.some((n) => !n.trim() || n.length > 60) ||
-        p.names[0].trim() === p.names[1].trim()
-      )
-        throw new Error(
-          "Informe dois nomes diferentes, com até 60 caracteres.",
-        );
+      const namesError = coupleNamesError(p.names);
+      if (namesError) throw new Error(namesError);
       if (!p.title.trim() || p.title.length > 80)
         throw new Error("Informe um nome para o espaço com até 80 caracteres.");
       if (p.photo && !p.photo.startsWith("data:image/jpeg;base64,"))

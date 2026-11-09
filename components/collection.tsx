@@ -30,6 +30,7 @@ import {
   dayLabel,
   localToday,
   isOverdue,
+  TOGETHER,
   type Entry,
   type Draft,
 } from "@/lib/model";
@@ -92,7 +93,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
       kind,
       title: String(f.get("title") || "").trim(),
       detail: String(f.get("detail") || "").trim(),
-      assignee: String(f.get("assignee") || "Nós dois"),
+      assignee: String(f.get("assignee") || TOGETHER),
       due: String(f.get("due") || ""),
       done: editing?.done ?? false,
       data: {
@@ -197,9 +198,9 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
               {isTask ? "Quem vai cuidar?" : "Quem vai comprar?"}
               <select
                 name="assignee"
-                defaultValue={editing?.assignee || "Nós dois"}
+                defaultValue={editing?.assignee || TOGETHER}
               >
-                {["Nós dois", ...names].map((n, i) => (
+                {[TOGETHER, ...names].map((n, i) => (
                   <option key={`${n}-${i}`}>{n}</option>
                 ))}
               </select>

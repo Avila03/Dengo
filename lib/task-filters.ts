@@ -1,4 +1,4 @@
-import type { Entry } from "./model";
+import { TOGETHER, type Entry } from "./model.ts";
 
 export type TaskSection = "overdue" | "today" | "upcoming" | "undated" | "done";
 export type ResponsibleFilter = "all" | "mine" | "partner" | "together";
@@ -23,7 +23,7 @@ export function filterResponsible(
   entry: Entry, filter: ResponsibleFilter, names: [string, string], memberSlot: number,
 ) {
   if (filter === "all") return true;
-  if (filter === "together") return entry.assignee === "Nós dois";
+  if (filter === "together") return entry.assignee === TOGETHER;
   return entry.assignee === names[filter === "mine" ? memberSlot : 1 - memberSlot];
 }
 

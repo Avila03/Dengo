@@ -1,6 +1,6 @@
 "use client";
 import { useId, useState } from "react";
-import type { Entry } from "@/lib/model";
+import { TOGETHER, type Entry } from "@/lib/model";
 import type { CalendarTopic } from "@/lib/calendar-topics";
 import { EVENT_REPEAT_LABELS, type EventFormValues } from "@/lib/event-form";
 
@@ -79,12 +79,12 @@ export function EventFields({ values, onChange, topics, entries, names, allowRep
           onChange={(e) => set("endDate", e.target.value)} />
       </label> : null}
     </details>
-    <details className="form-details" open={values.placeId || values.location || values.detail || values.assignee !== "Nós dois" ? true : undefined}>
+    <details className="form-details" open={values.placeId || values.location || values.detail || values.assignee !== TOGETHER ? true : undefined}>
       <summary>Participantes, local e observação</summary>
       <div className="form-grid">
         <label className="full">Participantes
           <select value={values.assignee} onChange={(e) => set("assignee", e.target.value)}>
-            {["Nós dois", ...names].map((name, i) => <option key={i}>{name}</option>)}
+            {[TOGETHER, ...names].map((name, i) => <option key={i}>{name}</option>)}
           </select>
         </label>
         <label className="full">Local
