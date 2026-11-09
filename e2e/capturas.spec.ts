@@ -28,5 +28,19 @@ for (const theme of THEMES) {
       const name = route.path === "/" ? "inicio" : route.path.slice(1);
       await page.screenshot({ path: path.join(DIR, theme, `${name}.png`), fullPage: true });
     }
+    // Estados que as telas principais não mostram: formulários, pagamentos e calendário.
+    const extras: [string, string, ((p: typeof page) => Promise<void>) | null][] = [
+      ["formulario", "/compromissos", async (p) => { await p.getByRole("button", { name: "Nova responsabilidade" }).click(); await p.getByRole("dialog").waitFor(); }],
+      ["pagamentos", "/compras?aba=pagamentos", null],
+      ["calendario", "/calendario", null],
+      ["detalhes", "/compromissos", async (p) => { await p.getByRole("button", { name: "Ver detalhes de Regar as plantas" }).click(); await p.getByRole("dialog").waitFor(); }],
+    ];
+    for (const [name, where, act] of extras) {
+      await openDemo(page, where);
+      await page.locator("main h1, #conteudo h1").first().waitFor();
+      if (act) await act(page);
+      await page.addStyleTag({ content: "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}" });
+      await page.screenshot({ path: path.join(DIR, theme, `${name}.png`), fullPage: !act });
+    }
   });
 }
