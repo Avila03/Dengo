@@ -15,6 +15,7 @@ import { supabase } from "@/lib/supabase";
 import { invitationCode } from "@/lib/lobby";
 import { personNameError } from "@/lib/model";
 import { useDengo } from "./provider";
+import { LeaveCouple } from "./leave-couple";
 export function Lobby({
   loading,
   onEnter,
@@ -26,6 +27,7 @@ export function Lobby({
     user,
     spaceId,
     memberCount,
+    memberSlot,
     preferences,
     demo,
     error,
@@ -154,7 +156,7 @@ export function Lobby({
               <p>
                 {memberCount === 2
                   ? preferences.names.join(" & ")
-                  : `${preferences.names[0]} · aguardando seu par`}
+                  : `${preferences.names[memberSlot] ?? preferences.names[0]} · aguardando seu par`}
               </p>
             </div>
           </div>
@@ -168,6 +170,7 @@ export function Lobby({
           <button type="button" className="secondary" onClick={() => {
             onEnter(); router.push("/configuracoes#casal");
           }}><Users size={16} /> Participantes e convite</button>
+          <LeaveCouple />
         </section>
       ) : (
         <>

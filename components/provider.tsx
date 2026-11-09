@@ -19,6 +19,7 @@ import { AppearanceProvider } from "./appearance-provider";
 import { supabase, demoMode } from "@/lib/supabase";
 import { Lobby } from "./lobby";
 import { syncEntries } from "@/lib/entry-sync";
+import { isOffline, OFFLINE_SAVE } from "@/lib/connection";
 import { type CalendarTopic, validateCalendarTopics } from "@/lib/calendar-topics";
 import {
   Entry,
@@ -39,6 +40,8 @@ type Context = {
   busy: boolean;
   error: string;
   demo: boolean;
+  /** Sem internet: a tela avisa e as gravações são bloqueadas com uma mensagem clara. */
+  offline: boolean;
   user: User | null;
   spaceId: string;
   memberCount: number;
@@ -71,7 +74,8 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
     [membershipLoaded, setMembershipLoaded] = useState(false),
     [memberCount, setMemberCount] = useState(0),
     [memberSlot, setMemberSlot] = useState(0),
-    [lobbyOpen, setLobbyOpen] = useState(true);
+    [lobbyOpen, setLobbyOpen] = useState(true),
+    [offline, setOffline] = useState(false);
   useEffect(() => {
     if (!ready || demoMode) return;
     let owner: string | null = null;
@@ -81,6 +85,20 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
       try { localStorage.removeItem(PUSH_OWNER_KEY); } catch {}
     }
   }, [ready, user?.id]);
+  useEffect(() => {
+    const update = () => setOffline(isOffline());
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    // O service worker não guarda páginas nem dados: só mostra um aviso quando
+    // o app é aberto sem internet (public/sw.js).
+    if (process.env.NODE_ENV === "production" && window.isSecureContext && "serviceWorker" in navigator)
+      navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).catch(() => {});
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
   const lock = useRef(false),
     identity = useRef<string | null>(null),
     sequence = useRef(0),
@@ -168,7 +186,8 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
       setMembershipLoaded(true);
     } catch (e) {
       if (request === sequence.current) {
-        setError((e as Error).message);
+        // Sem internet o aviso fixo já explica; não somamos um erro de carregamento.
+        setError(isOffline() ? "" : (e as Error).message);
         setMembershipLoaded(true);
       }
     }
@@ -183,9 +202,12 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
     const focus = () => void refresh();
     if (demoMode) window.addEventListener("storage", storage);
     window.addEventListener("focus", focus);
+    // Ao voltar a conexão, busca o que o par alterou enquanto isso.
+    window.addEventListener("online", focus);
     return () => {
       window.removeEventListener("storage", storage);
       window.removeEventListener("focus", focus);
+      window.removeEventListener("online", focus);
     };
   }, [refresh]);
   useEffect(() => {
@@ -229,6 +251,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
     setBusy(true);
     setError("");
     try {
+      if (!demoMode && isOffline()) throw new Error(OFFLINE_SAVE);
       if (!demoMode && (!supabase || !user || !space))
         throw new Error("Aguarde o carregamento do espaço do casal.");
       await fn();
@@ -510,6 +533,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         busy,
         error,
         demo: demoMode,
+        offline: offline && !demoMode,
         user,
         spaceId: space,
         memberCount,

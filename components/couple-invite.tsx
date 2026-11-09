@@ -3,10 +3,16 @@ import { useRef, useState } from "react";
 import { Copy, Link2, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useDengo } from "./provider";
+import { vacantSlot } from "@/lib/lobby";
 
 /** The invitation is managed only in the couple settings, with the existing RPC. */
 export function CoupleInvite() {
-  const { demo, memberCount, memberSlot } = useDengo();
+  const { demo, memberCount, memberSlot, entries, preferences } = useDengo();
+  const vacant = vacantSlot(memberSlot);
+  const vacantName = preferences.names[vacant];
+  // Só avisa quando o lugar vago já tem histórico (alguém saiu do casal).
+  const inherits = entries.some((e) => e.assignee === vacantName || e.data?.payer === vacant
+    || e.created_by_slot === vacant);
   const [invite, setInvite] = useState<{ code: string; expires_at: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -33,9 +39,12 @@ export function CoupleInvite() {
     <h3><Users size={18} /> Convite</h3>
     {demo ? <p>O convite fica disponível ao entrar com sua conta.</p>
       : memberCount >= 2 ? <p>Os dois participantes já estão no lobby.</p>
-      : memberSlot !== 0 ? <p>Quem criou o lobby pode gerar o convite.</p>
       : <>
         <p>Compartilhe com seu par. O link pode ser usado uma vez e expira em sete dias.</p>
+        {inherits ? <p className="helper">
+          Quem entrar ocupa o lugar de <strong>{vacantName}</strong>: responsabilidades e pagamentos registrados
+          nesse nome passam a ser dessa pessoa. Para começar do zero com outra pessoa, saia e crie um novo espaço.
+        </p> : null}
         <button type="button" className="secondary" disabled={busy} onClick={() => void generate()}>
           <Link2 size={16} /> {busy ? "Gerando…" : invite ? "Gerar novo convite" : "Gerar convite"}
         </button>

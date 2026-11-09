@@ -11,10 +11,12 @@ import {
 } from "lucide-react";
 import { Shell } from "./shell";
 import { CoupleInvite } from "./couple-invite";
+import { LeaveCouple } from "./leave-couple";
 import { AppearanceStudio } from "./appearance-studio";
 import { useDengo } from "./provider";
 import { CATEGORIES, parseMoney } from "@/lib/finance";
 import { localToday } from "@/lib/model";
+import { vacantSlot } from "@/lib/lobby";
 export function Settings() {
   const {
     demo,
@@ -23,6 +25,7 @@ export function Settings() {
     savePreferences,
     signOut,
     memberCount,
+    memberSlot,
     refresh,
   } = useDengo();
   const [photo, setPhoto] = useState(preferences.photo),
@@ -142,7 +145,7 @@ export function Settings() {
           </div>
         </div>
         <h3>Participantes <span className="tag">{demo ? "Prévia" : `${memberCount}/2`}</span></h3>
-        {!demo && memberCount < 2 ? <p className="helper">Seu par ainda não entrou. O segundo nome é provisório até aceitar o convite.</p> : null}
+        {!demo && memberCount < 2 ? <p className="helper">Há um lugar livre no casal: {preferences.names[vacantSlot(memberSlot)]}. Quem aceitar o convite ocupa esse lugar e o nome é atualizado.</p> : null}
         <div className="form-grid">
           <label>
             Primeira pessoa
@@ -237,6 +240,7 @@ export function Settings() {
             Sair da conta
           </button>
         ) : null}
+        <LeaveCouple />
       </section>
     </Shell>
   );

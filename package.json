@@ -1,6 +1,6 @@
 {
   "name": "dengo",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "description": "Um lugar para cuidar da vida a dois",
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
@@ -8,6 +8,7 @@
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:sql": "scripts/test-sql.sh",
     "e2e:build": "NEXT_PUBLIC_SUPABASE_URL= NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY= NEXT_PUBLIC_DEMO_MODE=true next build",
     "e2e": "playwright test",
     "e2e:capturas": "playwright test e2e/capturas.spec.ts --project=iphone"
