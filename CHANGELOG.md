@@ -2,6 +2,12 @@
 
 As versões mais recentes aparecem primeiro. O README descreve o estado atual do aplicativo.
 
+## Dengo 2.8.1 — menos peso a cada atualização
+
+- **Foto do casal sob demanda:** o resumo do casal, buscado a cada atualização do app, deixa de trazer a foto (até ~400 KB; hoje 21 KB, o dobro de todos os registros). Ele traz só a versão da foto, e o app a busca com `couple_photo()` quando ela muda. Um gatilho impede que apps antigos ainda abertos apaguem a foto ao salvar outras preferências; remover a foto exige o marcador `photo_removed`, enviado pelo botão **Remover foto**. Banco: `supabase/couple-photo.sql`; testes em `tests/couple-photo.sql`.
+- **Histórico do agendador limitado:** limpeza diária de `cron.job_run_details`, mantendo 7 dias (`supabase/cron-log-cleanup.sql`). Eram ~1.500 linhas novas por dia, sem limite.
+- **Banco:** removido um espaço vazio e sem membros, criado na configuração inicial.
+
 ## Dengo 2.8 — sair do casal e aviso sem internet
 
 - **Sair do casal:** em Configurações → Conta e privacidade ou no lobby. Quem sai perde o acesso; os registros ficam com quem permanece. A última pessoa só sai digitando o nome do espaço, o que apaga o espaço e todos os registros.
