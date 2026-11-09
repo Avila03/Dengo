@@ -55,27 +55,14 @@
   box-shadow:0 1px 5px rgba(38,24,24,.06);
 }
 .clean-list-tools {display:flex;gap:3px;align-items:center;margin-left:auto;min-width:0;position:relative}
-.clean-search-toggle,.clean-filter-details>summary {
+.clean-search-toggle {
   min-width:39px;min-height:39px;display:inline-flex;
   align-items:center;justify-content:center;gap:6px;
   padding:7px 9px;border:1px solid transparent;border-radius:10px;
   background:transparent;color:var(--muted);cursor:pointer;
   font-size:11px;font-weight:600;
 }
-.clean-search-toggle:hover,.clean-filter-details>summary:hover {background:var(--rose-light);color:var(--rose)}
-.clean-filter-details>summary {list-style:none;white-space:nowrap}
-.clean-filter-details>summary::-webkit-details-marker {display:none}
-.clean-filter-details>summary:after {content:none}
-.clean-filter-details[open]>summary {background:var(--rose-light);color:var(--rose)}
-.clean-filter-details>.task-responsible {
-  position:absolute;right:0;top:calc(100% + 7px);z-index:16;
-  display:flex;flex-direction:column;gap:6px;
-  width:min(285px,calc(100vw - 64px));max-width:calc(100vw - 45px);
-  border:1px solid var(--line);border-radius:12px;padding:13px;
-  background:var(--paper);box-shadow:0 14px 40px rgba(30,25,25,.12);
-}
-.clean-filter-details>.task-responsible>span{font-size:11px}
-.clean-filter-details>.task-responsible select {width:100%;min-height:44px}
+.clean-search-toggle:hover {background:var(--rose-light);color:var(--rose)}
 .clean-expanded-search{
   flex-basis:100%;display:flex!important;align-items:center;
   gap:9px;width:100%;max-width:none!important;
@@ -126,12 +113,10 @@
   .clean-list-filters {gap:2px;padding:2px;flex:0 1 auto}
   .clean-list-filters button{padding:6px 9px;min-height:35px;font-size:11px}
   .clean-list-tools{gap:0}
-  .clean-list-tools .clean-search-toggle,.clean-list-tools .clean-filter-details>summary{
+  .clean-list-tools .clean-search-toggle{
     min-width:37px;min-height:39px;padding:6px;
   }
-  .clean-list-tools .clean-search-toggle span,
-  .clean-list-tools .clean-filter-details>summary{font-size:0}
-  .clean-list-tools .clean-filter-details>summary svg{width:18px;height:18px}
+  .clean-list-tools .clean-search-toggle span{font-size:0}
   .clean-list-tools .clean-search-toggle svg{width:18px;height:18px}
   .clean-list-panel>.entry-list>.entry{padding:10px 0}
   .clean-simple-empty .text-link,.clean-collection-empty .text-link{min-height:38px}
@@ -140,7 +125,7 @@
 @media(max-width:370px) {
   .clean-list-filters button{font-size:10px;padding:5px 7px}
   .clean-list-panel{padding:9px!important}
-  .clean-list-tools .clean-search-toggle,.clean-list-tools .clean-filter-details>summary{min-width:34px}
+  .clean-list-tools .clean-search-toggle{min-width:34px}
   .bottom-nav a{font-size:9px}
 }
 

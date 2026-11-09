@@ -37,19 +37,16 @@
   background:color-mix(in srgb,var(--nav-accent) 12%,var(--nav-bg));
   color:var(--nav-accent)
 }
-:root[data-dengo-theme] .sidebar .brand,
-:root[data-dengo-theme] .mobile-brand{color:var(--nav-accent)}
+:root[data-dengo-theme] .sidebar .brand{color:var(--nav-accent)}
 :root[data-dengo-theme] .sidebar .brand span,
 :root[data-dengo-theme] .sidebar .nav-label,
 :root[data-dengo-theme] .sidebar .couple,
 :root[data-dengo-theme] .topbar-right,
-:root[data-dengo-theme] .topbar .icon-btn,
-:root[data-dengo-theme] .topbar .lobby-shortcut{color:var(--nav-ink)}
+:root[data-dengo-theme] .topbar .icon-btn{color:var(--nav-ink)}
 :root[data-dengo-theme] .panel,
 :root[data-dengo-theme] .payment-overview-card,
 :root[data-dengo-theme] .clean-collection-empty,
 :root[data-dengo-theme] .clean-simple-empty,
-:root[data-dengo-theme] .clean-shopping-summary span,
 :root[data-dengo-theme] .payment-create-options button,
 :root[data-dengo-theme] .clean-sheet,
 :root[data-dengo-theme] .clean-sheet-head,
@@ -173,14 +170,9 @@
   border-top:3px solid var(--rose);
   box-shadow:0 7px 16px rgba(0,0,0,.045);
 }
-:root[data-dengo-font="modern"] :is(h1,h2,h3,.brand,.mobile-brand),
 :root[data-dengo-font="modern"] :is(.money-value,.payment-overview-value strong){
   font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
   font-weight:700;letter-spacing:-.045em;
-}
-:root[data-dengo-font="editorial"] :is(h1,h2,.brand,.mobile-brand){
-  font-family:Georgia,"Times New Roman",serif;
-  font-weight:700;letter-spacing:-.055em;
 }
 :root[data-dengo-font="editorial"] .eyebrow{
   letter-spacing:.20em;text-transform:uppercase;
