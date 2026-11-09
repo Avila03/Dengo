@@ -24,7 +24,7 @@ jobs:
       - run: npm run e2e:build
       - name: Fluxos, navegação e layout
         run: npx playwright test --grep-invert "capturas do tema"
-      - name: Capturas dos 13 temas
+      - name: Capturas dos dois cadernos
         if: always()
         run: npm run e2e:capturas
       - uses: actions/upload-artifact@v4

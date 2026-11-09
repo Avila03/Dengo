@@ -11,10 +11,11 @@ import { EventQuickView } from "./event-quick-view";
 import { eventDurationLabel } from "@/lib/calendar-anniversaries";
 import { calendarTopics, calendarEntryColor, eventTopicLabel } from "@/lib/calendar-topics";
 import { useDengo } from "./provider";
-import { dayLabel, localToday } from "@/lib/model";
+import { dayLabel, localToday, penOf } from "@/lib/model";
 import { calendarEntries, calendarDayMap, eventDaysUntil } from "@/lib/calendar";
 import { addCalendarDays, eventStartTimeLabel } from "@/lib/calendar-schedule";
-import { todayEntries, addDaysISO, weekDates, calendarMonthDays, shiftMonth } from "@/lib/today";
+import { todayEntries, addDaysISO, weekDates, calendarMonthDays, shiftMonth, daysTogether } from "@/lib/today";
+import { NotesBoard } from "./notes-board";
 import { money } from "@/lib/finance";
 import { activeReminders } from "@/lib/payment-plans";
 import type { Entry } from "@/lib/model";
@@ -69,6 +70,7 @@ export function Home() {
   const daysToSpecial = nextSpecial ? eventDaysUntil(today, nextSpecial.due) : 0;
   const displayed = allVisible ? selectedItems : selectedItems.slice(0, 3);
   const selectedIsToday = selected === today;
+  const together = daysTogether(preferences.since, today);
   const dateText = new Intl.DateTimeFormat("pt-BR", {
     weekday: "long", day: "numeric", month: "long",
   }).format(new Date(today + "T12:00:00"));
@@ -83,16 +85,27 @@ export function Home() {
   }
   return (
     <Shell>
-      <section className="day-head">
-        <div>
-          <span className="eyebrow">HOJE, JUNTOS</span>
-          <h1>Nosso dia<span className="rose">.</span></h1>
-          <p>{dateText} <span className="clean-day-count">· {todayPending} {todayPending === 1 ? "pendência" : "pendências"}</span></p>
+      <section className="day-head notebook-head">
+        <Link href="/configuracoes#casal" className="polaroid"
+          aria-label={preferences.photo ? "Foto do casal: abrir configurações" : "Adicionar a foto de vocês"}>
+          {preferences.photo ? (
+            <img src={preferences.photo} alt="" width={104} height={104} />
+          ) : (
+            <span className="polaroid-empty"><Heart size={24} aria-hidden="true" />foto de vocês</span>
+          )}
+          <span className="polaroid-caption">{preferences.title || "nosso cantinho"}</span>
+        </Link>
+        <div className="notebook-head-copy">
+          <span className="day-date">{dateText}</span>
+          <h1>Nosso <em className="marker">dia</em></h1>
+          <p>{together > 0 ? <>Juntos há <strong>{together.toLocaleString("pt-BR")}</strong> {together === 1 ? "dia" : "dias"}</> : "Hoje, juntos"}
+            <span className="clean-day-count"> · {todayPending} {todayPending === 1 ? "pendência" : "pendências"}</span></p>
         </div>
         <Link href={"/calendario?data=" + today + "&novo=1"} className="primary day-add" aria-label="Adicionar compromisso ao calendário">
           <Plus size={18} /> <span>Adicionar</span>
         </Link>
       </section>
+      <NotesBoard />
 
 
       {paymentReminders.length>0 ? (
@@ -235,7 +248,7 @@ export function Home() {
                       entry.data.eventRepeat !== "none" ? (
                         <span className="day-repeat-mark"><Repeat2 size={12} /> {entry.data.eventRepeat === "weekly" ? "Semanal" : entry.data.eventRepeat === "monthly" ? "Mensal" : "Anual"}</span>
                       ) : null}
-                    {" · " + entry.assignee}
+                    {" · "}<span className="pen-name" data-pen={penOf(entry.assignee, preferences.names)}>{entry.assignee}</span>
                     {entry.data?.location ? " · " + entry.data.location : ""}
                     {entry.kind === "expense" && entry.data?.amount ? " · " + money(entry.data.amount) : ""}
                   </small>

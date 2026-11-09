@@ -3,14 +3,11 @@ import path from "node:path";
 import { ROUTES, seedDemo, openDemo } from "./demo";
 
 /**
- * Gera uma captura de cada tela em cada um dos 13 temas, no tamanho do iPhone.
+ * Gera uma captura de cada tela nos dois cadernos, no tamanho do iPhone.
  * Não compara pixels: serve de referência para revisar mudanças visuais
  * (por exemplo, a consolidação do CSS) comparando os artefatos do CI antes e depois.
  */
-const ALL_THEMES = [
-  "original", "noite", "lavanda", "salvia", "iris", "grafite", "floresta",
-  "ametista", "cobalto", "atelier", "fucsia", "neon", "mono",
-];
+const ALL_THEMES = ["caderno", "caderno-noite"];
 // CAPTURAS_TEMAS=original,noite limita os temas (útil no circuito de revisão visual).
 const THEMES = process.env.CAPTURAS_TEMAS ? process.env.CAPTURAS_TEMAS.split(",") : ALL_THEMES;
 const DIR = process.env.CAPTURAS_DIR || "capturas";

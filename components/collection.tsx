@@ -31,6 +31,7 @@ import {
   localToday,
   isOverdue,
   TOGETHER,
+  penOf,
   type Entry,
   type Draft,
 } from "@/lib/model";
@@ -139,7 +140,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
       <section className={embedded ? "clean-embedded-collection-head" : "page-heading clean-task-heading"}>
         {!embedded ? (
           <div>
-            <h1>{isTask ? "Responsabilidades" : "Lista de compras"}<span className="rose">.</span></h1>
+            <h1>{isTask ? "Combinados" : "Lista de compras"}<span className="rose">.</span></h1>
             <p>{all.length === 0
               ? "Um lugar simples para organizar o que precisa ser feito."
               : pending + (isTask ? " pendentes" : " para comprar") +
@@ -314,7 +315,7 @@ export function Collection({ kind, embedded = false }: { kind: "shopping" | "tas
                     {isTask && subtaskProgress(entries, e.id).total ? <small className="subtask-count">{subtaskProgress(entries,e.id).done}/{subtaskProgress(entries,e.id).total} subtarefas concluídas</small> : null}
                     {!isTask && quantityLabel(e) ? <p className="shopping-quantity">{quantityLabel(e)}{e.data?.unitPrice !== undefined ? ` · ${money(e.data.unitPrice)} por ${e.data.unit === "l" ? "litro" : e.data.unit === "ml" ? "mL" : e.data.unit === "un" ? "unidade" : e.data.unit}` : ""}</p> : null}
                     <div className="entry-meta">
-                      <span className="tag">{e.assignee}</span>
+                      <span className="tag pen-tag" data-pen={penOf(e.assignee, names)}>{e.assignee}</span>
                       {!isTask ? (
                         <span className={"tag purchase-status " + purchaseState}>
                           {{ planned: "A comprar", bought: "Comprado sem gasto",

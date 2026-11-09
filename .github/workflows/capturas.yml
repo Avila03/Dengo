@@ -23,7 +23,7 @@ jobs:
       - run: npm run e2e:build
       - name: Capturas
         env:
-          CAPTURAS_TEMAS: ${{ vars.CAPTURAS_TEMAS || 'original,noite' }}
+          CAPTURAS_TEMAS: ${{ vars.CAPTURAS_TEMAS || 'caderno,caderno-noite' }}
         run: npx playwright test e2e/capturas.spec.ts --project=iphone --reporter=list || true
       - name: Gravar na branch de capturas
         run: |

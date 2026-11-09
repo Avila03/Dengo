@@ -4,13 +4,14 @@ import { expect, type Page } from "@playwright/test";
 export const ENTRIES_KEY = "dengo.demo.v1";
 export const PREFS_KEY = "dengo.preferences.v1";
 export const APPEARANCE_KEY = "dengo:appearance:v1:demo";
+export const NOTES_KEY = "dengo.demo.notes.v1";
 
 export const ROUTES = [
   { path: "/", heading: /Nosso dia|Hoje/i, nav: "Nosso dia" },
-  { path: "/compromissos", heading: /Responsabilidades/i, nav: "Responsabilidades" },
-  { path: "/compras", heading: /Financeiro|Compras|Lista de compras/i, nav: "Financeiro" },
+  { path: "/compromissos", heading: /Combinados/i, nav: "Combinados" },
+  { path: "/compras", heading: /Caderneta/i, nav: "Caderneta" },
   { path: "/lugares", heading: /lugares/i, nav: "Lugares" },
-  { path: "/filmes", heading: /Filmes/i, nav: "Filmes" },
+  { path: "/filmes", heading: /Sessão a dois/i, nav: "Filmes" },
   { path: "/configuracoes", heading: /espaço|Configura/i, nav: null },
   { path: "/notificacoes", heading: /Notifica|Avisos/i, nav: null },
 ] as const;
@@ -58,9 +59,16 @@ export async function seedDemo(page: Page, options: SeedOptions = {}) {
           title: "Casa de teste", names: ["Ana", "Bruno"], since: "2022-03-14", photo: "", budgets: {},
         }));
       if (theme) localStorage.setItem(keys.appearance, JSON.stringify({ theme }));
+      if (!empty && localStorage.getItem(keys.notes) === null) {
+        const ago = (min: number) => new Date(Date.now() - min * 60000).toISOString();
+        localStorage.setItem(keys.notes, JSON.stringify([
+          { id: "e2e-note-1", author_slot: 1, body: "Comprei o café! Hoje o jantar é por minha conta.", created_at: ago(40) },
+          { id: "e2e-note-2", author_slot: 0, body: "Te amo, boa prova!", created_at: ago(60 * 26) },
+        ]));
+      }
     },
     {
-      keys: { entries: ENTRIES_KEY, prefs: PREFS_KEY, appearance: APPEARANCE_KEY },
+      keys: { entries: ENTRIES_KEY, prefs: PREFS_KEY, appearance: APPEARANCE_KEY, notes: NOTES_KEY },
       theme: options.theme ?? null,
       empty: !!options.empty,
     },

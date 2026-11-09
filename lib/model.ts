@@ -386,3 +386,11 @@ export function validateDraft(d: Draft) {
       throw new Error("A divisão deve estar entre 0 e 100%.");
   }
 }
+/** "Caneta" de quem cuida: primeira pessoa, segunda, o casal ou outro nome (antigo). */
+export type Pen = "a" | "b" | "both" | "other";
+export function penOf(assignee: string, names: readonly string[]): Pen {
+  if (assignee === TOGETHER) return "both";
+  if (assignee === names[0]) return "a";
+  if (assignee === names[1]) return "b";
+  return "other";
+}

@@ -19,6 +19,7 @@ import { AppearanceProvider } from "./appearance-provider";
 import { supabase, demoMode } from "@/lib/supabase";
 import { Lobby } from "./lobby";
 import { syncEntries } from "@/lib/entry-sync";
+import { type Note, NOTES_DEMO_KEY, NOTES_LIMIT, noteBodyError, readDemoNotes } from "@/lib/notes";
 import { isOffline, OFFLINE_SAVE } from "@/lib/connection";
 import { type CalendarTopic, validateCalendarTopics } from "@/lib/calendar-topics";
 import {
@@ -35,6 +36,12 @@ import {
 } from "@/lib/model";
 type Context = {
   entries: Entry[];
+  /** Bilhetes mais recentes do casal, do mais novo para o mais antigo. */
+  notes: Note[];
+  postNote: (body: string) => Promise<boolean>;
+  deleteNote: (id: string) => Promise<void>;
+  /** Se o bilhete foi escrito por quem está usando o app (só esses podem ser apagados). */
+  ownNote: (note: Note) => boolean;
   names: string[];
   preferences: Preferences;
   busy: boolean;
@@ -75,7 +82,8 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
     [memberCount, setMemberCount] = useState(0),
     [memberSlot, setMemberSlot] = useState(0),
     [lobbyOpen, setLobbyOpen] = useState(true),
-    [offline, setOffline] = useState(false);
+    [offline, setOffline] = useState(false),
+    [notes, setNotes] = useState<Note[]>([]);
   useEffect(() => {
     if (!ready || demoMode) return;
     let owner: string | null = null;
@@ -119,6 +127,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         synced.current = { space: "", entries: [] };
         photo.current = { space: "", version: "", data: "" };
         setEntries([]);
+        setNotes([]);
         setSpace("");
         setMembershipLoaded(false);
         setLobbyOpen(true);
@@ -152,6 +161,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
     try {
       if (demoMode) {
         setEntries(readEntries(localStorage.getItem(STORAGE_KEY)));
+        setNotes(readDemoNotes(localStorage.getItem(NOTES_DEMO_KEY)));
         const raw = localStorage.getItem(PREFS_KEY);
         if (raw) {
           const p = JSON.parse(raw);
@@ -178,7 +188,9 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
       if (request !== sequence.current) return;
       synced.current = { space: home.space_id, entries: items };
       const couplePhoto = await loadCouplePhoto(home);
+      const loadedNotes = await loadNotes(home.space_id);
       if (request !== sequence.current) return;
+      if (loadedNotes) setNotes(loadedNotes);
       setSpace(home.space_id);
       setMemberSlot(home.slot);
       setMemberCount(home.members);
@@ -206,6 +218,16 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
    * de `couple_photo` apenas quando muda. Bancos sem essa versão ainda mandam a
    * foto dentro das preferências, e ela é usada diretamente.
    */
+  /** Bilhetes recentes. Sem a tabela (banco antigo) ou em erro, mantém os atuais. */
+  async function loadNotes(spaceId: string): Promise<Note[] | null> {
+    const { data, error } = await supabase!
+      .from("notes")
+      .select("id,author_slot,body,created_at,created_by")
+      .eq("space_id", spaceId)
+      .order("created_at", { ascending: false })
+      .limit(NOTES_LIMIT);
+    return error ? null : (data as Note[]);
+  }
   async function loadCouplePhoto(home: { space_id: string; photo_version?: string; preferences?: { photo?: string } }) {
     if (typeof home.photo_version !== "string") return home.preferences?.photo ?? "";
     const cached = photo.current;
@@ -256,6 +278,11 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
       )
       .on(
         "postgres_changes",
+        { event: "*", schema: "public", table: "notes", filter: `space_id=eq.${space}` },
+        changed,
+      )
+      .on(
+        "postgres_changes",
         {
           event: "UPDATE",
           schema: "public",
@@ -288,6 +315,38 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
       lock.current = false;
       setBusy(false);
     }
+  }
+  async function postNote(body: string) {
+    const problem = noteBodyError(body);
+    if (problem) { setError(problem); return false; }
+    return action(async () => {
+      if (demoMode) {
+        const note: Note = { id: crypto.randomUUID(), author_slot: 0, body: body.trim(), created_at: new Date().toISOString() };
+        const next = [note, ...readDemoNotes(localStorage.getItem(NOTES_DEMO_KEY))].slice(0, NOTES_LIMIT);
+        localStorage.setItem(NOTES_DEMO_KEY, JSON.stringify(next));
+        setNotes(next);
+        return;
+      }
+      // Autor e lugar são definidos pelo banco a partir da sessão.
+      const { data, error } = await supabase!.from("notes")
+        .insert({ space_id: space, author_slot: memberSlot, body: body.trim() })
+        .select("id,author_slot,body,created_at,created_by").single();
+      if (error) throw new Error("Não foi possível colar o bilhete. Tente de novo.");
+      setNotes((list) => [data as Note, ...list.filter((n) => n.id !== (data as Note).id)].slice(0, NOTES_LIMIT));
+    });
+  }
+  async function deleteNote(id: string) {
+    await action(async () => {
+      if (demoMode) {
+        const next = readDemoNotes(localStorage.getItem(NOTES_DEMO_KEY)).filter((n) => n.id !== id);
+        localStorage.setItem(NOTES_DEMO_KEY, JSON.stringify(next));
+        setNotes(next);
+        return;
+      }
+      const { error } = await supabase!.from("notes").delete().eq("id", id).eq("created_by", user!.id);
+      if (error) throw new Error("Não foi possível tirar o bilhete. Tente de novo.");
+      setNotes((list) => list.filter((n) => n.id !== id));
+    });
   }
   function appendSuccessor(list: Entry[], entry: Entry) {
     const next = entry.done ? successor(entry, preferences.names) : null;
@@ -555,6 +614,10 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
     <Data.Provider
       value={{
         entries,
+        notes,
+        postNote,
+        deleteNote,
+        ownNote: (note: Note) => demoMode || (!!user && note.created_by === user.id),
         names: preferences.names,
         preferences,
         busy,

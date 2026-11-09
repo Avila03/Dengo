@@ -27,7 +27,7 @@ test("shopping header is not duplicated by an embedded list heading", () => {
   assert.match(source, /className=\{embedded \? "clean-embedded-collection-head"/);
   assert.doesNotMatch(source, /className="shopping-inline-title"/);
   const hub=read("components/shopping-hub.tsx");
-  assert.match(hub, /<h1>Financeiro/);
+  assert.match(hub, /<h1>Caderneta/);
   assert.match(hub, /className="purchases-tabs purchases-main-choice"/);
   assert.doesNotMatch(hub, /className="payment-section-nav"/);
 });
@@ -35,7 +35,7 @@ test("mobile navigation avoids long wrap and refresh is available in settings", 
   const shell=read("components/shell.tsx");
   const settings=read("components/settings.tsx");
   const style=read("app/clarity.css");
-  assert.match(shell, /label: "Responsabilidades"/);
+  assert.match(shell, /label: "Combinados"/);
   assert.match(style, /\.bottom-nav a span\{white-space:nowrap/);
   assert.match(style, /\.topbar-refresh\{display:none!important\}/);
   assert.match(settings, /Atualizar registros/);
