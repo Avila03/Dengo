@@ -1,0 +1,37 @@
+name: Capturas para revisão visual
+# Em branches redesign/**, gera capturas no tamanho do iPhone e grava na branch
+# capturas-<nome da branch>, para revisar o visual sem baixar artefatos.
+on:
+  push:
+    branches: ["redesign/**"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  capturas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm install --no-save --no-audit --no-fund @playwright/test@1.63.0
+      - run: npx playwright install --with-deps webkit
+      - run: npm run e2e:build
+      - name: Capturas
+        env:
+          CAPTURAS_TEMAS: ${{ vars.CAPTURAS_TEMAS || 'caderno,caderno-noite' }}
+        run: npx playwright test e2e/capturas.spec.ts --project=iphone --reporter=list || true
+      - name: Gravar na branch de capturas
+        run: |
+          BRANCH="capturas-${GITHUB_REF_NAME//\//-}"
+          cd capturas
+          git init -q
+          git checkout -q -b "$BRANCH"
+          echo "$GITHUB_SHA" > COMMIT
+          git add .
+          git -c user.name="dengo-ci" -c user.email="dengo-ci@users.noreply.github.com" commit -qm "Capturas de $GITHUB_SHA"
+          git push -fq "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" "$BRANCH"

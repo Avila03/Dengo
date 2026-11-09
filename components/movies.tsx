@@ -251,8 +251,8 @@ export function Movies() {
   return (
     <Shell>
       <PageHeading
-        eyebrow="O PRÓXIMO SÓ MAIS UM"
-        title="Filmes & séries"
+        eyebrow="FILMES E SÉRIES"
+        title="Sessão a dois"
         description="Tudo que queremos assistir, estamos acompanhando e já vimos."
       >
         <button type="button" className="primary" onClick={() => beginManual(null)}>

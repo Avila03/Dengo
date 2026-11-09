@@ -72,3 +72,16 @@ test("tela vazia mostra só um botão de criar", async ({ page }) => {
   await expect(page.getByRole("button", { name: /Nova responsabilidade/ })).toHaveCount(1);
   await expect(page.getByRole("group", { name: "Filtrar lista" })).toHaveCount(0);
 });
+
+test("cola, mostra e tira um bilhete", async ({ page }) => {
+  await seedDemo(page, { empty: true });
+  await openDemo(page, "/");
+  const campo = page.getByLabel(/Escrever um bilhete/);
+  await campo.fill("Passa no mercado na volta?");
+  await page.getByRole("button", { name: "Colar" }).click();
+  const bilhete = page.locator(".note-latest");
+  await expect(bilhete).toContainText("Passa no mercado na volta?");
+  await expect(campo).toHaveValue("");
+  await bilhete.getByRole("button", { name: "Tirar este bilhete" }).click();
+  await expect(page.locator(".note-latest")).toHaveCount(0);
+});

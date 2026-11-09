@@ -47,3 +47,10 @@ export function shiftMonth(month: string, delta: number): string {
   const next = new Date(year, mm - 1 + delta, 1);
   return next.getFullYear() + "-" + String(next.getMonth() + 1).padStart(2, "0");
 }
+/** Dias desde a data em que o casal começou (inclui o dia de hoje como "1 dia" só a partir do dia seguinte). */
+export function daysTogether(since: string, today: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(since) || since > today) return 0;
+  const start = Date.UTC(+since.slice(0, 4), +since.slice(5, 7) - 1, +since.slice(8, 10));
+  const end = Date.UTC(+today.slice(0, 4), +today.slice(5, 7) - 1, +today.slice(8, 10));
+  return Math.round((end - start) / 86400000);
+}

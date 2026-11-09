@@ -20,10 +20,10 @@ import { useDengo } from "./provider";
 import { OFFLINE_BANNER } from "@/lib/connection";
 const links = [
   { href: "/", label: "Nosso dia", icon: House },
-  { href: "/compromissos", label: "Responsabilidades", icon: ListChecks },
-  { href: "/compras", label: "Financeiro", icon: Wallet },
+  { href: "/compromissos", label: "Combinados", icon: ListChecks },
+  { href: "/compras", label: "Caderneta", icon: Wallet },
   { href: "/lugares", label: "Nossos lugares", icon: MapPin },
-  { href: "/filmes", label: "Filmes e séries", icon: Clapperboard },
+  { href: "/filmes", label: "Sessão a dois", icon: Clapperboard },
 ];
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
@@ -31,8 +31,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const mobileLinks = links.map((link) => ({
     ...link,
     label: link.href === "/lugares" ? "Lugares" :
-      link.href === "/filmes" ? "Filmes" :
-      link.href === "/compromissos" ? "Responsa\u00adbilidades" : link.label,
+      link.href === "/filmes" ? "Filmes" : link.label,
   }));
   const mobileActive = (href: string) =>
     href === "/" ? path === "/" || path === "/calendario" : path === href;
@@ -43,7 +42,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </a>
       <aside className="sidebar">
         <Link href="/" className="brand-link" aria-label="Dengo — Nosso dia"><Brand tagline /></Link>
-        <div className="nav-label">NOSSO COTIDIANO</div>
+        <div className="nav-label">NOSSO CADERNO</div>
         <nav aria-label="Navegação principal">
           {links.map(({ href, label, icon: Icon }) => (
             <Link
@@ -152,7 +151,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             key={href}
             className={mobileActive(href) ? "active" : ""}
             aria-current={mobileActive(href) ? "page" : undefined}
-            aria-label={href === "/compromissos" ? "Responsabilidades" : label}
+            aria-label={label}
           >
             <Icon size={22} />
             <span>{label}</span>

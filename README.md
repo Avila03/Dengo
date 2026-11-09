@@ -1,17 +1,17 @@
 # Dengo
 
-Um lugar para cuidar da vida a dois: agenda, responsabilidades, finanças, lugares e filmes de um casal, com login individual e dados compartilhados. Feito para o iPhone (instalável na tela inicial), funciona também no computador.
+O caderno de vocês dois: um lugar para cuidar da vida a dois, com agenda, responsabilidades, finanças, lugares e filmes de um casal, com login individual e dados compartilhados. Feito para o iPhone (instalável na tela inicial), funciona também no computador.
 
-**Versão atual:** 2.8.1 · [Histórico de versões](CHANGELOG.md)
+**Versão atual:** 2.9 · [Histórico de versões](CHANGELOG.md)
 
 ## O que o Dengo faz
 
-- **Nosso dia:** semana e calendário mensal com tópicos coloridos, compromissos que se repetem, datas especiais com contagem regressiva e quanto tempo o casal está junto.
-- **Responsabilidades:** tarefas com responsável (cada pessoa ou “Nós dois”), prazo, repetição com alternância, subtarefas e filtros por pessoa.
-- **Financeiro:** lista de compras com quantidade e preço, despesas com divisão personalizada, assinaturas, parcelamentos, contas fixas, vencimentos, metas do casal e saldo entre os dois.
-- **Lugares e filmes:** coleções, favoritos e visitas; lista de filmes e séries com status, episódio atual, notas e catálogo TMDB.
+- **Nosso dia:** a foto de vocês, os bilhetes do casal, semana e calendário mensal com tópicos coloridos, compromissos que se repetem, datas especiais com contagem regressiva e quanto tempo o casal está junto.
+- **Combinados:** responsabilidades com responsável (cada pessoa ou “Nós dois”), prazo, repetição com alternância, subtarefas e filtros por pessoa.
+- **Caderneta:** lista de compras com quantidade e preço, despesas com divisão personalizada, assinaturas, parcelamentos, contas fixas, vencimentos, metas do casal e saldo entre os dois.
+- **Nossos lugares e Sessão a dois:** coleções, favoritos e visitas; filmes e séries com status, episódio atual, notas e catálogo TMDB.
 - **Avisos:** oito tipos de notificação Web Push com preferências por pessoa, horário de silêncio e histórico no sininho.
-- **Aparência:** 13 temas e personalização individual de cartões, fundos, tipografia e ícones.
+- **Aparência:** o Caderno de dia e o Caderno à noite; cada pessoa escolhe o seu. Cada um tem sua “caneta”: a primeira pessoa em azul-tinta, a segunda em verde e o casal em vermelho.
 - **Casal:** login individual, convite por link e saída do casal; os registros ficam com quem permanece.
 
 ## Como é feito
@@ -61,7 +61,7 @@ A pasta `e2e/` tem testes Playwright que abrem o Dengo no **modo demonstração*
 - campos de formulário têm fonte de 16 px ou mais (evita o zoom automático do Safari);
 - criar, concluir, reabrir, filtrar e abrir os detalhes de uma responsabilidade.
 
-O GitHub Actions (`.github/workflows/e2e.yml`) roda a suíte a cada push e PR e publica o artefato **capturas-iphone**, com as sete telas em cada um dos 13 temas. Compare as capturas de dois PRs para revisar mudanças visuais.
+O GitHub Actions (`.github/workflows/e2e.yml`) roda a suíte a cada push e PR e publica o artefato **capturas-iphone**, com as sete telas e alguns estados (formulário, detalhes, pagamentos, calendário) nos dois cadernos. Em branches `redesign/**`, o workflow **Capturas para revisão visual** grava essas imagens na branch `capturas-<branch>`. Compare as capturas de dois PRs para revisar mudanças visuais.
 
 Para rodar localmente:
 
@@ -79,7 +79,7 @@ npm run e2e:capturas
 
 Projeto: `jgntmeifdaghykiodfee`, região São Paulo, separado do Mesa Marcada.
 
-A estrutura e as políticas de `setup.sql` e `lobby.sql` já foram aplicadas nesse projeto. **Não executar esses scripts novamente nele.** Para outro banco vazio, executar `setup.sql` e depois `lobby.sql`; em seguida `couple-planning.sql` os scripts de push (`push.sql`, `push-lockdown.sql`, `push-signed-dispatch.sql` e `push-schedule.sql`), `cron-log-cleanup.sql`, `leave-couple.sql` e, por último, `couple-photo.sql`. Os detalhes de cada script estão no [histórico de versões](CHANGELOG.md).
+A estrutura e as políticas de `setup.sql` e `lobby.sql` já foram aplicadas nesse projeto. **Não executar esses scripts novamente nele.** Para outro banco vazio, executar `setup.sql` e depois `lobby.sql`; em seguida `couple-planning.sql` os scripts de push (`push.sql`, `push-lockdown.sql`, `push-signed-dispatch.sql` e `push-schedule.sql`), `cron-log-cleanup.sql`, `leave-couple.sql`, `couple-photo.sql` e, por último, `notes.sql`. Os detalhes de cada script estão no [histórico de versões](CHANGELOG.md).
 
 Para ativar o uso do casal:
 
@@ -109,6 +109,10 @@ Em **Configurações → Conta e privacidade** (ou no lobby), cada pessoa pode s
 Testes em `tests/leave-couple.sql`, no mesmo formato de `tests/lobby.sql` (transação revertida).
 
 Todos os testes SQL rodam no GitHub Actions (`.github/workflows/sql.yml`) num Postgres 16 descartável, com uma simulação mínima do Supabase (`tests/supabase-shim.sql`). Localmente: `PGHOST=… PGUSER=… npm run test:sql`.
+
+## Bilhetes
+
+Recados curtos de um para o outro (até 280 caracteres), em `public.notes` (`supabase/notes.sql`). O mais recente aparece como post-it no **Nosso dia**; os anteriores ficam logo abaixo. Só o casal lê e escreve, a autoria e o lugar vêm da sessão, ninguém edita um bilhete colado e cada um só tira os próprios. Chegam em tempo real ao par. Testes em `tests/notes.sql`.
 
 ## Sem internet
 

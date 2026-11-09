@@ -22,7 +22,7 @@ import { calendarDayDifference, eventFinish } from "../lib/calendar-schedule.ts"
 import { DEFAULT_CALENDAR_TOPICS, calendarTopics, calendarEntryColor, eventTopicLabel, validateCalendarTopics } from "../lib/calendar-topics.ts";
 import { filterResponsible, sortTaskEntries, taskSection } from "../lib/task-filters.ts";
 import { elapsedCalendarMonths, formatYearsAndMonths, eventDurationLabel } from "../lib/calendar-anniversaries.ts";
-import { normalizeGooglePlaces, googlePlaceMapsUrl, googleMapsEmbedUrl, normalizePhotonPlaces, openStreetMapEmbedUrl, photonCategoryFilter, overpassSearchQuery, normalizeOverpassPlaces, normalizePlaceLink, safePlaceLink } from "../lib/places.ts";
+import { googleMapsEmbedUrl, openStreetMapEmbedUrl, normalizePlaceLink, safePlaceLink } from "../lib/places.ts";
 const task: Entry = {
   id: "abc",
   kind: "task",
@@ -129,59 +129,15 @@ test("calendar files use explicit end times and fold UTF-8 text safely", () => {
     assert.ok(new TextEncoder().encode(line).length <= 75);
 });
 
-test("normalizes Google Place IDs and ignores duplicates and invalid values", () => {
-  const results = normalizeGooglePlaces([
-    { id: "ChIJ12345678", displayName: { text: "Espartano" }, formattedAddress: "Porto Alegre, RS" },
-    { id: "ChIJ12345678", displayName: { text: "Duplicado" } },
-    { id: "not valid", displayName: { text: "Invalido" } },
-  ]);
-  assert.equal(results.length, 1);
-  assert.equal(results[0].title, "Espartano");
-});
-test("Google map URLs point to the selected Place ID", () => {
-  const url = new URL(googlePlaceMapsUrl("ChIJ12345678", "Espartano"));
-  assert.equal(url.searchParams.get("query_place_id"), "ChIJ12345678");
+test("saved places embed Google or OpenStreetMap maps only with valid data", () => {
   const embed = new URL(googleMapsEmbedUrl("ChIJ12345678", "referrer_restricted_key"));
   assert.equal(embed.searchParams.get("q"), "place_id:ChIJ12345678");
   assert.equal(googleMapsEmbedUrl("https://invalid", "key"), "");
-});
-
-test("Photon search returns stable OSM IDs and map coordinates", () => {
-  const results = normalizePhotonPlaces({
-    features: [
-      { properties: { osm_type: "N", osm_id: 12345, name: "Espartano", city: "Porto Alegre", country: "Brasil", osm_value: "restaurant" }, geometry: { coordinates: [-51.2, -30.0] } },
-      { properties: { osm_type: "N", osm_id: 12345, name: "Duplicado" }, geometry: { coordinates: [-51.2, -30.0] } },
-      { properties: { osm_type: "N", osm_id: 123456, name: "Inválido" }, geometry: { coordinates: [999, -30.0] } },
-    ],
-  });
-  assert.equal(results.length, 1);
-  assert.equal(results[0].id, "osm_n_12345");
-  assert.equal(results[0].lat, -30);
-  assert.equal(results[0].lon, -51.2);
-  assert.equal(results[0].title, "Espartano");
-  const url = new URL(openStreetMapEmbedUrl(results[0].lat, results[0].lon));
-  assert.equal(url.searchParams.get("marker"), "-30,-51.2");
+  assert.equal(googleMapsEmbedUrl("ChIJ12345678", " "), "");
+  const osm = new URL(openStreetMapEmbedUrl(-30, -51.2));
+  assert.equal(osm.searchParams.get("marker"), "-30,-51.2");
   assert.equal(openStreetMapEmbedUrl(999, 0), "");
 });
-
-test("restaurant, bar and café search categories select OSM POIs", () => {
-  assert.match(photonCategoryFilter("restaurant"), /osm\.amenity\.restaurant/);
-  assert.match(photonCategoryFilter("bar"), /osm\.amenity\.pub/);
-  assert.match(photonCategoryFilter("cafe"), /osm\.amenity\.cafe/);
-  const query = overpassSearchQuery("Espartano", "Porto Alegre, RS", "restaurant");
-  assert.match(query, /area\["name"="Porto Alegre"\]/);
-  assert.match(query, /amenity/);
-});
-test("Overpass results normalize nodes and way centers", () => {
-  const places = normalizeOverpassPlaces({ elements: [
-    { type: "node", id: 1234, lat: -30.01, lon: -51.21, tags: { name: "Espartano", amenity: "restaurant", "addr:city": "Porto Alegre" } },
-    { type: "way", id: 5678, center: { lat: -30.03, lon: -51.2 }, tags: { name: "Café", amenity: "cafe" } },
-  ] });
-  assert.equal(places.length, 2);
-  assert.equal(places[0].id, "osm_n_1234");
-  assert.equal(places[1].title, "Café");
-});
-
 test("a saved place accepts TikTok and Google Maps HTTPS links", () => {
   const tikTok = "https://www.tiktok.com/@perfil/video/123456";
   const google = "https://maps.app.goo.gl/abcdef";

@@ -4,7 +4,7 @@ import {createContext,useContext,useEffect,useRef,useState,type ReactNode} from 
 import {supabase} from "@/lib/supabase";
 import type {User} from "@supabase/supabase-js";
 import {
-  type Appearance,DEFAULT_APPEARANCE,parseAppearance,appearanceStorageKey,
+  type Appearance,DEFAULT_APPEARANCE,parseAppearance,appearanceStorageKey,themeById,
 } from "@/lib/appearance";
 
 type AppearanceContext = {
@@ -38,12 +38,8 @@ export function AppearanceProvider({children,user,demo}:{children:ReactNode;user
     try {legacyLocal=window.localStorage.getItem("dengo.theme.v1:"+userId);}
     catch {/* Optional storage. */}
     const legacyTheme=user?.user_metadata?.dengo_theme??legacyLocal;
-    const previousId:Record<string,Appearance["theme"]>={
-      original:"original",noite:"noite",lavanda:"lavanda",salvia:"salvia",
-      inverno:"cobalto",ouro:"grafite",
-    };
-    const previous=typeof legacyTheme==="string"?previousId[legacyTheme]:undefined;
-    const selected=parseAppearance(remote??local??(previous?{theme:previous}:null));
+    // Temas antigos (Studio ou anteriores) viram o Caderno de dia ou à noite.
+    const selected=parseAppearance(remote??local??(typeof legacyTheme==="string"?{theme:legacyTheme}:null));
     lastRemote.current=remote == null ? "" : JSON.stringify(selected);
     setCurrent(selected);
     setStatus("idle");
@@ -54,31 +50,17 @@ export function AppearanceProvider({children,user,demo}:{children:ReactNode;user
 
   useEffect(()=>{
     const root=document.documentElement;
-    root.dataset.dengoTheme=appearance.theme;
-    root.dataset.dengoCards=appearance.cards;
-    root.dataset.dengoBackground=appearance.background;
-    root.dataset.dengoFont=appearance.font;
-    root.dataset.dengoIcons=appearance.icons;
-    const dark=["noite","salvia","iris","grafite","floresta","ametista","neon"].includes(appearance.theme);
-    root.style.colorScheme=dark?"dark":"light";
-    const color=document.querySelector('meta[name="theme-color"]');
-    if(color)color.setAttribute("content",({
-      original:"#F9F7F4",noite:"#0C0E15",lavanda:"#EEE8FB",salvia:"#0E261D",
-      iris:"#292F58",grafite:"#222629",floresta:"#102C24",ametista:"#271B3D",
-      cobalto:"#1643D8",atelier:"#F8F7F4",fucsia:"#F52C98",neon:"#090B15",
-      mono:"#FFFFFF",
-    } as Record<string,string>)[appearance.theme]);
+    const theme=themeById(appearance.theme);
+    root.dataset.dengoTheme=theme.id;
+    root.style.colorScheme=theme.dark?"dark":"light";
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content",theme.background);
   },[appearance]);
 
   useEffect(()=>()=> {
     const root=document.documentElement;
     delete root.dataset.dengoTheme;
-    delete root.dataset.dengoCards;
-    delete root.dataset.dengoBackground;
-    delete root.dataset.dengoFont;
-    delete root.dataset.dengoIcons;
     root.style.removeProperty("color-scheme");
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#f9f7f4");
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content",themeById(DEFAULT_APPEARANCE.theme).background);
   },[]);
 
   useEffect(()=>{

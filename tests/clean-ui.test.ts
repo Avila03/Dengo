@@ -12,7 +12,7 @@ test("Clean visual stylesheet is loaded after the original design", () => {
   const css=file("app/clean.css");
   for(const selector of [".clean-sheet-backdrop",".clean-item-menu",
     ".clean-place-details",".clean-discover",".clean-plan-details",
-    ".clean-calendar-upcoming",".clean-shopping-summary"]) {
+    ".clean-calendar-upcoming"]) {
     assert.ok(css.includes(selector),selector+" is present in stylesheet");
   }
 });

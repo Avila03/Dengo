@@ -28,7 +28,7 @@ export function ShoppingHub() {
     <Shell>
       <header className="purchases-header purchases-simple-head">
         <div>
-          <h1>Financeiro<span className="rose">.</span></h1>
+          <h1>Caderneta<span className="rose">.</span></h1>
           <p>As compras e os pagamentos de vocês, em ordem.</p>
         </div>
       </header>

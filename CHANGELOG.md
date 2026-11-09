@@ -2,6 +2,17 @@
 
 As versões mais recentes aparecem primeiro. O README descreve o estado atual do aplicativo.
 
+## Dengo 2.9 — Caderno de nós dois
+
+- **Nova linguagem visual:** o Dengo vira o caderno do casal. Papel creme e tinta azul-marinho (o azul do ícone), títulos em Instrument Serif, interface em Work Sans e escrita à mão (Caveat) só no que vocês escrevem: nomes, bilhetes e legendas. As fontes são servidas pelo próprio site.
+- **Dois cadernos no lugar do Dengo Studio:** Caderno de dia e Caderno à noite, escolha individual. Temas antigos migram sozinhos (os escuros para o Caderno à noite). Contraste AA verificado por teste em todas as cores de texto, canetas e botões.
+- **Cada um com sua caneta:** o nome de quem cuida aparece à mão, na cor da pessoa (azul-tinta, verde) ou do casal (vermelho), nas listas e na agenda do dia.
+- **Gestos de papel:** o que foi concluído é riscado de vermelho, o atrasado ganha marca-texto, etiquetas viram carimbos, filtros principais viram abas de caderno, o acerto entre vocês é um recibo picotado e os lugares são cartões-postais.
+- **Nosso dia:** a foto do casal como polaroid, “Juntos há N dias” a partir da data do casal e os **Bilhetes**.
+- **Bilhetes:** recados de até 280 caracteres, em tempo real. Banco: `supabase/notes.sql` (RLS, autoria pela sessão, sem edição, cada um tira só os próprios); testes em `tests/notes.sql`.
+- **Nomes:** Responsabilidades → Combinados, Financeiro → Caderneta, Filmes e séries → Sessão a dois. Todas as funcionalidades continuam, inclusive o catálogo TMDB.
+- **Aviso sem internet** com as cores do Caderno.
+
 ## Dengo 2.8.1 — menos peso a cada atualização
 
 - **Foto do casal sob demanda:** o resumo do casal, buscado a cada atualização do app, deixa de trazer a foto (até ~400 KB; hoje 21 KB, o dobro de todos os registros). Ele traz só a versão da foto, e o app a busca com `couple_photo()` quando ela muda. Um gatilho impede que apps antigos ainda abertos apaguem a foto ao salvar outras preferências; remover a foto exige o marcador `photo_removed`, enviado pelo botão **Remover foto**. Banco: `supabase/couple-photo.sql`; testes em `tests/couple-photo.sql`.

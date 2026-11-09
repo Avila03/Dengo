@@ -1,0 +1,240 @@
+/* Caderno de nós dois — linguagem visual do Dengo 2.9.
+   Carregado por último. Regras prefixadas com :root[data-dengo-theme] para valerem
+   nos dois cadernos sem depender da ordem das folhas antigas.
+   Escrita à mão (--font-hand) só no que o casal escreveu: nomes, bilhetes, legendas. */
+
+:root{--font-serif-stack:var(--font-serif),Georgia,"Times New Roman",serif;--font-sans-stack:var(--font-sans),-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--font-hand-stack:var(--font-hand),"Bradley Hand","Segoe Print",cursive}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ── Tipografia ─────────────────────────────────────────────── */
+:root[data-dengo-theme] body,
+:root[data-dengo-theme] :is(button,input,select,textarea){font-family:var(--font-sans-stack)}
+:root[data-dengo-theme] :is(h1,h2,h3,.dengo-brand-name,.empty h2){font-family:var(--font-serif-stack);font-weight:400;letter-spacing:-.005em}
+:root[data-dengo-theme] :is(.page-heading,.day-head,.purchases-simple-head,.notification-heading) h1{font-size:42px;line-height:1;margin:2px 0 6px;color:var(--page-ink)}
+:root[data-dengo-theme] .panel h2{font-size:24px;line-height:1.1}
+:root[data-dengo-theme] h1 .rose{color:var(--rose)}
+:root[data-dengo-theme] .eyebrow{font-family:var(--font-sans-stack);font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--muted)}
+:root[data-dengo-theme] em.marker{font-style:italic;background:linear-gradient(transparent 58%,var(--hl) 58%);padding:0 .06em}
+:root[data-dengo-theme] .money-value,:root[data-dengo-theme] .payment-overview-value strong{font-variant-numeric:tabular-nums}
+
+/* ── Marca ──────────────────────────────────────────────────── */
+.brand-link{display:inline-flex;align-items:center;flex-shrink:0;text-decoration:none}
+.dengo-brand{display:inline-flex;align-items:center;gap:9px;color:var(--nav-ink,var(--ink));line-height:1;flex-shrink:0}
+.dengo-brand-symbol{width:40px;height:40px;display:block;border-radius:24%;flex-shrink:0}
+.dengo-brand-copy{display:flex;flex-direction:column;gap:4px}
+.dengo-brand-name{font-family:var(--font-serif-stack);font-size:32px;line-height:1;font-weight:400}
+.dengo-brand-tagline{color:var(--muted);font-family:var(--font-hand-stack);font-size:16px;line-height:1}
+.dengo-brand-compact{gap:8px}
+.dengo-brand-compact .dengo-brand-symbol{width:30px;height:30px;border-radius:8px}
+.dengo-brand-compact .dengo-brand-name{font-size:25px}
+.mobile-brand-link{display:none}
+.login>.dengo-brand{margin-bottom:32px}
+:root[data-dengo-theme] :is(.sidebar,.topbar) .dengo-brand{color:var(--ink)}
+@media(max-width:760px){
+  .mobile-brand-link{display:inline-flex}
+  .lobby-header .dengo-brand-symbol{width:36px;height:36px}
+  .lobby-header .dengo-brand-name{font-size:28px}
+}
+
+/* ── Página ─────────────────────────────────────────────────── */
+:root[data-dengo-theme] body,:root[data-dengo-theme] .main-wrap{background:var(--bg);color:var(--ink)}
+:root[data-dengo-theme] .topbar{background:var(--bg);border-bottom:0;box-shadow:none}
+:root[data-dengo-theme] .dengo-brand-name{font-size:24px;color:var(--ink)}
+:root[data-dengo-theme] .lobby-title{font-family:var(--font-hand-stack);font-size:19px;font-weight:700;color:var(--muted)}
+:root[data-dengo-theme] .demo-banner{background:var(--sticky);color:var(--ink);border:0;font-size:12px}
+:root[data-dengo-theme] .demo-banner a{color:var(--rose)}
+
+/* Folhas do caderno: cantos discretos, borda de papel e sombra baixa. */
+:root[data-dengo-theme] :is(.panel,.payment-overview-card,.payment-plan-card,.clean-collection-empty,.clean-simple-empty,.clean-discover,.goal-card,.saved-media-card,.place-card,.clean-sheet,.couple-balance){
+  border-radius:6px;border:1px solid var(--line);background:var(--paper);
+  box-shadow:0 1px 0 var(--line),0 10px 22px -18px rgba(20,24,48,.35)
+}
+
+/* ── Botões ─────────────────────────────────────────────────── */
+:root[data-dengo-theme] .primary{
+  border-radius:999px;border:0;background:var(--rose);color:var(--accent-ink);
+  font-weight:600;box-shadow:0 3px 0 var(--rose-deep);transition:transform .08s,box-shadow .08s
+}
+:root[data-dengo-theme] .primary:hover{background:var(--rose);filter:brightness(1.05);color:var(--accent-ink)}
+:root[data-dengo-theme] .primary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--rose-deep)}
+:root[data-dengo-theme] .primary:disabled{opacity:.55;box-shadow:none}
+:root[data-dengo-theme] .secondary{border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--ink)}
+:root[data-dengo-theme] .secondary:hover{border-color:var(--ink);background:transparent}
+:root[data-dengo-theme] .text-link{color:var(--rose);font-weight:600}
+
+/* ── Campos ─────────────────────────────────────────────────── */
+:root[data-dengo-theme] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea){
+  border:1.5px solid var(--line);border-radius:8px;background:var(--field-bg);color:var(--ink)
+}
+:root[data-dengo-theme] :is(input,select,textarea):focus{border-color:var(--ink);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--hl) 55%,transparent)}
+:root[data-dengo-theme] :focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+
+/* ── Abas de caderno (filtros e escolhas) ───────────────────── */
+:root[data-dengo-theme] :is(.clean-list-filters,.purchases-tabs,.saved-media-filters){
+  display:flex;gap:4px;padding:0;background:transparent;border:0;border-bottom:1.5px solid var(--ink);
+  border-radius:0;box-shadow:none
+}
+:root[data-dengo-theme] :is(.clean-list-filters,.purchases-tabs,.saved-media-filters) button{
+  border:0;border-radius:10px 10px 0 0;background:var(--tab);color:var(--muted);box-shadow:none;
+  font-weight:600;min-height:40px
+}
+:root[data-dengo-theme] :is(.clean-list-filters,.purchases-tabs,.saved-media-filters) button:is(.selected,[aria-pressed="true"]){
+  background:var(--ink);color:var(--bg)
+}
+/* A escolha principal da Caderneta continua grande, mas como duas abas. */
+:root[data-dengo-theme] .purchases-main-choice button{min-height:46px;font-size:14px}
+
+/* Filtros secundários (pessoa, situação, coleção): fichas leves, não abas. */
+:root[data-dengo-theme] :is(.responsibility-filters,.places-status-row,.places-collection-list){display:flex;flex-wrap:wrap;gap:6px;grid-template-columns:none}
+:root[data-dengo-theme] :is(.responsibility-filters,.places-status-row,.places-collection-list) button{
+  min-height:38px;padding:0 13px;border-radius:999px;border:1.5px solid var(--line);background:transparent;
+  color:var(--muted);font-weight:600;font-size:13px;box-shadow:none;flex:0 0 auto;width:auto
+}
+:root[data-dengo-theme] :is(.responsibility-filters,.places-status-row,.places-collection-list) button:is(.selected,[aria-pressed="true"]){
+  border-color:var(--ink);color:var(--ink);background:var(--soft-surface)
+}
+:root[data-dengo-theme] .day-month-toggle{background:transparent!important;color:var(--rose)}
+:root[data-dengo-theme] .places-heart{background:transparent;border:1.5px solid var(--line);color:var(--muted)}
+:root[data-dengo-theme] .places-heart.is-favorite{border-color:var(--rose);color:var(--rose);background:transparent}
+:root[data-dengo-theme] .stat-icon{background:var(--soft-surface);color:var(--ink)}
+:root[data-dengo-theme] .appearance-studio .helper{text-align:left}
+
+/* ── Listas pautadas ────────────────────────────────────────── */
+:root[data-dengo-theme] .entry-list>.entry,
+:root[data-dengo-theme] .day-agenda-row{border-top:0;border-bottom:1px solid var(--line)}
+:root[data-dengo-theme] .entry .check,
+:root[data-dengo-theme] .check{
+  width:26px;height:26px;margin:10px 9px;border:1.6px solid var(--ink);border-radius:5px;background:transparent;color:transparent
+}
+:root[data-dengo-theme] .entry .check{box-shadow:0 0 0 9px transparent}
+:root[data-dengo-theme] .check:hover{background:transparent;color:color-mix(in srgb,var(--rose) 45%,transparent)}
+:root[data-dengo-theme] .check.checked{background:transparent;border-color:var(--ink);color:var(--rose)}
+:root[data-dengo-theme] .check svg{stroke-width:3}
+:root[data-dengo-theme] .entry.done :is(.entry-title-button,.entry-copy>strong){
+  text-decoration:line-through;text-decoration-color:var(--rose);text-decoration-thickness:2px;color:var(--muted)
+}
+:root[data-dengo-theme] .task-entry-overdue .entry-title-button{
+  display:inline;width:auto;text-align:left;padding:0 2px;
+  background:linear-gradient(transparent 58%,var(--hl) 58%);-webkit-box-decoration-break:clone;box-decoration-break:clone
+}
+:root[data-dengo-theme] .entry-title-button{font-size:15.5px;font-weight:500;color:var(--ink)}
+:root[data-dengo-theme] .entry-meta .overdue{color:var(--rose);font-weight:700}
+
+/* Cada um com sua caneta. */
+:root[data-dengo-theme] :is(.pen-tag,.pen-name,.note-author){font-family:var(--font-hand-stack);font-weight:700;color:var(--pen-a)}
+:root[data-dengo-theme] .tag.pen-tag{font-size:18px;line-height:1;padding:0 2px;border:0;background:none}
+:root[data-dengo-theme] .pen-name{font-size:16px}
+:root[data-dengo-theme] [data-pen="b"]{color:var(--pen-b)}
+:root[data-dengo-theme] [data-pen="both"]{color:var(--pen-both)}
+:root[data-dengo-theme] [data-pen="other"]{color:var(--muted)}
+
+/* Etiquetas de estado viram carimbos. */
+:root[data-dengo-theme] .tag:not(.pen-tag){border-radius:3px;background:transparent;border:1.5px solid var(--line);color:var(--muted);font-weight:600}
+:root[data-dengo-theme] .tag.purchase-status{text-transform:uppercase;letter-spacing:.1em;font-size:9.5px;font-weight:800;transform:rotate(-2deg)}
+:root[data-dengo-theme] .tag.purchase-status.paid{border-color:var(--green);color:var(--green)}
+:root[data-dengo-theme] .tag.purchase-status.payment-pending{border-color:var(--rose);color:var(--rose)}
+
+/* ── Barra inferior ─────────────────────────────────────────── */
+:root[data-dengo-theme] .bottom-nav{background:var(--bg);border-top:1px solid var(--line);box-shadow:none}
+:root[data-dengo-theme] .bottom-nav a{background:transparent;color:var(--muted);font-weight:600;position:relative}
+:root[data-dengo-theme] .bottom-nav a.active{background:transparent;color:var(--rose)}
+:root[data-dengo-theme] .bottom-nav a.active::after{content:"";width:18px;height:3px;border-radius:2px;background:var(--rose);margin-top:1px}
+:root[data-dengo-theme] .bottom-nav a span{white-space:nowrap}
+:root[data-dengo-theme] .sidebar{background:var(--bg);border-color:var(--line)}
+:root[data-dengo-theme] .sidebar nav a.active{background:transparent;color:var(--rose);box-shadow:inset 3px 0 0 var(--rose)}
+
+/* ── Nosso dia ──────────────────────────────────────────────── */
+:root[data-dengo-theme] .notebook-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:16px}
+:root[data-dengo-theme] .notebook-head .day-add{align-self:start}
+.polaroid{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 7px 6px;background:#fff;
+  transform:rotate(-3deg);box-shadow:0 6px 14px rgba(20,24,48,.18);color:#22305A;text-decoration:none}
+.polaroid::before{content:"";position:absolute;top:-9px;left:50%;width:54px;height:18px;margin-left:-27px;background:rgba(247,216,110,.82);transform:rotate(4deg)}
+.polaroid img,.polaroid-empty{width:96px;height:96px;object-fit:cover;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#E7DCCB;color:#5F584E;font-size:11px}
+.polaroid-caption{max-width:96px;font-family:var(--font-hand-stack);font-size:17px;line-height:1.1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:root[data-dengo-theme] .day-date{display:block;font-family:var(--font-serif-stack);font-style:italic;font-size:16px;color:var(--muted);text-transform:lowercase}
+:root[data-dengo-theme] .notebook-head-copy p{margin:2px 0 0;font-size:13px;color:var(--muted);text-transform:none}
+:root[data-dengo-theme] .notebook-head-copy p strong{color:var(--ink)}
+:root[data-dengo-theme] .day-countdown{background:transparent;border:2px dashed var(--rose);border-radius:6px;color:var(--rose)}
+:root[data-dengo-theme] .day-countdown strong{letter-spacing:.02em}
+:root[data-dengo-theme] .day-payment-alert{background:var(--sticky);color:var(--ink);border:0;border-radius:4px;box-shadow:0 4px 10px rgba(20,24,48,.1);transform:rotate(-.6deg)}
+:root[data-dengo-theme] .day-week-day{border-radius:10px}
+:root[data-dengo-theme] .day-week-day.selected{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+:root[data-dengo-theme] .day-week-day.selected :is(span,small,strong){color:var(--bg)}
+
+/* Bilhetes */
+.notes-board{display:flex;flex-direction:column;gap:12px;margin:4px 0 16px}
+:root[data-dengo-theme] .note-card{background:var(--sticky);color:var(--ink);box-shadow:0 5px 12px rgba(20,24,48,.14)}
+.note-latest{position:relative;margin:0;align-self:flex-end;max-width:min(92%,420px);padding:14px 40px 12px 16px;transform:rotate(1.6deg)}
+.note-latest blockquote{margin:0;font-family:var(--font-hand-stack);font-size:23px;line-height:1.1;overflow-wrap:anywhere}
+.note-latest figcaption{display:flex;justify-content:flex-end;align-items:baseline;gap:10px;margin-top:6px;font-size:12px;opacity:.85}
+.note-latest .note-author{font-size:19px}
+.note-remove{position:absolute;top:4px;right:4px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:inherit;opacity:.65;cursor:pointer}
+.note-remove:hover{opacity:1}
+.note-compose{display:flex;gap:8px;align-items:center}
+:root[data-dengo-theme] .note-compose input{flex:1;min-width:0;min-height:46px;padding:0 12px;border-style:dashed;background:transparent;font-family:var(--font-hand-stack);font-size:21px}
+.note-compose .primary{min-height:44px;padding:0 18px}
+.notes-older summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);min-height:36px;display:flex;align-items:center}
+.notes-older ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:10px}
+.note-small{padding:10px 12px;transform:rotate(-.6deg)}
+.note-small:nth-child(even){transform:rotate(.7deg)}
+.note-small p{margin:0 0 4px;font-family:var(--font-hand-stack);font-size:19px;line-height:1.1;overflow-wrap:anywhere}
+.note-meta{font-size:12px;opacity:.85}
+.note-meta .note-author{font-size:16px}
+.note-remove-inline{margin-left:8px;border:0;background:none;color:inherit;text-decoration:underline;font-size:12px;cursor:pointer;min-height:32px}
+
+/* ── Caderneta: o acerto é um recibo ────────────────────────── */
+:root[data-dengo-theme] .couple-balance{
+  position:relative;padding:16px 16px 24px;border-radius:0;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),95% 100%,90% calc(100% - 8px),85% 100%,80% calc(100% - 8px),75% 100%,70% calc(100% - 8px),65% 100%,60% calc(100% - 8px),55% 100%,50% calc(100% - 8px),45% 100%,40% calc(100% - 8px),35% 100%,30% calc(100% - 8px),25% 100%,20% calc(100% - 8px),15% 100%,10% calc(100% - 8px),5% 100%,0 calc(100% - 8px))
+}
+:root[data-dengo-theme] .couple-balance strong{font-family:var(--font-serif-stack);font-weight:400;font-size:22px}
+:root[data-dengo-theme] .couple-balance b{font-variant-numeric:tabular-nums;background:linear-gradient(transparent 58%,var(--hl) 58%)}
+
+/* ── Lugares: cartões-postais ───────────────────────────────── */
+:root[data-dengo-theme] .place-card{transform:rotate(-.5deg)}
+:root[data-dengo-theme] .place-card:nth-child(even){transform:rotate(.5deg)}
+:root[data-dengo-theme] .place-card h2{font-size:23px}
+:root[data-dengo-theme] .clean-place-status{display:inline-block;padding:3px 8px;border:2px solid var(--green);color:var(--green);
+  font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;transform:rotate(-5deg);background:transparent;border-radius:2px}
+
+/* ── Sessão a dois: ingressos ───────────────────────────────── */
+:root[data-dengo-theme] .saved-media-card{border-radius:4px;overflow:hidden}
+:root[data-dengo-theme] .saved-media-card .movie-copy h3{font-size:21px}
+:root[data-dengo-theme] .saved-media-card .saved-media-feedback{background:var(--soft-surface);border-radius:4px}
+:root[data-dengo-theme] .saved-media-card img{border-right:2px dashed var(--line)}
+
+/* ── Folhas de edição ───────────────────────────────────────── */
+:root[data-dengo-theme] .clean-sheet{background:var(--bg);border-radius:14px 14px 0 0}
+:root[data-dengo-theme] .clean-sheet-head{background:var(--bg);border-bottom:1.5px solid var(--ink)}
+:root[data-dengo-theme] .clean-sheet-head h2{font-size:26px}
+
+/* ── Aparência: escolher o caderno ──────────────────────────── */
+.notebook-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.notebook-choice{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:10px;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);cursor:pointer;text-align:left;min-height:44px}
+.notebook-choice.is-selected{border-color:var(--rose);box-shadow:0 0 0 2px var(--rose) inset}
+.notebook-swatch{display:flex;flex-direction:column;justify-content:space-around;width:100%;height:58px;padding:8px 10px;border:1px solid;border-radius:4px;box-sizing:border-box}
+.notebook-swatch i{width:22px;height:6px;border-radius:3px}
+.notebook-swatch b{display:block;border-bottom:1px solid}
+.notebook-name{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600}
+.notebook-check{position:absolute;top:8px;right:8px;color:var(--rose)}
+.appearance-status{min-height:18px;margin:10px 0 0;font-size:12px;color:var(--muted)}
+
+/* ── Celular ────────────────────────────────────────────────── */
+@media (max-width:700px){
+  :root[data-dengo-theme] :is(.page-heading,.day-head,.purchases-simple-head,.notification-heading) h1{font-size:38px}
+  :root[data-dengo-theme] .notebook-head{grid-template-columns:auto minmax(0,1fr);gap:14px 16px}
+  :root[data-dengo-theme] .notebook-head .day-add{grid-column:1 / -1;justify-self:start;min-height:42px}
+  .polaroid img,.polaroid-empty{width:84px;height:84px}
+  .polaroid-caption{max-width:84px;font-size:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  :root[data-dengo-theme] .primary{transition:none}
+  .polaroid,.note-latest,.note-small,:root[data-dengo-theme] :is(.place-card,.tag.purchase-status,.day-payment-alert){transform:none}
+}
+
+/* ── Ajustes finos ─────────────────────────────────────────── */
+:root[data-dengo-theme] .clean-sheet-head strong{font-family:var(--font-serif-stack);font-weight:400;font-size:25px;line-height:1.1}
+/* "novembro de 2026", não "Novembro De 2026": só a primeira letra em maiúscula. */
+:root[data-dengo-theme] :is(.month-title,.day-month-header strong){text-transform:none}
+:root[data-dengo-theme] :is(.month-title,.day-month-header strong)::first-letter{text-transform:uppercase}
+:root[data-dengo-theme] .payment-overview-heading input[type=month]{width:172px;font-size:15px;padding:7px 8px}

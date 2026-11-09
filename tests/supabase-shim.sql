@@ -18,3 +18,5 @@ create publication supabase_realtime;
 create schema vault; create table vault.secrets(name text primary key, secret text);
 create view vault.decrypted_secrets as select name, secret as decrypted_secret from vault.secrets;
 create schema net; create function net.http_post(url text, headers jsonb default '{}', body jsonb default '{}', timeout_milliseconds int default 1000) returns bigint language sql as 'select 1::bigint';
+-- Como no Supabase: tabelas novas em public recebem todas as permissões para anon e authenticated.
+alter default privileges in schema public grant all on tables to anon, authenticated;
