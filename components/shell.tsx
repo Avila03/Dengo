@@ -14,8 +14,10 @@ import {
   LogOut,
   Clapperboard,
   MapPin,
+  WifiOff,
 } from "lucide-react";
 import { useDengo } from "./provider";
+import { OFFLINE_BANNER } from "@/lib/connection";
 const links = [
   { href: "/", label: "Nosso dia", icon: House },
   { href: "/compromissos", label: "Responsabilidades", icon: ListChecks },
@@ -25,7 +27,7 @@ const links = [
 ];
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const { demo, error, refresh, signOut, preferences } = useDengo();
+  const { demo, offline, error, refresh, signOut, preferences } = useDengo();
   const mobileLinks = links.map((link) => ({
     ...link,
     label: link.href === "/lugares" ? "Lugares" :
@@ -126,6 +128,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Link href="/configuracoes">
               Entenda <ArrowUpRight size={13} />
             </Link>
+          </div>
+        ) : null}
+        {offline ? (
+          <div className="demo-banner offline-banner" role="status">
+            <WifiOff size={14} /> {OFFLINE_BANNER}
           </div>
         ) : null}
         <main id="conteudo" className="clean-main" tabIndex={-1}>
