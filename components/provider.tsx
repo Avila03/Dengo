@@ -18,7 +18,7 @@ import { PasswordRecovery } from "./password-recovery";
 import { AppearanceProvider } from "./appearance-provider";
 import { supabase, demoMode } from "@/lib/supabase";
 import { Lobby } from "./lobby";
-import { loadAllEntries } from "@/lib/records";
+import { syncEntries } from "@/lib/entry-sync";
 import { type CalendarTopic, validateCalendarTopics } from "@/lib/calendar-topics";
 import {
   Entry,
@@ -30,6 +30,7 @@ import {
   readEntries,
   validateDraft,
   successor,
+  coupleNamesError,
 } from "@/lib/model";
 type Context = {
   entries: Entry[];
@@ -82,7 +83,9 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
   }, [ready, user?.id]);
   const lock = useRef(false),
     identity = useRef<string | null>(null),
-    sequence = useRef(0);
+    sequence = useRef(0),
+    // Última cópia confirmada pelo servidor, base da sincronização incremental.
+    synced = useRef<{ space: string; entries: Entry[] }>({ space: "", entries: [] });
   useEffect(() => {
     if (!supabase) {
       setReady(true);
@@ -93,6 +96,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
       if (!live) return;
       if (identity.current !== u?.id) {
         sequence.current++;
+        synced.current = { space: "", entries: [] };
         setEntries([]);
         setSpace("");
         setMembershipLoaded(false);
@@ -142,13 +146,16 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
       if (homeError)
         throw new Error("Não foi possível abrir o lobby. Tente atualizar.");
       if (!home) {
+        synced.current = { space: "", entries: [] };
         setSpace("");
         setMemberCount(0);
         setMembershipLoaded(true);
         return;
       }
-      const items = await loadAllEntries(supabase, home.space_id);
+      const base = synced.current.space === home.space_id ? synced.current.entries : [];
+      const items = await syncEntries(supabase, home.space_id, base);
       if (request !== sequence.current) return;
+      synced.current = { space: home.space_id, entries: items };
       setSpace(home.space_id);
       setMemberSlot(home.slot);
       setMemberCount(home.members);
@@ -403,13 +410,8 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
   async function savePreferences(p: Preferences) {
     const nextPrefs: Preferences = { ...preferences, ...p, calendarTopics: preferences.calendarTopics };
     return action(async () => {
-      if (
-        p.names.some((n) => !n.trim() || n.length > 60) ||
-        p.names[0].trim() === p.names[1].trim()
-      )
-        throw new Error(
-          "Informe dois nomes diferentes, com até 60 caracteres.",
-        );
+      const namesError = coupleNamesError(p.names);
+      if (namesError) throw new Error(namesError);
       if (!p.title.trim() || p.title.length > 80)
         throw new Error("Informe um nome para o espaço com até 80 caracteres.");
       if (p.photo && !p.photo.startsWith("data:image/jpeg;base64,"))

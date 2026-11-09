@@ -7,7 +7,7 @@ import {DeleteButton} from "./ui";
 import {EntryAudit} from "./entry-audit";
 import {goalProgress} from "@/lib/couple-planning";
 import {money,parseMoney} from "@/lib/finance";
-import {dayLabel,localToday,type Entry,type Draft} from "@/lib/model";
+import {dayLabel,localToday,TOGETHER,type Entry,type Draft} from "@/lib/model";
 
 export function Goals() {
   const {entries,names,busy,add,update,remove}=useDengo();
@@ -22,7 +22,7 @@ export function Goals() {
     try {
       let draft:Draft;
       if(form==="goal") draft={kind:"goal",title:String(fields.get("title")||"").trim(),detail:String(fields.get("detail")||""),
-        assignee:"Nós dois",due:String(fields.get("due")||""),done:false,data:{...editing?.data,goalTarget:parseMoney(String(fields.get("target")||""))}};
+        assignee:TOGETHER,due:String(fields.get("due")||""),done:false,data:{...editing?.data,goalTarget:parseMoney(String(fields.get("target")||""))}};
       else {
         if(!target || !entries.some(e=>e.id===target.id&&e.kind==="goal"))throw new Error("Esta meta não está mais disponível.");
         const payer=Number(fields.get("payer")) as 0|1;

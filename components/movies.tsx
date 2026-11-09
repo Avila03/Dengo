@@ -11,7 +11,7 @@ import { EntryAudit } from "./entry-audit";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
 import { supabase } from "@/lib/supabase";
-import type { Entry, Draft } from "@/lib/model";
+import { TOGETHER, type Entry, type Draft } from "@/lib/model";
 import type { MovieResult } from "@/lib/movies";
 import {
   mediaStatus, mediaCounters, filterSavedMedia, mediaProgressLabel,
@@ -148,7 +148,7 @@ export function Movies() {
       kind: "movie",
       title: result.title,
       detail: "",
-      assignee: "Nós dois",
+      assignee: TOGETHER,
       due: "",
       done: false,
       data: {
@@ -180,7 +180,7 @@ export function Movies() {
       kind: "movie",
       title: String(form.get("title") || "").trim(),
       detail: editing?.detail || "",
-      assignee: "Nós dois",
+      assignee: TOGETHER,
       due: "",
       done: watchState === "watched",
       data: {

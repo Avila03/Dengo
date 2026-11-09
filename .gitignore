@@ -4,3 +4,7 @@ node_modules/
 !.env.example
 out/
 *.tsbuildinfo
+# Testes de ponta a ponta
+test-results/
+playwright-report/
+capturas/

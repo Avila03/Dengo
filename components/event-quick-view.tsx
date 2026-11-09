@@ -9,7 +9,7 @@ import type { Draft, Entry, EventOccurrenceChanges } from "@/lib/model";
 import { CleanSheet } from "./clean-sheet";
 import { EventFields } from "./event-fields";
 import { eventFormValues, eventDataFromForm } from "@/lib/event-form";
-import { localToday } from "@/lib/model";
+import { localToday, TOGETHER } from "@/lib/model";
 import { useDengo } from "./provider";
 import { eventDurationLabel } from "@/lib/calendar-anniversaries";
 import { calendarTopics, calendarEntryColor, eventTopicLabel } from "@/lib/calendar-topics";
@@ -53,7 +53,7 @@ export function EventQuickView({
   const [prepOpen, setPrepOpen] = useState(false);
   const [prepKind, setPrepKind] = useState<"task" | "shopping">("task");
   const [prepTitle, setPrepTitle] = useState("");
-  const [prepAssignee, setPrepAssignee] = useState("Nós dois");
+  const [prepAssignee, setPrepAssignee] = useState(TOGETHER);
   const [prepDue, setPrepDue] = useState(localToday());
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -286,7 +286,7 @@ export function EventQuickView({
               </label>
               <label>Responsável
                 <select value={prepAssignee} onChange={(e) => setPrepAssignee(e.target.value)}>
-                  {["Nós dois",...names].map((name,i) => <option key={i} value={name}>{name}</option>)}
+                  {[TOGETHER,...names].map((name,i) => <option key={i} value={name}>{name}</option>)}
                 </select>
               </label>
             </div>

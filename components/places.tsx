@@ -10,7 +10,7 @@ import { CleanSheet } from "./clean-sheet";
 import { EntryAudit } from "./entry-audit";
 import { PageHeading, DeleteButton } from "./ui";
 import { useDengo } from "./provider";
-import { localToday, isDate, type Entry, type Draft } from "@/lib/model";
+import { localToday, isDate, TOGETHER, type Entry, type Draft } from "@/lib/model";
 import { mapsUrl } from "@/lib/calendar";
 import { googleMapsEmbedUrl, openStreetMapEmbedUrl, normalizePlaceLink, safePlaceLink } from "@/lib/places";
 import { money, parseMoney } from "@/lib/finance";
@@ -128,7 +128,7 @@ export function Places() {
         kind: "place",
         title,
         detail: String(form.get("detail") || "").trim(),
-        assignee: "Nós dois",
+        assignee: TOGETHER,
         due: "",
         done: visited,
         data: {
