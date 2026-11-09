@@ -7,10 +7,12 @@ import { ROUTES, seedDemo, openDemo } from "./demo";
  * Não compara pixels: serve de referência para revisar mudanças visuais
  * (por exemplo, a consolidação do CSS) comparando os artefatos do CI antes e depois.
  */
-const THEMES = [
+const ALL_THEMES = [
   "original", "noite", "lavanda", "salvia", "iris", "grafite", "floresta",
   "ametista", "cobalto", "atelier", "fucsia", "neon", "mono",
 ];
+// CAPTURAS_TEMAS=original,noite limita os temas (útil no circuito de revisão visual).
+const THEMES = process.env.CAPTURAS_TEMAS ? process.env.CAPTURAS_TEMAS.split(",") : ALL_THEMES;
 const DIR = process.env.CAPTURAS_DIR || "capturas";
 
 test.describe.configure({ mode: "parallel" });
