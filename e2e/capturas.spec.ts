@@ -19,6 +19,9 @@ for (const theme of THEMES) {
     test.skip(info.project.name !== "iphone", "Capturas só no tamanho iPhone 13.");
     await seedDemo(page, { theme });
     await openDemo(page, "/");
+    await page.goto("/");
+    await page.getByRole("button", { name: /Abrir demonstração/i }).waitFor();
+    await page.screenshot({ path: path.join(DIR, theme, "lobby.png"), fullPage: true });
     await expect(page.locator("html")).toHaveAttribute("data-dengo-theme", theme);
     for (const route of ROUTES) {
       await openDemo(page, route.path);
