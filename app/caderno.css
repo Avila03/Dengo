@@ -231,3 +231,10 @@
   :root[data-dengo-theme] .primary{transition:none}
   .polaroid,.note-latest,.note-small,:root[data-dengo-theme] :is(.place-card,.tag.purchase-status,.day-payment-alert){transform:none}
 }
+
+/* ── Ajustes finos ─────────────────────────────────────────── */
+:root[data-dengo-theme] .clean-sheet-head strong{font-family:var(--font-serif-stack);font-weight:400;font-size:25px;line-height:1.1}
+/* "novembro de 2026", não "Novembro De 2026": só a primeira letra em maiúscula. */
+:root[data-dengo-theme] :is(.month-title,.day-month-header strong){text-transform:none}
+:root[data-dengo-theme] :is(.month-title,.day-month-header strong)::first-letter{text-transform:uppercase}
+:root[data-dengo-theme] .payment-overview-heading input[type=month]{width:172px;font-size:15px;padding:7px 8px}
