@@ -26,17 +26,17 @@ self.addEventListener("notificationclick",event=>{
    em vez da página de erro do Safari. Com internet, a requisição segue normalmente. */
 const OFFLINE_PAGE=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#F9F7F4"><title>Dengo · sem internet</title>
+<meta name="theme-color" content="#F5EDE0"><title>Dengo · sem internet</title>
 <style>
  html,body{height:100%;margin:0}
- body{display:grid;place-items:center;padding:24px;box-sizing:border-box;background:#F9F7F4;color:#353B37;
+ body{display:grid;place-items:center;padding:24px;box-sizing:border-box;background:#F5EDE0;color:#22305A;
   font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-align:center}
  main{max-width:340px}
  img{width:72px;height:72px;border-radius:18px}
- h1{font:600 24px/1.25 Georgia,"Times New Roman",serif;margin:20px 0 8px}
- p{margin:0 0 24px;color:#5d625f}
- button{min-height:48px;padding:0 24px;border:0;border-radius:999px;background:#A65364;color:#fff;font-family:inherit;font-size:16px;font-weight:600}
- @media (prefers-color-scheme:dark){body{background:#0C0E15;color:#F7EDF4}p{color:#c9bfc6}}
+ h1{font:400 30px/1.15 Georgia,"Times New Roman",serif;margin:20px 0 8px}
+ p{margin:0 0 24px;color:#5F584E}
+ button{min-height:48px;padding:0 24px;border:0;border-radius:999px;background:#C23A2B;color:#fff;box-shadow:0 3px 0 #8E2A1F;font-family:inherit;font-size:16px;font-weight:600}
+ @media (prefers-color-scheme:dark){body{background:#1C2034;color:#EEE4D3}p{color:#B5AC9E}button{background:#FF7B67;color:#1C2034;box-shadow:0 3px 0 #C2493A}}
 </style></head><body><main>
 <img src="/brand/dengo-icon-192-v2.png" alt="" onerror="this.remove()">
 <h1>Sem internet no momento</h1>
