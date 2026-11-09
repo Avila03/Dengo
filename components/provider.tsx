@@ -103,7 +103,9 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
     identity = useRef<string | null>(null),
     sequence = useRef(0),
     // Última cópia confirmada pelo servidor, base da sincronização incremental.
-    synced = useRef<{ space: string; entries: Entry[] }>({ space: "", entries: [] });
+    synced = useRef<{ space: string; entries: Entry[] }>({ space: "", entries: [] }),
+    // Foto do casal já baixada: só é buscada de novo quando a versão muda.
+    photo = useRef<{ space: string; version: string; data: string }>({ space: "", version: "", data: "" });
   useEffect(() => {
     if (!supabase) {
       setReady(true);
@@ -115,6 +117,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
       if (identity.current !== u?.id) {
         sequence.current++;
         synced.current = { space: "", entries: [] };
+        photo.current = { space: "", version: "", data: "" };
         setEntries([]);
         setSpace("");
         setMembershipLoaded(false);
@@ -174,6 +177,8 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
       const items = await syncEntries(supabase, home.space_id, base);
       if (request !== sequence.current) return;
       synced.current = { space: home.space_id, entries: items };
+      const couplePhoto = await loadCouplePhoto(home);
+      if (request !== sequence.current) return;
       setSpace(home.space_id);
       setMemberSlot(home.slot);
       setMemberCount(home.members);
@@ -182,6 +187,7 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
         ...DEFAULT_PREFS,
         ...home.preferences,
         names: home.names,
+        photo: couplePhoto,
       });
       setMembershipLoaded(true);
     } catch (e) {
@@ -195,6 +201,25 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+  /**
+   * O resumo do casal traz só a versão da foto (`photo_version`); a imagem vem
+   * de `couple_photo` apenas quando muda. Bancos sem essa versão ainda mandam a
+   * foto dentro das preferências, e ela é usada diretamente.
+   */
+  async function loadCouplePhoto(home: { space_id: string; photo_version?: string; preferences?: { photo?: string } }) {
+    if (typeof home.photo_version !== "string") return home.preferences?.photo ?? "";
+    const cached = photo.current;
+    if (cached.space === home.space_id && cached.version === home.photo_version) return cached.data;
+    let data = "";
+    if (home.photo_version) {
+      const { data: loaded, error } = await supabase!.rpc("couple_photo");
+      // Sem a foto, o app segue normalmente; ela é buscada de novo na próxima atualização.
+      if (error) return cached.space === home.space_id ? cached.data : "";
+      data = typeof loaded === "string" ? loaded : "";
+    }
+    photo.current = { space: home.space_id, version: home.photo_version, data };
+    return data;
+  }
   useEffect(() => {
     const storage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY || e.key === PREFS_KEY) void refresh();
@@ -465,6 +490,8 @@ export function DengoProvider({ children }: { children: React.ReactNode }) {
               title: p.title,
               since: p.since,
               photo: p.photo,
+              // Sem este marcador, o banco mantém a foto atual quando ela chega vazia.
+              ...(!p.photo && preferences.photo ? { photo_removed: true } : {}),
               budgets: p.budgets,
               calendarTopics: preferences.calendarTopics,
             },

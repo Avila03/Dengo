@@ -2,7 +2,7 @@
 
 Um lugar para cuidar da vida a dois: agenda, responsabilidades, finanças, lugares e filmes de um casal, com login individual e dados compartilhados. Feito para o iPhone (instalável na tela inicial), funciona também no computador.
 
-**Versão atual:** 2.8 · [Histórico de versões](CHANGELOG.md)
+**Versão atual:** 2.8.1 · [Histórico de versões](CHANGELOG.md)
 
 ## O que o Dengo faz
 
@@ -79,7 +79,7 @@ npm run e2e:capturas
 
 Projeto: `jgntmeifdaghykiodfee`, região São Paulo, separado do Mesa Marcada.
 
-A estrutura e as políticas de `setup.sql` e `lobby.sql` já foram aplicadas nesse projeto. **Não executar esses scripts novamente nele.** Para outro banco vazio, executar `setup.sql` e depois `lobby.sql`; em seguida `couple-planning.sql` os scripts de push (`push.sql`, `push-lockdown.sql`, `push-signed-dispatch.sql` e `push-schedule.sql`) e, por último, `leave-couple.sql`. Os detalhes de cada script estão no [histórico de versões](CHANGELOG.md).
+A estrutura e as políticas de `setup.sql` e `lobby.sql` já foram aplicadas nesse projeto. **Não executar esses scripts novamente nele.** Para outro banco vazio, executar `setup.sql` e depois `lobby.sql`; em seguida `couple-planning.sql` os scripts de push (`push.sql`, `push-lockdown.sql`, `push-signed-dispatch.sql` e `push-schedule.sql`), `cron-log-cleanup.sql`, `leave-couple.sql` e, por último, `couple-photo.sql`. Os detalhes de cada script estão no [histórico de versões](CHANGELOG.md).
 
 Para ativar o uso do casal:
 
