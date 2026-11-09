@@ -26,6 +26,7 @@ do $$ declare n public.notes; begin
  begin insert into public.notes(space_id,author_slot,body) values(current_setting('t.space')::uuid,1,'   ');raise exception using errcode='P0002',message='Empty note';exception when check_violation then null;end;
  begin insert into public.notes(space_id,author_slot,body) values(current_setting('t.space')::uuid,1,repeat('a',281));raise exception using errcode='P0002',message='Long note';exception when check_violation then null;end;
  begin update public.notes set body='editado';raise exception using errcode='P0002',message='Note edited';exception when insufficient_privilege then null;end;
+ begin truncate public.notes;raise exception using errcode='P0002',message='Truncate allowed';exception when insufficient_privilege then null;end;
 end $$;
 -- Ana lê, mas não apaga o bilhete do Bruno.
 select set_config('request.jwt.claim.sub','00000000-0000-4000-a000-000000000401',true);

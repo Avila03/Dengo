@@ -34,6 +34,9 @@ revoke all on function dengo_private.stamp_note_author() from public,anon,authen
 create trigger stamp_note_author before insert on public.notes
  for each row execute function dengo_private.stamp_note_author();
 
+-- O Supabase concede todas as permissões por padrão a tabelas novas em public
+-- (inclusive TRUNCATE, que ignora o RLS). Anônimo sem acesso; logado só lê, cola e tira.
+revoke all on public.notes from anon, authenticated;
 grant select,insert,delete on public.notes to authenticated;
 create policy read_couple_notes on public.notes for select to authenticated
  using(exists(select 1 from public.memberships m where m.space_id=notes.space_id and m.user_id=(select auth.uid())));
