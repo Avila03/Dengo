@@ -98,12 +98,21 @@ export async function expectNoHorizontalOverflow(page: Page) {
   expect(overflow.scroll).toBeLessThanOrEqual(overflow.width + 1);
 }
 
-/** Coleta erros de JavaScript da página para falhar o teste no final. */
+/**
+ * Coleta erros de JavaScript e respostas HTTP com erro para falhar o teste no
+ * final. Sem TMDB_READ_ACCESS_TOKEN, /api/movies responde 503 de propósito e a
+ * tela mostra a mensagem de configuração: isso não é um erro do aplicativo.
+ */
 export function collectPageErrors(page: Page) {
   const errors: string[] = [];
+  const expected = (url: string) => /\/api\/movies|favicon|manifest/i.test(url);
   page.on("pageerror", (e) => errors.push(e.message));
+  page.on("response", (r) => {
+    if (r.status() >= 400 && !expected(r.url())) errors.push(`${r.status()} ${r.url()}`);
+  });
   page.on("console", (m) => {
-    if (m.type() === "error" && !/favicon|manifest/i.test(m.text())) errors.push(m.text());
+    // Falhas de rede já são verificadas acima, com a URL de cada resposta.
+    if (m.type() === "error" && !/Failed to load resource/i.test(m.text())) errors.push(m.text());
   });
   return errors;
 }
