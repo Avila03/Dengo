@@ -2,7 +2,15 @@
 
 As versões mais recentes aparecem primeiro. O README descreve o estado atual do aplicativo.
 
-## Não publicado — base técnica
+## Dengo 2.8 — sair do casal e aviso sem internet
+
+- **Sair do casal:** em Configurações → Conta e privacidade ou no lobby. Quem sai perde o acesso; os registros ficam com quem permanece. A última pessoa só sai digitando o nome do espaço, o que apaga o espaço e todos os registros.
+- **Convite pelo lugar vago:** quem permanece pode convidar, mesmo sem ter criado o espaço. A pessoa que entra ocupa o lugar livre (0 ou 1); responsabilidades e pagamentos em nome de quem saiu passam a ser dela, e a tela de convite avisa antes.
+- **Banco:** `supabase/leave-couple.sql` adiciona `leave_couple` e atualiza `create_couple`, `create_couple_invite` e `join_couple` (mesma assinatura e permissões). A exclusão do espaço apaga primeiro os registros para não violar a chave de `push_changes`. “Nós dois” passa a ser recusado também no banco.
+- **Sem internet:** faixa de aviso, gravações recusadas com mensagem clara e, ao abrir sem conexão, um aviso estático do service worker em vez do erro do Safari. Nada é guardado em cache; o service worker passa a ser registrado para todos, não só ao ativar notificações.
+- **Testes:** `tests/leave-couple.sql` (saída, convite por quem ficou, lugar vago, nomes, exclusão confirmada, isolamento), testes unitários das mensagens e da conexão e um teste de ponta a ponta do aviso offline.
+
+## 2.7.1 — base técnica
 
 - **Testes no iPhone:** suíte Playwright no modo demonstração (iPhone 13, iPhone SE e desktop) cobrindo navegação, rolagem lateral, alvos de toque, zoom de campos no Safari e o ciclo de uma responsabilidade. O CI gera capturas das sete telas nos 13 temas como artefato `capturas-iphone`.
 - **Sincronização incremental:** ao abrir, voltar à aba ou receber uma alteração do par, o app baixa só a assinatura dos registros (id e datas) e busca por inteiro apenas os novos ou alterados. O carregamento completo continua sendo usado na primeira abertura e quando quase tudo mudou. O saldo do casal segue considerando todo o histórico.

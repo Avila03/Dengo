@@ -2,7 +2,7 @@
 
 Um lugar para cuidar da vida a dois: agenda, responsabilidades, finanças, lugares e filmes de um casal, com login individual e dados compartilhados. Feito para o iPhone (instalável na tela inicial), funciona também no computador.
 
-**Versão atual:** 2.7 · [Histórico de versões](CHANGELOG.md)
+**Versão atual:** 2.8 · [Histórico de versões](CHANGELOG.md)
 
 ## O que o Dengo faz
 
@@ -12,6 +12,7 @@ Um lugar para cuidar da vida a dois: agenda, responsabilidades, finanças, lugar
 - **Lugares e filmes:** coleções, favoritos e visitas; lista de filmes e séries com status, episódio atual, notas e catálogo TMDB.
 - **Avisos:** oito tipos de notificação Web Push com preferências por pessoa, horário de silêncio e histórico no sininho.
 - **Aparência:** 13 temas e personalização individual de cartões, fundos, tipografia e ícones.
+- **Casal:** login individual, convite por link e saída do casal; os registros ficam com quem permanece.
 
 ## Como é feito
 
@@ -78,7 +79,7 @@ npm run e2e:capturas
 
 Projeto: `jgntmeifdaghykiodfee`, região São Paulo, separado do Mesa Marcada.
 
-A estrutura e as políticas de `setup.sql` e `lobby.sql` já foram aplicadas nesse projeto. **Não executar esses scripts novamente nele.** Para outro banco vazio, executar `setup.sql` e depois `lobby.sql`; em seguida `couple-planning.sql` e os scripts de push (`push.sql`, `push-lockdown.sql`, `push-signed-dispatch.sql` e, por último, `push-schedule.sql`). Os detalhes de cada script estão no [histórico de versões](CHANGELOG.md).
+A estrutura e as políticas de `setup.sql` e `lobby.sql` já foram aplicadas nesse projeto. **Não executar esses scripts novamente nele.** Para outro banco vazio, executar `setup.sql` e depois `lobby.sql`; em seguida `couple-planning.sql` os scripts de push (`push.sql`, `push-lockdown.sql`, `push-signed-dispatch.sql` e `push-schedule.sql`) e, por último, `leave-couple.sql`. Os detalhes de cada script estão no [histórico de versões](CHANGELOG.md).
 
 Para ativar o uso do casal:
 
@@ -95,6 +96,23 @@ Não é mais necessário vincular contas por SQL no fluxo normal. `connect_accou
 Os métodos privilegiados de onboarding ficam no schema não exposto `dengo_private`, com search_path vazio, verificação explícita de auth.uid(), travas transacionais, permissões limitadas e wrappers públicos invoker. Convites ficam apenas como hash SHA-256 e não são consultáveis pelos clientes. As demais gravações continuam sob RLS. `Referrer-Policy: no-referrer` evita encaminhar o link de convite como referenciador a sites externos.
 
 As políticas foram verificadas com usuários temporários em transação revertida: acesso dos dois membros, bloqueio de usuário externo, bloqueio de alteração de membership pelo cliente, recorrência sem duplicidade e conversão atômica de compra em despesa. O advisor de segurança não apontou problemas. Também foram testados criação do lobby, rotação/expiração/uso único de convite, rejeição de terceira pessoa e proteção contra falsificar autoria. Os testes SQL estão em `tests/database.sql` e `tests/lobby.sql` e revertem todas as fixtures. Isso não substitui o teste final de login e navegador com as contas reais.
+
+### Sair do casal
+
+Em **Configurações → Conta e privacidade** (ou no lobby), cada pessoa pode sair do casal com `leave_couple` (`supabase/leave-couple.sql`):
+
+- quem sai perde o acesso na hora, em todos os aparelhos; os registros ficam com quem permanece, e o histórico de avisos de quem saiu é apagado;
+- quem permanece pode gerar um convite, mesmo que não tenha criado o espaço. Quem entrar ocupa o lugar vago: responsabilidades e pagamentos em nome de quem saiu passam a ser dessa pessoa (a tela de convite avisa);
+- a última pessoa só sai digitando o nome do espaço, e isso apaga o espaço e todos os registros;
+- “Nós dois” é recusado como nome de pessoa também no banco.
+
+Testes em `tests/leave-couple.sql`, no mesmo formato de `tests/lobby.sql` (transação revertida).
+
+Todos os testes SQL rodam no GitHub Actions (`.github/workflows/sql.yml`) num Postgres 16 descartável, com uma simulação mínima do Supabase (`tests/supabase-shim.sql`). Localmente: `PGHOST=… PGUSER=… npm run test:sql`.
+
+## Sem internet
+
+O Dengo não guarda registros nem páginas no aparelho. Sem conexão, uma faixa avisa que a tela mostra apenas o que já estava aberto, e qualquer gravação é recusada com uma mensagem clara, sem perder o que foi digitado. Ao abrir o app sem internet, o service worker (`public/sw.js`) mostra um aviso estático com **Tentar de novo** no lugar da página de erro do Safari; quando a conexão volta, a página recarrega sozinha e busca o que o par alterou.
 
 ## Ativar o catálogo TMDB
 
@@ -114,6 +132,6 @@ Importar `Avila03/Dengo` com o preset Next.js e configurar as variáveis acima. 
 - Registrar uma despesa recorrente já paga cria a próxima pendente. A compra que originou a primeira despesa não é vinculada às repetições seguintes.
 - Ao atualizar o nome de alguém, os responsáveis com o nome anterior são atualizados. Os campos de pagador e a divisão financeira usam índices estáveis. “Nós dois” é reservado para tarefas do casal e não pode ser nome de uma pessoa.
 - O orçamento do lugar é estimativo e não vira gasto automaticamente. Não há reserva de estabelecimento, pagamento, integração bancária, receita, envio de mensagens ou upload de fotos dos passeios.
-- Não há saída, troca ou exclusão de casal pelo app nesta versão. Uma conta fica vinculada a um espaço; o administrador pode auxiliar na recuperação.
-- A exportação JSON é uma cópia manual. Importação e backup automático ainda não estão disponíveis. A recuperação de senha por e-mail foi adicionada na versão 0.4 e depende da configuração de redirecionamento e envio de e-mails do Supabase.
+- Uma conta pertence a um espaço por vez. Para trocar, é preciso sair do casal atual antes de criar ou aceitar outro.
+- Não há exportação nem restauração de dados pelo app. A recuperação de senha por e-mail foi adicionada na versão 0.4 e depende da configuração de redirecionamento e envio de e-mails do Supabase.
 - O plano gratuito tem cotas e pode pausar por pouca atividade. Os testes de ponta a ponta usam o modo demonstração; login, convite, Realtime e push reais ainda precisam de conferência com as contas e os aparelhos do casal.
