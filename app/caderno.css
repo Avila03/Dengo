@@ -17,6 +17,25 @@
 :root[data-dengo-theme] em.marker{font-style:italic;background:linear-gradient(transparent 58%,var(--hl) 58%);padding:0 .06em}
 :root[data-dengo-theme] .money-value,:root[data-dengo-theme] .payment-overview-value strong{font-variant-numeric:tabular-nums}
 
+/* ── Marca ──────────────────────────────────────────────────── */
+.brand-link{display:inline-flex;align-items:center;flex-shrink:0;text-decoration:none}
+.dengo-brand{display:inline-flex;align-items:center;gap:9px;color:var(--nav-ink,var(--ink));line-height:1;flex-shrink:0}
+.dengo-brand-symbol{width:40px;height:40px;display:block;border-radius:24%;flex-shrink:0}
+.dengo-brand-copy{display:flex;flex-direction:column;gap:4px}
+.dengo-brand-name{font-family:var(--font-serif-stack);font-size:32px;line-height:1;font-weight:400}
+.dengo-brand-tagline{color:var(--muted);font-family:var(--font-hand-stack);font-size:16px;line-height:1}
+.dengo-brand-compact{gap:8px}
+.dengo-brand-compact .dengo-brand-symbol{width:30px;height:30px;border-radius:8px}
+.dengo-brand-compact .dengo-brand-name{font-size:25px}
+.mobile-brand-link{display:none}
+.login>.dengo-brand{margin-bottom:32px}
+:root[data-dengo-theme] :is(.sidebar,.topbar) .dengo-brand{color:var(--ink)}
+@media(max-width:760px){
+  .mobile-brand-link{display:inline-flex}
+  .lobby-header .dengo-brand-symbol{width:36px;height:36px}
+  .lobby-header .dengo-brand-name{font-size:28px}
+}
+
 /* ── Página ─────────────────────────────────────────────────── */
 :root[data-dengo-theme] body,:root[data-dengo-theme] .main-wrap{background:var(--bg);color:var(--ink)}
 :root[data-dengo-theme] .topbar{background:var(--bg);border-bottom:0;box-shadow:none}
@@ -65,6 +84,21 @@
 /* A escolha principal da Caderneta continua grande, mas como duas abas. */
 :root[data-dengo-theme] .purchases-main-choice button{min-height:46px;font-size:14px}
 
+/* Filtros secundários (pessoa, situação, coleção): fichas leves, não abas. */
+:root[data-dengo-theme] :is(.responsibility-filters,.places-status-row,.places-collection-list){display:flex;flex-wrap:wrap;gap:6px;grid-template-columns:none}
+:root[data-dengo-theme] :is(.responsibility-filters,.places-status-row,.places-collection-list) button{
+  min-height:38px;padding:0 13px;border-radius:999px;border:1.5px solid var(--line);background:transparent;
+  color:var(--muted);font-weight:600;font-size:13px;box-shadow:none;flex:0 0 auto;width:auto
+}
+:root[data-dengo-theme] :is(.responsibility-filters,.places-status-row,.places-collection-list) button:is(.selected,[aria-pressed="true"]){
+  border-color:var(--ink);color:var(--ink);background:var(--soft-surface)
+}
+:root[data-dengo-theme] .day-month-toggle{background:transparent!important;color:var(--rose)}
+:root[data-dengo-theme] .places-heart{background:transparent;border:1.5px solid var(--line);color:var(--muted)}
+:root[data-dengo-theme] .places-heart.is-favorite{border-color:var(--rose);color:var(--rose);background:transparent}
+:root[data-dengo-theme] .stat-icon{background:var(--soft-surface);color:var(--ink)}
+:root[data-dengo-theme] .appearance-studio .helper{text-align:left}
+
 /* ── Listas pautadas ────────────────────────────────────────── */
 :root[data-dengo-theme] .entry-list>.entry,
 :root[data-dengo-theme] .day-agenda-row{border-top:0;border-bottom:1px solid var(--line)}
@@ -80,7 +114,8 @@
   text-decoration:line-through;text-decoration-color:var(--rose);text-decoration-thickness:2px;color:var(--muted)
 }
 :root[data-dengo-theme] .task-entry-overdue .entry-title-button{
-  background:linear-gradient(transparent 58%,var(--hl) 58%);align-self:flex-start
+  display:inline;width:auto;text-align:left;padding:0 2px;
+  background:linear-gradient(transparent 58%,var(--hl) 58%);-webkit-box-decoration-break:clone;box-decoration-break:clone
 }
 :root[data-dengo-theme] .entry-title-button{font-size:15.5px;font-weight:500;color:var(--ink)}
 :root[data-dengo-theme] .entry-meta .overdue{color:var(--rose);font-weight:700}
@@ -117,7 +152,7 @@
 .polaroid img,.polaroid-empty{width:96px;height:96px;object-fit:cover;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#E7DCCB;color:#5F584E;font-size:11px}
 .polaroid-caption{max-width:96px;font-family:var(--font-hand-stack);font-size:17px;line-height:1.1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 :root[data-dengo-theme] .day-date{display:block;font-family:var(--font-serif-stack);font-style:italic;font-size:16px;color:var(--muted);text-transform:lowercase}
-:root[data-dengo-theme] .notebook-head-copy p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+:root[data-dengo-theme] .notebook-head-copy p{margin:2px 0 0;font-size:13px;color:var(--muted);text-transform:none}
 :root[data-dengo-theme] .notebook-head-copy p strong{color:var(--ink)}
 :root[data-dengo-theme] .day-countdown{background:transparent;border:2px dashed var(--rose);border-radius:6px;color:var(--rose)}
 :root[data-dengo-theme] .day-countdown strong{letter-spacing:.02em}
