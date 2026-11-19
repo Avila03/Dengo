@@ -50,9 +50,15 @@ test("media still has status, episode and feedback; discovery remains accessible
 });
 test("calendars and payment plan advanced controls are not removed", () => {
   const calendar=file("components/calendar.tsx");
-  assert.match(calendar,/className="clean-calendar-legend"/);
-  assert.match(calendar,/className="clean-calendar-upcoming"/);
-  assert.match(calendar,/className="clean-calendar-help"/);
+  // Legenda virou as fichas de categoria (que também filtram); próximos e próximas datas
+  // continuam no calendário; a exportação fica nos detalhes de cada compromisso.
+  assert.match(calendar,/className="calendar-chips"/);
+  assert.match(calendar,/className="agenda-upcoming"/);
+  assert.match(calendar,/className="next-dates"/);
+  const quick=file("components/event-quick-view.tsx");
+  assert.match(quick,/googleCalendarUrl\(occurrence\)/);
+  assert.match(quick,/eventICS\(occurrence\)/);
+  assert.match(file("components/settings.tsx"),/<TopicManager/);
   assert.match(calendar,/<CleanSheet/);
   const payments=file("components/payment-center.tsx");
   assert.match(payments,/className="clean-plan-details"/);

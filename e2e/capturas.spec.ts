@@ -37,6 +37,7 @@ for (const theme of THEMES) {
       ["pagamentos", "/compras?aba=pagamentos", null],
       ["compromisso", "/calendario", async (p) => { await p.getByRole("button", { name: "Novo compromisso" }).click(); await p.getByRole("dialog").waitFor(); }],
       ["calendario", "/calendario", null],
+      ["calendario-proximos", "/calendario", async (p) => { await p.getByRole("button", { name: "Próximos", exact: true }).click(); }],
       ["detalhes", "/compromissos", async (p) => { await p.getByRole("button", { name: "Ver detalhes de Regar as plantas" }).click(); await p.getByRole("dialog").waitFor(); }],
     ];
     for (const [name, where, act] of extras) {

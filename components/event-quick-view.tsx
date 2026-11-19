@@ -2,9 +2,10 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
-  Check, ChevronRight, Clock3, ExternalLink, MapPin, Pencil, Plus,
+  Check, ChevronRight, Clock3, Download, ExternalLink, MapPin, Pencil, Plus,
   Repeat2, Trash2,
 } from "lucide-react";
+import { downloadFile, eventICS, googleCalendarUrl } from "@/lib/calendar";
 import type { Draft, Entry, EventOccurrenceChanges } from "@/lib/model";
 import { CleanSheet } from "./clean-sheet";
 import { EventFields } from "./event-fields";
@@ -203,6 +204,15 @@ export function EventQuickView({
         {linked && linked.id !== place?.id ? <Link className="secondary event-quick-link" href={linkToItem}>
           <ExternalLink size={15} /> {linked.kind === "place" ? "Lugar salvo" : "Filme ou série"}: {linked.title}
         </Link> : null}
+        <div className="event-export" aria-label="Levar para outro calendário">
+          <a className="text-link" href={googleCalendarUrl(occurrence)} target="_blank" rel="noopener noreferrer">
+            Google Agenda <ExternalLink size={13} aria-hidden="true" />
+          </a>
+          <button type="button" className="text-link" onClick={() => downloadFile("dengo-compromisso.ics", eventICS(occurrence))}>
+            <Download size={13} aria-hidden="true" /> Baixar .ics
+          </button>
+          <span className="helper">Alterações depois não são sincronizadas.</span>
+        </div>
         <div className="event-quick-actions">
           <button type="button" className="secondary" disabled={busy} onClick={() => void complete()}>
             <Check size={16} /> {occurrence.done ? "Reabrir" : "Concluir"}

@@ -13,6 +13,8 @@ import { Shell } from "./shell";
 import { CoupleInvite } from "./couple-invite";
 import { LeaveCouple } from "./leave-couple";
 import { AppearanceStudio } from "./appearance-studio";
+import { TopicManager } from "./topic-manager";
+import { calendarTopics } from "@/lib/calendar-topics";
 import { useDengo } from "./provider";
 import { CATEGORIES, parseMoney } from "@/lib/finance";
 import { localToday } from "@/lib/model";
@@ -23,6 +25,7 @@ export function Settings() {
     preferences,
     busy,
     savePreferences,
+    saveCalendarTopics,
     signOut,
     memberCount,
     memberSlot,
@@ -216,6 +219,13 @@ export function Settings() {
       </form>
       <CoupleInvite key={memberCount} />
       <AppearanceStudio />
+      <section className="panel calendar-categories" id="categorias" aria-labelledby="categorias-title">
+        <span className="eyebrow">CALENDÁRIO</span>
+        <h2 id="categorias-title">Categorias e cores</h2>
+        <p className="helper">Valem para os dois. Combinados e Contas aparecem no calendário com cores próprias.</p>
+        <TopicManager key={calendarTopics(preferences.calendarTopics).map((t) => t.id + t.name + t.color).join("|")}
+          topics={calendarTopics(preferences.calendarTopics)} busy={busy} onSave={saveCalendarTopics} />
+      </section>
       <section className="panel settings-account-panel">
         <div className="stat-icon sage">
           <ShieldCheck />

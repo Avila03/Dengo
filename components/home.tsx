@@ -3,10 +3,11 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Repeat2,
-  Heart, Palette, Plus, Filter, Bell,
+  Heart, Plus, Bell,
 } from "lucide-react";
 import { Shell } from "./shell";
 import { TopicDots } from "./topic-dots";
+import { MonthGrid } from "./month-grid";
 import { EventQuickView } from "./event-quick-view";
 import { eventDurationLabel } from "@/lib/calendar-anniversaries";
 import { calendarTopics, calendarEntryColor, eventTopicLabel } from "@/lib/calendar-topics";
@@ -14,14 +15,13 @@ import { useDengo } from "./provider";
 import { dayLabel, localToday, penOf } from "@/lib/model";
 import { calendarEntries, calendarDayMap, eventDaysUntil } from "@/lib/calendar";
 import { addCalendarDays, eventStartTimeLabel } from "@/lib/calendar-schedule";
-import { todayEntries, addDaysISO, weekDates, calendarMonthDays, shiftMonth, daysTogether } from "@/lib/today";
+import { todayEntries, addDaysISO, weekDates, shiftMonth, daysTogether } from "@/lib/today";
 import { NotesBoard } from "./notes-board";
 import { money } from "@/lib/finance";
 import { activeReminders } from "@/lib/payment-plans";
 import type { Entry } from "@/lib/model";
 
 const dayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-const weekdays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const labelByKind: Record<string, string> = {
   event: "Evento",
   task: "Responsabilidade",
@@ -41,15 +41,9 @@ export function Home() {
   const [monthOpen, setMonthOpen] = useState(false);
   const [month, setMonth] = useState(today.slice(0, 7));
   const [allVisible, setAllVisible] = useState(false);
-  const [selectedTopic, setSelectedTopic] = useState("all");
   const [preview, setPreview] = useState<Entry | null>(null);
   const week = weekDates(selected);
-  const visible = (entry: Entry) => selectedTopic === "all" ||
-    (entry.kind === "event" && (
-      entry.data?.topicId === selectedTopic ||
-      (selectedTopic === "outros" && !topics.some((topic) => topic.id === entry.data?.topicId))
-    ));
-  const selectedItems = todayEntries(entries, selected).filter(visible);
+  const selectedItems = todayEntries(entries, selected);
   const todayItems = todayEntries(entries, today);
   const todayPending = todayItems.filter((entry) => !entry.done).length;
   const intervalDates = [today, week[0], week[6], selected, month + "-01",
@@ -60,7 +54,7 @@ export function Home() {
   });
   const byDay = new Map<string, Entry[]>();
   for (const [date, events] of allDays)
-    byDay.set(date, events.filter(visible));
+    byDay.set(date, events);
   const nextSpecial = calendarEntries(entries, {from: today, to: addCalendarDays(today, 400)})
     .filter((entry) => entry.kind === "event" &&
       (entry.data?.eventRepeat === "monthly" || entry.data?.eventRepeat === "yearly") &&
@@ -74,9 +68,6 @@ export function Home() {
   const dateText = new Intl.DateTimeFormat("pt-BR", {
     weekday: "long", day: "numeric", month: "long",
   }).format(new Date(today + "T12:00:00"));
-  const monthTitle = new Intl.DateTimeFormat("pt-BR", {
-    month: "long", year: "numeric",
-  }).format(new Date(month + "-15T12:00:00"));
 
   function chooseDay(day: string) {
     setSelected(day);
@@ -166,51 +157,10 @@ export function Home() {
             Agenda completa <ArrowRight size={15} />
           </Link>
         </div>
-        <details className="clean-inline-options">
-          <summary><Filter size={15} /> {selectedTopic === "all" ? "Categorias e filtros" :
-            "Filtrando: " + (topics.find(t => t.id === selectedTopic)?.name || "Outros")}
-          </summary>
-          <div className="home-calendar-filter-toggle">
-            <Link href="/calendario?topicos=1#calendar-categories" className="text-link">
-              <Palette size={15} /> Editar categorias e cores
-            </Link>
-            {selectedTopic !== "all" ? <button type="button" className="text-link"
-              onClick={() => setSelectedTopic("all")}>Limpar filtro</button> : null}
-          </div>
-          <div className="calendar-topic-filters" role="group" aria-label="Filtrar calendário">
-            <button type="button" className={selectedTopic === "all" ? "selected" : ""}
-              onClick={() => setSelectedTopic("all")}>Todos</button>
-            {topics.map((topic) => (
-              <button key={topic.id} type="button"
-                className={selectedTopic === topic.id ? "selected" : ""}
-                onClick={() => setSelectedTopic(topic.id)}>
-                <i className="topic-legend-dot" style={{backgroundColor:topic.color}} /> {topic.name}
-              </button>
-            ))}
-          </div>
-        </details>
         {monthOpen ? (
           <div className="day-month" id="day-month-view">
-            <div className="day-month-header">
-              <button type="button" className="icon-btn" aria-label="Mês anterior"
-                onClick={() => setMonth((value) => shiftMonth(value, -1))}><ChevronLeft size={19} /></button>
-              <strong>{monthTitle}</strong>
-              <button type="button" className="icon-btn" aria-label="Próximo mês"
-                onClick={() => setMonth((value) => shiftMonth(value, 1))}><ChevronRight size={19} /></button>
-            </div>
-            <div className="day-month-grid">
-              {weekdays.map((name) => <span className="day-month-weekday" key={name}>{name}</span>)}
-              {calendarMonthDays(month).map((date, index) => date ? (
-                <button type="button" key={date} onClick={() => chooseDay(date)}
-                  className={"day-month-cell" +
-                    (date === today ? " today" : "") +
-                    (date === selected ? " selected" : "")}
-                  aria-label={dayLabel(date) + ", " + (byDay.get(date)?.length || 0) + " registros"} aria-pressed={date === selected}>
-                  {Number(date.slice(-2))}
-                  <TopicDots entries={byDay.get(date) || []} topics={topics} />
-                </button>
-              ) : <span key={"empty-" + index} aria-hidden="true" />)}
-            </div>
+            <MonthGrid month={month} entries={entries} topics={topics} today={today} selected={selected}
+              onSelect={chooseDay} onShift={(delta) => setMonth((value) => shiftMonth(value, delta))} />
           </div>
         ) : null}
       </section>
