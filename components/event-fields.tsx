@@ -1,8 +1,16 @@
 "use client";
-import { useId, useState } from "react";
+import { useId } from "react";
 import { TOGETHER, type Entry } from "@/lib/model";
 import type { CalendarTopic } from "@/lib/calendar-topics";
 import { EVENT_REPEAT_LABELS, type EventFormValues } from "@/lib/event-form";
+
+/** Último dia aceito para o fim (o modelo limita eventos a 61 dias). */
+function maxEnd(due: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) return undefined;
+  const d = new Date(due + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + 60);
+  return d.toISOString().slice(0, 10);
+}
 
 /** One field layout for new events and changes to saved occurrences. */
 export function EventFields({ values, onChange, topics, entries, names, allowRepeat = true }: {
@@ -14,7 +22,6 @@ export function EventFields({ values, onChange, topics, entries, names, allowRep
   allowRepeat?: boolean;
 }) {
   const id = useId();
-  const [multiDay, setMultiDay] = useState(Boolean(values.endDate));
   const places = entries.filter((e) => e.kind === "place");
   const selectedTopic = topics.find((topic) => topic.id === values.topicId);
   const set = <K extends keyof EventFormValues>(key: K, value: EventFormValues[K]) =>
@@ -25,12 +32,35 @@ export function EventFields({ values, onChange, topics, entries, names, allowRep
         <input required maxLength={120} value={values.title}
           onChange={(e) => set("title", e.target.value)} placeholder="O que vamos fazer?" />
       </label>
-      <label>Data
-        <input type="date" required value={values.due} onChange={(e) => set("due", e.target.value)} />
-      </label>
-      <label>Horário
-        <input type="time" value={values.time} onChange={(e) => set("time", e.target.value)} />
-      </label>
+      <fieldset className="full event-when">
+        <legend>Início</legend>
+        <label>Data
+          <input type="date" required value={values.due} onChange={(e) => {
+            const due = e.target.value;
+            // Se o início passar do fim, o fim acompanha (evita um intervalo invertido).
+            onChange({ ...values, due, endDate: values.endDate && values.endDate < due ? due : values.endDate });
+          }} />
+        </label>
+        <label>Horário <span className="optional">opcional</span>
+          <input type="time" value={values.time} onChange={(e) =>
+            onChange({ ...values, time: e.target.value, endTime: e.target.value ? values.endTime : "" })} />
+        </label>
+      </fieldset>
+      <fieldset className="full event-when" aria-describedby={id + "-end-help"}>
+        <legend>Fim <span className="optional">opcional</span></legend>
+        <label>Data
+          <input type="date" min={values.due} max={maxEnd(values.due)} value={values.endDate}
+            onChange={(e) => set("endDate", e.target.value)} />
+        </label>
+        <label>Horário
+          <input type="time" value={values.endTime} disabled={!values.time}
+            onChange={(e) => set("endTime", e.target.value)} />
+        </label>
+        <p id={id + "-end-help"} className="helper full">
+          {values.time ? "Para viagens e eventos de vários dias, escolha a data de volta." :
+            "Para viagens, escolha a data de volta. Defina um horário de início para marcar também o de término."}
+        </p>
+      </fieldset>
       <label className="full">Categoria
         <span className="topic-select">
           <i className="topic-legend-dot" style={{ backgroundColor: selectedTopic?.color || topics[0]?.color }} />
@@ -67,18 +97,6 @@ export function EventFields({ values, onChange, topics, entries, names, allowRep
         </details> : null}
       </div> : <span className="form-toggle-hint">Não repetir</span>}
     </section> : null}
-    <details className="form-details" open={multiDay || undefined}>
-      <summary>Duração</summary>
-      <label className="checkbox-label">
-        <input type="checkbox" checked={multiDay} aria-controls={id + "-end"}
-          onChange={(e) => { setMultiDay(e.target.checked); if (!e.target.checked) set("endDate", ""); }} />
-        Dura mais de um dia
-      </label>
-      {multiDay ? <label id={id + "-end"}>Data de término
-        <input type="date" required min={values.due} value={values.endDate}
-          onChange={(e) => set("endDate", e.target.value)} />
-      </label> : null}
-    </details>
     <details className="form-details" open={values.placeId || values.location || values.detail || values.assignee !== TOGETHER ? true : undefined}>
       <summary>Participantes, local e observação</summary>
       <div className="form-grid">

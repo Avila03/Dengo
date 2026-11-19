@@ -87,7 +87,7 @@ export function Calendar() {
   function newForm(date: string): EventFormValues {
     return {
       title: source?.kind === "movie" ? `Assistir: ${source.title}` : source?.title || "",
-      due: date, endDate: "", time: "", detail: "", assignee: TOGETHER,
+      due: date, endDate: "", endTime: "", time: "", detail: "", assignee: TOGETHER,
       placeId: source?.kind === "place" ? source.id : "", location: "",
       topicId: source?.kind === "movie" ? "filmes" : source?.kind === "place" ? "passeio" : topics[0].id,
       repeat: "none", counter: "off",
