@@ -71,7 +71,7 @@ test("place selection stores saved name and address while retaining an existing 
   assert.equal(data.placeId, place.id);
   assert.equal(data.sourceId, "film");
   assert.equal(data.sourceKind, "movie");
-  assert.equal(data.endTime, "");
+  assert.equal(data.endTime, values.time ? values.endTime : "");
   assert.doesNotThrow(() => validateDraft({ ...movieEvent, data }));
 });
 
@@ -83,4 +83,22 @@ test("editing keeps historical locations until explicitly cleared, and replaces 
   const cleared = eventDataFromForm({ ...eventFormValues(oldPlace), placeId: "", location: "" }, [], oldPlace.data);
   assert.equal(cleared.sourceId, "");
   assert.equal(cleared.location, "");
+});
+
+test("formulário guarda início e fim: viagens de vários dias e horário de término", () => {
+  const base = eventFormValues(weekly);
+  const trip = eventDataFromForm({ ...base, due: "2026-12-20", endDate: "2026-12-27", time: "", endTime: "" }, []);
+  assert.equal(trip.endDate, "2026-12-27");
+  assert.doesNotThrow(() => validateDraft({ ...weekly, due: "2026-12-20", data: { ...trip, eventRepeat: "none" } }));
+  const show = eventDataFromForm({ ...base, due: "2026-12-20", endDate: "", time: "20:00", endTime: "23:30" }, []);
+  assert.equal(show.endTime, "23:30");
+  assert.equal(show.endDate, "");
+  // Fim no mesmo dia não guarda data; término sem início é descartado.
+  assert.equal(eventDataFromForm({ ...base, due: "2026-12-20", endDate: "2026-12-20" }, []).endDate, "");
+  assert.equal(eventDataFromForm({ ...base, time: "", endTime: "10:00" }, []).endTime, "");
+  // Ida à noite e volta de madrugada no dia seguinte.
+  const late = eventDataFromForm({ ...base, due: "2026-12-31", endDate: "2027-01-01", time: "21:00", endTime: "02:00" }, []);
+  assert.doesNotThrow(() => validateDraft({ ...weekly, due: "2026-12-31", data: { ...late, eventRepeat: "none" } }));
+  // O horário de término salvo volta para o formulário ao editar.
+  assert.equal(eventFormValues({ ...weekly, data: { ...weekly.data, time: "20:00", endTime: "23:30" } }).endTime, "23:30");
 });

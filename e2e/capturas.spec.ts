@@ -35,6 +35,7 @@ for (const theme of THEMES) {
     const extras: [string, string, ((p: typeof page) => Promise<void>) | null][] = [
       ["formulario", "/compromissos", async (p) => { await p.getByRole("button", { name: "Nova responsabilidade" }).click(); await p.getByRole("dialog").waitFor(); }],
       ["pagamentos", "/compras?aba=pagamentos", null],
+      ["compromisso", "/calendario", async (p) => { await p.getByRole("button", { name: "Novo compromisso" }).click(); await p.getByRole("dialog").waitFor(); }],
       ["calendario", "/calendario", null],
       ["detalhes", "/compromissos", async (p) => { await p.getByRole("button", { name: "Ver detalhes de Regar as plantas" }).click(); await p.getByRole("dialog").waitFor(); }],
     ];

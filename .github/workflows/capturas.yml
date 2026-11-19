@@ -32,6 +32,8 @@ jobs:
           git init -q
           git checkout -q -b "$BRANCH"
           echo "$GITHUB_SHA" > COMMIT
+          # Branch só de imagens: a Vercel não deve publicar nada dela (conta no limite diário).
+          echo '{"git":{"deploymentEnabled":false}}' > vercel.json
           git add .
           git -c user.name="dengo-ci" -c user.email="dengo-ci@users.noreply.github.com" commit -qm "Capturas de $GITHUB_SHA"
           git push -fq "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" "$BRANCH"

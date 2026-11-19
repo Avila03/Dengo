@@ -238,3 +238,10 @@
 :root[data-dengo-theme] :is(.month-title,.day-month-header strong){text-transform:none}
 :root[data-dengo-theme] :is(.month-title,.day-month-header strong)::first-letter{text-transform:uppercase}
 :root[data-dengo-theme] .payment-overview-heading input[type=month]{width:172px;font-size:15px;padding:7px 8px}
+
+/* Compromissos: início e fim lado a lado, sempre visíveis. */
+.event-when{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px;border:0;padding:0;margin:0;min-width:0}
+:root[data-dengo-theme] .event-when legend{padding:0;margin:0 0 4px;font-family:var(--font-serif-stack);font-size:18px;color:var(--ink)}
+.event-when .helper{grid-column:1 / -1;margin:0;text-align:left}
+.event-when input:disabled{opacity:.5}
+:root[data-dengo-theme] .optional{font-family:var(--font-sans-stack);font-size:11px;font-weight:500;color:var(--muted)}
