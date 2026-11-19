@@ -247,8 +247,10 @@
 :root[data-dengo-theme] .optional{font-family:var(--font-sans-stack);font-size:11px;font-weight:500;color:var(--muted)}
 
 /* ── Calendário (2.10) ─────────────────────────────────────── */
-.calendar-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
-.calendar-heading h1{margin:0}
+:root[data-dengo-theme] .page-heading.calendar-heading{display:flex;flex-direction:row;align-items:flex-end;justify-content:space-between;gap:12px;text-align:left;margin-bottom:6px}
+.calendar-heading>div{min-width:0}
+:root[data-dengo-theme] .calendar-heading h1{margin:0}
+:root[data-dengo-theme] :is(.next-dates-head,.agenda-day-head) .text-link{display:inline-flex;align-items:center;gap:3px;min-height:36px;padding:0 2px;border:0;background:none;box-shadow:none;cursor:pointer;font-size:13px;color:var(--rose)}
 :root[data-dengo-theme] .round-add{flex:none;width:48px;height:48px;min-height:48px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center}
 .calendar-views{margin:14px 0 10px}
 .calendar-chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;margin-bottom:12px;scrollbar-width:none}
@@ -326,3 +328,7 @@
   :root[data-dengo-theme] .month-sheet-day{min-height:92px}
   .month-sheet-bar{font-size:11px;height:18px;line-height:18px}
 }
+/* Nas configurações o gerenciador de categorias entra sem moldura própria */
+:root[data-dengo-theme] .calendar-categories .topic-editor{border:0;box-shadow:none;background:transparent;padding:0;margin:10px 0 0}
+.calendar-categories .topic-editor>.section-title{display:none}
+.calendar-categories>.helper{text-align:left}
