@@ -2,6 +2,16 @@
 
 As versões mais recentes aparecem primeiro. O README descreve o estado atual do aplicativo.
 
+## Dengo 2.10 — o calendário como agenda de papel
+
+- **Mês mais limpo:** cada compromisso vira uma barrinha com a cor da categoria; viagens e eventos de vários dias aparecem como uma faixa contínua. Até duas por dia, o resto em “+N”. Hoje fica circulado de vermelho.
+- **Próximas datas:** as três próximas coisas marcadas, logo no topo; tocar abre o dia.
+- **Fichas de categoria:** mostram e escondem categorias com um toque (inclusive Combinados e Contas). Criar e editar categorias passou para **Configurações → Categorias e cores**.
+- **Aba Próximos:** a agenda corrida, separada em Esta semana, Próxima semana e Mais adiante, com o carimbo “faltam N dias” para viagens e contagens.
+- **Início e Fim visíveis** no formulário de compromisso, para viagens e eventos de vários dias.
+- **Levar para outro calendário:** nos detalhes do compromisso, link para o Google Agenda e arquivo .ics.
+- O mês do Nosso dia usa a mesma grade.
+
 ## Dengo 2.9 — Caderno de nós dois
 
 - **Nova linguagem visual:** o Dengo vira o caderno do casal. Papel creme e tinta azul-marinho (o azul do ícone), títulos em Instrument Serif, interface em Work Sans e escrita à mão (Caveat) só no que vocês escrevem: nomes, bilhetes e legendas. As fontes são servidas pelo próprio site.

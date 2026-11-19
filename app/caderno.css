@@ -238,3 +238,97 @@
 :root[data-dengo-theme] :is(.month-title,.day-month-header strong){text-transform:none}
 :root[data-dengo-theme] :is(.month-title,.day-month-header strong)::first-letter{text-transform:uppercase}
 :root[data-dengo-theme] .payment-overview-heading input[type=month]{width:172px;font-size:15px;padding:7px 8px}
+
+/* Compromissos: início e fim lado a lado, sempre visíveis. */
+.event-when{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px;border:0;padding:0;margin:0;min-width:0}
+:root[data-dengo-theme] .event-when legend{padding:0;margin:0 0 4px;font-family:var(--font-serif-stack);font-size:18px;color:var(--ink)}
+.event-when .helper{grid-column:1 / -1;margin:0;text-align:left}
+.event-when input:disabled{opacity:.5}
+:root[data-dengo-theme] .optional{font-family:var(--font-sans-stack);font-size:11px;font-weight:500;color:var(--muted)}
+
+/* ── Calendário (2.10) ─────────────────────────────────────── */
+:root[data-dengo-theme] .page-heading.calendar-heading{display:flex;flex-direction:row;align-items:flex-end;justify-content:space-between;gap:12px;text-align:left;margin-bottom:6px}
+.calendar-heading>div{min-width:0}
+:root[data-dengo-theme] .calendar-heading h1{margin:0}
+:root[data-dengo-theme] :is(.next-dates-head,.agenda-day-head) .text-link{display:inline-flex;align-items:center;gap:3px;min-height:36px;padding:0 2px;border:0;background:none;box-shadow:none;cursor:pointer;font-size:13px;color:var(--rose)}
+:root[data-dengo-theme] .round-add{flex:none;width:48px;height:48px;min-height:48px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.calendar-views{margin:14px 0 10px}
+.calendar-chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;margin-bottom:12px;scrollbar-width:none}
+.calendar-chips::-webkit-scrollbar{display:none}
+:root[data-dengo-theme] .calendar-chip{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:999px;
+  border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:none}
+.calendar-chip i{width:9px;height:9px;border-radius:50%;background:var(--chip);border:1.5px solid var(--chip)}
+:root[data-dengo-theme] .calendar-chip.is-off{background:transparent;color:var(--muted);text-decoration:line-through}
+.calendar-chip.is-off i{background:transparent}
+:root[data-dengo-theme] .calendar-chip-edit{color:var(--muted);border-style:dashed;background:transparent}
+
+.next-dates{margin-bottom:14px}
+.next-dates-head{display:flex;align-items:baseline;justify-content:space-between}
+:root[data-dengo-theme] .next-dates-head h2{margin:0;font-size:22px}
+.next-dates-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:6px}
+:root[data-dengo-theme] .next-date{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:98px;padding:9px 9px 8px;text-align:left;cursor:pointer;
+  background:var(--paper);color:var(--ink);border:1px solid var(--line);border-top:4px solid var(--bar);border-radius:4px;box-shadow:0 1px 0 var(--line)}
+.next-date-day{display:flex;align-items:baseline;gap:4px;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.next-date-day b{font-family:var(--font-serif-stack);font-weight:400;font-size:26px;line-height:1;letter-spacing:0;color:var(--ink)}
+.next-date-title{font-size:12.5px;font-weight:600;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:30px}
+.next-date-when{margin-top:auto;font-size:11px;font-weight:700;color:var(--bar)}
+.calendar-handnote{margin:12px 0;font-family:var(--font-hand-stack);font-size:21px;color:var(--muted)}
+
+/* O mês como página de agenda */
+:root[data-dengo-theme] .month-sheet{background:var(--paper);border:1px solid var(--line);border-radius:6px;box-shadow:0 1px 0 var(--line);padding:8px 4px 6px;margin-bottom:16px}
+.month-sheet-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px}
+:root[data-dengo-theme] .month-sheet-title{margin:0;font-size:23px;text-transform:none}
+.month-sheet-title::first-letter{text-transform:uppercase}
+.month-sheet-weekdays,.month-sheet-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+:root[data-dengo-theme] .month-sheet-weekdays{padding-bottom:4px;border-bottom:1.5px solid var(--ink);font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--muted);text-align:center}
+:root[data-dengo-theme] .month-sheet-week{border-bottom:1px solid var(--line)}
+.month-sheet-week:last-child{border-bottom:0}
+:root[data-dengo-theme] .month-sheet-day{display:flex;flex-direction:column;gap:2px;min-width:0;min-height:66px;padding:4px 0;border:0;border-radius:0;background:transparent;color:var(--ink);cursor:pointer;text-align:left}
+:root[data-dengo-theme] .month-sheet-day.is-selected{background:var(--soft-surface)}
+.month-sheet-day.is-outside{opacity:.4}
+.month-sheet-num{align-self:center;width:25px;height:25px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:13px;font-weight:500}
+:root[data-dengo-theme] .month-sheet-day.is-today .month-sheet-num{border:2px solid var(--rose);color:var(--rose);font-weight:700}
+.month-sheet-bar{display:block;height:15px;line-height:15px;margin:0 2px;padding:0 3px;border-radius:3px;overflow:hidden;white-space:nowrap;
+  font-size:9.5px;font-weight:600;color:var(--bar);background:color-mix(in srgb,var(--bar) 17%,transparent);box-shadow:inset 2px 0 0 var(--bar)}
+.month-sheet-bar.is-multi{color:#fff;background:var(--bar);box-shadow:none;border-radius:0;margin:0 -1px}
+.month-sheet-bar.is-multi.is-start{margin-left:2px;border-top-left-radius:3px;border-bottom-left-radius:3px}
+.month-sheet-bar.is-multi.is-end{margin-right:2px;border-top-right-radius:3px;border-bottom-right-radius:3px}
+.month-sheet-bar.is-done{opacity:.5;text-decoration:line-through}
+.month-sheet-more{padding-left:4px;font-size:9.5px;font-weight:700;color:var(--muted)}
+:root[data-dengo-theme="caderno-noite"] .month-sheet-bar.is-multi{color:#14172a}
+
+/* Linhas da agenda */
+.agenda-day-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:4px;border-bottom:2px solid var(--ink)}
+:root[data-dengo-theme] .agenda-day-head h2{margin:0;font-size:23px}
+.agenda-day-head h2::first-letter{text-transform:uppercase}
+:root[data-dengo-theme] .agenda-line{display:grid;grid-template-columns:auto 4px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;min-height:54px;
+  padding:9px 2px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink);text-align:left;text-decoration:none;cursor:pointer}
+.agenda-line-time{min-width:56px;font-size:12.5px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.agenda-line-bar{width:4px;height:34px;border-radius:2px;background:var(--bar)}
+.agenda-line-copy{display:flex;flex-direction:column;gap:1px;min-width:0}
+.agenda-line-copy strong{font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:root[data-dengo-theme] .agenda-line-copy strong.is-done{text-decoration:line-through;text-decoration-color:var(--rose);color:var(--muted)}
+.agenda-line-copy small{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agenda-line-date{display:flex;flex-direction:column;align-items:center;min-width:44px;line-height:1}
+.agenda-line-date small{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.agenda-line-date b{font-family:var(--font-serif-stack);font-weight:400;font-size:25px}
+.agenda-line-copy .calendar-stamp{align-self:flex-start;margin-top:4px}
+.agenda-group{margin-bottom:12px}
+:root[data-dengo-theme] .agenda-group h2{margin:10px 0 0;padding-bottom:4px;border-bottom:2px solid var(--ink);font-size:23px}
+:root[data-dengo-theme] .calendar-stamp{display:inline-block;padding:2px 7px;border:2px solid var(--rose);color:var(--rose);font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;transform:rotate(-3deg)}
+.calendar-export-note{margin-top:14px;text-align:left}
+
+/* Detalhes: levar a outro calendário */
+.event-export{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:12px 0 4px}
+.event-export .text-link{display:inline-flex;align-items:center;gap:4px;min-height:36px;border:0;background:none;cursor:pointer;font-size:13.5px}
+.event-export .helper{flex-basis:100%;margin:0;text-align:left;font-size:11.5px}
+
+@media (min-width:900px){
+  .next-dates-list{grid-template-columns:repeat(3,minmax(0,220px))}
+  :root[data-dengo-theme] .month-sheet-day{min-height:92px}
+  .month-sheet-bar{font-size:11px;height:18px;line-height:18px}
+}
+/* Nas configurações o gerenciador de categorias entra sem moldura própria */
+:root[data-dengo-theme] .calendar-categories .topic-editor{border:0;box-shadow:none;background:transparent;padding:0;margin:10px 0 0}
+.calendar-categories .topic-editor>.section-title{display:none}
+.calendar-categories>.helper{text-align:left}
