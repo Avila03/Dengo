@@ -41,7 +41,7 @@ export function EventFields({ values, onChange, topics, entries, names, allowRep
             onChange({ ...values, due, endDate: values.endDate && values.endDate < due ? due : values.endDate });
           }} />
         </label>
-        <label>Horário <span className="optional">opcional</span>
+        <label>Horário
           <input type="time" value={values.time} onChange={(e) =>
             onChange({ ...values, time: e.target.value, endTime: e.target.value ? values.endTime : "" })} />
         </label>
