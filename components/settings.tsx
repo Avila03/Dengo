@@ -12,6 +12,7 @@ import {
 import { Shell } from "./shell";
 import { CoupleInvite } from "./couple-invite";
 import { LeaveCouple } from "./leave-couple";
+import { ChangePassword } from "./change-password";
 import { AppearanceStudio } from "./appearance-studio";
 import { useDengo } from "./provider";
 import { CATEGORIES, parseMoney } from "@/lib/finance";
@@ -240,6 +241,7 @@ export function Settings() {
             Sair da conta
           </button>
         ) : null}
+        <ChangePassword />
         <LeaveCouple />
       </section>
     </Shell>

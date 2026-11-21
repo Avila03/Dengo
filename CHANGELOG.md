@@ -2,6 +2,10 @@
 
 As versões mais recentes aparecem primeiro. O README descreve o estado atual do aplicativo.
 
+## Dengo 2.9.1 — trocar senha
+
+- **Configurações → Conta e privacidade → Trocar senha:** cada um muda a própria senha sem depender de e-mail, confirmando a senha atual.
+
 ## Dengo 2.9 — Caderno de nós dois
 
 - **Nova linguagem visual:** o Dengo vira o caderno do casal. Papel creme e tinta azul-marinho (o azul do ícone), títulos em Instrument Serif, interface em Work Sans e escrita à mão (Caveat) só no que vocês escrevem: nomes, bilhetes e legendas. As fontes são servidas pelo próprio site.

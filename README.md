@@ -2,7 +2,7 @@
 
 O caderno de vocês dois: um lugar para cuidar da vida a dois, com agenda, responsabilidades, finanças, lugares e filmes de um casal, com login individual e dados compartilhados. Feito para o iPhone (instalável na tela inicial), funciona também no computador.
 
-**Versão atual:** 2.9 · [Histórico de versões](CHANGELOG.md)
+**Versão atual:** 2.9.1 · [Histórico de versões](CHANGELOG.md)
 
 ## O que o Dengo faz
 
